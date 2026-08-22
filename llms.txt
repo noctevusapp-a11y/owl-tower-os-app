@@ -1,0 +1,15 @@
+# Owl Tower Construction OS
+
+> Construction management platform by Owl Tower Construction Group, Inc. (CSLB #1108551, Torrance, CA). It runs projects, schedules, estimating, financials, field reporting, service work orders and subcontractor compliance from one system.
+
+Owl Tower Construction OS is a private, invite-only workspace for Owl Tower staff, field crews, subcontractors and clients. Almost every page requires an authenticated account, so only the pages listed below are publicly reachable.
+
+## Pages
+
+- [Home](/): Overview and entry point to Owl Tower Construction OS.
+- [Sign in](/auth): Account sign-in and invitation acceptance for staff, field crews and subcontractors.
+
+## Optional
+
+- Project workspaces, financials, scheduling, documents, service dispatch and compliance vaults are behind authentication and are not available to crawlers.
+- Client project portals and shared photo galleries are reachable only through private, tokenized links issued by Owl Tower.

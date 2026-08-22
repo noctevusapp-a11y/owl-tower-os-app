@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline — Owl Tower OS</title>
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: #080a0d; color: #a9adb1;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        padding: 24px; text-align: center;
+      }
+      .card {
+        max-width: 380px; border: 1px solid #23262b; background: #171a1f;
+        border-radius: 14px; padding: 32px 26px;
+      }
+      img { width: 92px; height: auto; margin-bottom: 18px; opacity: .95; }
+      h1 { color: #c89a36; font-size: 15px; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 10px; }
+      p { font-size: 13px; line-height: 1.65; margin: 0 0 8px; }
+      .hint { color: #6f747a; font-size: 11px; margin-top: 16px; }
+      button {
+        margin-top: 20px; background: #c89a36; color: #080a0d; border: 0; border-radius: 8px;
+        padding: 10px 18px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+        text-transform: uppercase; cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/icon-192.png" alt="Owl Tower Construction Group" />
+      <h1>No connection</h1>
+      <p>You are offline. Screens you already opened stay available, and jobsite photos you capture are queued and uploaded automatically once you are back on the network.</p>
+      <p class="hint">Owl Tower Construction OS</p>
+      <button onclick="location.reload()">Try again</button>
+    </div>
+  </body>
+</html>
