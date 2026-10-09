@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "application": "owl-tower-os",
+  "source_repository": "noctevusapp-a11y/owl-tower-os",
+  "source_ref": "unknown",
+  "source_commit": "d61cf7860b245d7ec2467ce7e52ce2322cc1c50a",
+  "artifact_repository": "sites/owl-tower-os-codex",
+  "deployment_commit": "d61cf7860b245d7ec2467ce7e52ce2322cc1c50a",
+  "repositories_aligned": true,
+  "built_at": "2026-10-09T17:29:04.843Z"
+}
