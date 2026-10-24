@@ -33,10 +33,11 @@ DIVISION_NAMES = {
     "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
-              "EQUIP_CREW_MISMATCH", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL"}
+              "EQUIP_CREW_MISMATCH", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "EQUIPMENT_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
-              "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED"}
+              "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
+              "PERCENT_ADD", "TOTAL_OP_UNREADABLE"}
 DESC_FIXES = [(r"\b1b\.", "lb."), (r"\bIb\.", "lb."), (r"\b1bs\.", "lbs."), (r"(\d)\s*0C\b", r"\1 OC"), (r"\b0\.C\.", "O.C."), ("’", "'"), ("‘", "'"),
               ("”", '"'), ("“", '"'), ("″", '"'), ("—", "-"), ("–", "-"), (r"\s+,", ","), (r"\s{2,}", " "), (r"^[\s\-=~_.|:;'\"]+", ""), (r"[\s\-=~_|:;'\"]+$", "")]
 
@@ -185,7 +186,8 @@ def main() -> int:
             st.append((indent, desc))
         open_flags = [f for f in flags if f in OPEN_FLAGS]
         has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
-        status = "header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified")
+        pct = ln.get("percent") or {}
+        status = "percent_add" if pct else ("header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified"))
         cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None
         crew = crews.get(ln["crew"]) if ln["crew"] else None
         pg_no = ln["pdf_page"]
@@ -195,7 +197,9 @@ def main() -> int:
             "description": desc, "description_path": " | ".join(path + [desc]) if path else desc, "level": len(path),
             "crew": ln["crew"], "crew_source": ln["crew_source"], "daily_output": ln["output"], "labor_hours": ln["hours"], "unit": ln["unit"],
             "unit_source": ln["unit_source"], "material_2022": ln["material"], "labor_2022": ln["labor"], "equipment_2022": ln["equipment"],
-            "total_2022": ln["total"], "total_incl_op_2022": ln["total_op"], "ref_note": ln.get("ref_note"),
+            "total_2022": ln["total"], "total_incl_op_2022": ln["total_op"],
+            "material_add_pct": pct.get("material"), "labor_add_pct": pct.get("labor"), "equipment_add_pct": pct.get("equipment"),
+            "total_add_pct": pct.get("total"), "ref_note": ln.get("ref_note"),
             "book_page": pg_no - 14, "pdf_page": pg_no, "status": status, "flags": ";".join(flags),
             "conf": json.dumps(ln.get("conf", {})),
             "crew_labor_hours_per_day": crew["labor_hours_per_day"] if crew else None})

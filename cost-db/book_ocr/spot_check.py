@@ -57,10 +57,8 @@ def row_y(ocr_dir: Path, pdf_page: int, line: str, desc: str) -> tuple[int, int,
         if not first or any(z[4][:4].lower() == first for z in same):
             best = w
             break
-    if best is None and cands:
-        best = cands[0]
     if best is None:
-        return None
+        return None                                            # no row with this number AND this description: skip rather than show a neighbour
     return best[1] - 8, best[1] + best[3] + 8, h
 
 

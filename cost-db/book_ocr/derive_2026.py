@@ -156,6 +156,10 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     cols = list(rows_out[0].keys())
     for r in rows_out:
+        for k in r:
+            if k not in cols:
+                cols.append(k)
+    for r in rows_out:
         for k in cols:
             r.setdefault(k, None)
     with (out / "book_lines_la_latest.csv").open("w", newline="", encoding="utf-8") as f:

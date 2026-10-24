@@ -242,6 +242,8 @@ def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
             whole = whole.replace(",", "")
             if not re.fullmatch(r"\d*", whole) or not re.fullmatch(r"\d+", frac):
                 return []
+            if kind == "hours" and len(frac) != 3:
+                return []                                      # labor-hours are always printed with three decimals
             out.append((Decimal((whole or "0") + "." + frac), "as_read"))
         else:
             s2 = s.replace(",", "")
@@ -251,8 +253,6 @@ def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
             if kind == "hours":
                 if len(s2) >= 3:
                     out.append((Decimal((s2[:-3] or "0") + "." + s2[-3:]), "point_restored"))
-                else:
-                    out.append((n, "as_read"))
             elif kind == "output":
                 out.append((n, "as_read"))
                 if len(s2) >= 3:
@@ -400,7 +400,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 ok = abs(prod - lh_known) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.05"))
             else:
                 k4 = (prod / 4).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-                ok = 1 <= k4 <= 120 and abs(prod - 4 * k4) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.06"))
+                ok = 1 <= k4 <= 48 and abs(prod - 4 * k4) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.06"))
             if not ok:
                 continue
             score = W["output"].get(o, 0.0) + W["hours"].get(h, 0.0)
@@ -503,6 +503,26 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
         vals["total_op"] = None
         conf["total_op"] = None
         flags.append("TOTAL_OP_UNREADABLE")
+    if crew and vals["total_op"] is not None and vals["output"] and vals["output"] > 0 and crew.get("op_labor_daily") is not None \
+            and (vals["labor"] is not None or vals["material"] is not None) and "LABOR_CREW_MISMATCH" not in flags:
+        o = vals["output"]
+        l_op = Decimal(str(crew["op_labor_daily"])) / o if vals["labor"] is not None else Decimal(0)
+        e_op = Decimal(str(crew.get("op_equip_daily") or 0)) / o if vals["equipment"] is not None else Decimal(0)
+        m = vals["material"] or Decimal(0)
+        exp = Decimal("1.10") * m + l_op + e_op
+        tol = (Decimal("0.55") * rstep(m) if m else Decimal(0)) + (rstep(vals["labor"]) / 2 if vals["labor"] is not None else Decimal(0)) \
+            + (rstep(vals["equipment"]) / 2 if vals["equipment"] is not None else Decimal(0)) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
+        if abs(exp - vals["total_op"]) > tol:
+            # a material the O&P column disagrees with: pick the material candidate the O&P supports, if exactly one does
+            m2 = (vals["total_op"] - l_op - e_op) / Decimal("1.10")
+            alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]
+            if len(alts) == 1 and vals["total"] is not None and (conf.get("material") or 0) < 4.0:
+                vals["material"], conf["material"] = alts[0], None
+                vals["total"] = alts[0] + (vals["labor"] or 0) + (vals["equipment"] or 0)
+                flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "MATERIAL_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM")]
+                flags.append("MATERIAL_FROM_OP_CHECK")
+            else:
+                flags.append("OP_MISMATCH")
     flags[:] = list(dict.fromkeys(flags))
     return vals, conf, flags
 
@@ -728,6 +748,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         partial = False
         ir = ia_row_near(r[0]["_yc"])
         ia_first = ir[0]["t"] if ir and ir[0]["x0"] < 230 and re.fullmatch(r"\d{3,4}", ir[0]["t"]) else None
+        if ia_first and LINE_RE.fullmatch(r[0]["t"]) and ia_first[-3:] != r[0]["t"][-3:]:
+            ir, ia_first = [], None                            # the nearest text-layer row is another line: do not mix the two
         body = r[1:]
         if LINE_RE.fullmatch(first) and r[0]["x0"] < 230:
             line_no = first
@@ -767,7 +789,13 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         crew_raw_i = " ".join(z["t"] for z in ci["cells"]["crew"]).strip(" |:;.,'‘’`\"~=_")
         unit_raw = " ".join(z["t"] for z in ct["cells"]["unit"]).strip(" |:;,'‘’`\"~=_")
         unit_raw_i = " ".join(z["t"] for z in ci["cells"]["unit"]).strip(" |:;,'‘’`\"~=_")
-        cands = {k: numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w) for k in NUM_COLS}
+        pct = {}
+        for k in MONEY:
+            raw_k = "".join(z["t"] for z in ct["cells"][k]) + "|" + "".join(z["t"] for z in ci["cells"][k])
+            if "%" in raw_k:
+                m_pct = re.search(r"(\d{1,3})\s*%", raw_k)
+                pct[k] = m_pct.group(1) if m_pct else "?"
+        cands = {k: ([] if k in pct else numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w)) for k in NUM_COLS}
         crew_id = normalise_crew(crew_raw, known) or normalise_crew(crew_raw_i, known)
         crew_src = "printed" if crew_id else None
         cell_has_text = bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) or bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or ""))
@@ -778,6 +806,9 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         vals, confs, flags = settle(cands, crew_row)
         if crew_unread:
             flags.append("CREW_UNREAD")
+        if pct:
+            flags.append("PERCENT_ADD")
+            flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "TOTAL_DERIVED_FROM_SUM")]
         unit = normalise_unit(unit_raw) or normalise_unit(unit_raw_i)
         if unit:
             last_unit, unit_src = unit, "printed"
@@ -803,6 +834,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
             "ref_note": ref[0] if ref else None, "crew": crew_id, "crew_source": crew_src, "crew_raw": crew_raw or crew_raw_i or None,
             "unit": unit, "unit_source": unit_src, "unit_raw": unit_raw or unit_raw_i or None,
             **{k: (str(vals[k]) if vals[k] is not None else None) for k in NUM_COLS},
+            "percent": pct or None,
             "conf": {k: confs[k] for k in NUM_COLS if confs[k] is not None},
             "raw": {k: [(str(v), how, src) for v, how, src in cands[k]] for k in NUM_COLS if cands[k]},
             "flags": flags})
