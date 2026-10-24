@@ -1,0 +1,16 @@
+unit_id,base_code,qualifier,name,dimension,base_unit_id,to_base_num,to_base_den,factor_formula,definition,is_fixed_conversion
+EA,EA,,each,count,EA,1,1,EA = 1 EA,Single countable item.,true
+LF,LF,,linear foot,length,LF,1,1,LF = 1 LF,12 in.,true
+SF,SF,,square foot,area,SF,1,1,SF = 1 SF,144 in^2.,true
+SY,SY,,square yard,area,SF,9,1,SY = 9 SF,9 SF.,true
+CF,CF,,cubic foot,volume,CF,1,1,CF = 1 CF,1728 in^3.,true
+CY,CY,,cubic yard,volume,CF,27,1,CY = 27 CF,27 CF.,true
+LB,LB,,pound (avoirdupois mass),mass,LB,1,1,LB = 1 LB,0.45359237 kg exactly.,true
+TON_SHORT,TON,short,short ton (US ton),mass,LB,2000,1,TON_SHORT = 2000 LB,2000 lb. Default meaning of 'ton' for US bulk materials; always state the qualifier.,true
+TON_LONG,TON,long,long ton,mass,LB,2240,1,TON_LONG = 2240 LB,2240 lb.,true
+TON_METRIC,TON,metric,metric tonne,mass,LB,100000000000,45359237,TON_METRIC = 1000 kg = 1000/0.45359237 LB,1000 kg.,true
+TON_REFRIG,TON,refrigeration,ton of refrigeration (cooling capacity),cooling_capacity,TON_REFRIG,1,1,"TON_REFRIG = 12000 Btu/h (capacity, not mass)","HVAC cooling capacity: 12,000 Btu/h. Not convertible to mass units.",true
+GAL_US,GAL,us_liquid,US liquid gallon,volume,CF,77,576,GAL_US = 231/1728 CF,"231 in^3 = 3.785411784 L. Default for US paints, coatings, adhesives.",true
+GAL_IMP,GAL,imperial,imperial gallon,volume,CF,284130625,1769802912,GAL_IMP = 4.54609 L / (16.387064 mL/in^3 * 1728 in^3/CF),4.54609 L. Not used for US products; present to detect mislabelled data.,true
+HR,HR,,hour,time,HR,1,1,HR = 1 HR,"Context must say person-hour, crew-hour or equipment-hour; stored in separate fields, never mixed.",true
+DAY,DAY,,work day / shift,time,HR,,,DAY = shift_hours HR (shift length is a per-crew parameter),Not a fixed number of hours. Convert only through crews.shift_hours.,false

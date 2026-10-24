@@ -1,0 +1,443 @@
+"""Independent validation rules (the 'agent F' checks) + the strict promotion gate.
+
+Every rule returns Issue records that map 1:1 to the validation_issues table. Rules are written to FAIL LOUDLY on
+contradictions; missing data is NOT an issue (it is a backlog item) unless a record claims to have it.
+
+Promotion gate (promote_validated): an OBSERVED record may become review_status='validated' only if
+  1. it has no open error-level issue,
+  2. its source was actually fetched (verification_method == 'fetched_primary'), and
+  3. its evidence fields are present.
+Search-snippet evidence therefore can never reach 'validated'.
+"""
+from __future__ import annotations
+
+import json
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import date
+from decimal import Decimal
+from typing import Any, Iterable, Optional
+
+from .calc import Engine, RunParams, median
+from .ids import SpecError, spec_key
+from .store import Database
+from .units import Units, UnitError
+
+D = Decimal
+GLOBAL_EXCLUDED_TOKENS = {"mobilization", "daily_cleanup_and_protection", "supervision_and_general_conditions",
+                          "sales_tax_and_delivery", "permits_and_inspections", "overhead_and_profit"}
+OBSERVED_TABLES = ("price_observations", "labor_rates", "equipment_rates", "productivity_observations",
+                   "burden_rates", "index_values", "product_consumption", "bid_benchmarks", "products")
+
+
+@dataclass
+class Issue:
+    record_table: str
+    record_id: str
+    rule_code: str
+    severity: str          # error | warning | info
+    message: str
+    details: dict = field(default_factory=dict)
+
+    def as_row(self, detected_by: str = "costdb.validate") -> dict:
+        return {"detected_at": None, "detected_by": detected_by, "record_table": self.record_table,
+                "record_id": self.record_id, "rule_code": self.rule_code, "severity": self.severity,
+                "message": self.message, "details": self.details, "status": "open", "resolution_note": None,
+                "resolved_at": None}
+
+
+def pk_of(table: str, row: dict) -> str:
+    keys = {"work_items": ("work_item_id", "version"), "assemblies": ("assembly_id", "version"),
+            "index_values": ("index_id", "period_start", "vintage_date"), "calculation_run_lines": ("run_id", "line_no")}
+    if table in keys:
+        return "|".join(str(row[k]) for k in keys[table])
+    meta_first = {"units": "unit_id", "regions": "region_id", "categories": "category_id", "trades": "trade_code",
+                  "equipment_types": "equipment_type_code", "sources": "source_id", "products": "product_id",
+                  "product_consumption": "consumption_id", "price_observations": "observation_id",
+                  "calculation_runs": "run_id", "labor_rates": "labor_rate_id", "burden_rates": "burden_id",
+                  "equipment_rates": "equipment_rate_id", "crews": "crew_id", "crew_members": "crew_member_id",
+                  "work_item_components": "component_id", "productivity_observations": "productivity_id",
+                  "assembly_components": "assembly_component_id", "indices": "index_id", "adjustment_factors": "factor_id",
+                  "assumptions": "assumption_id", "capture_targets": "target_id", "bid_benchmarks": "benchmark_id"}
+    return str(row[meta_first[table]])
+
+
+class Validator:
+    def __init__(self, db: Database, today: Optional[date] = None, production: bool = True):
+        self.db = db
+        self.today = today or date.today()
+        self.production = production
+        self.units = Units(db["units"])
+        self.issues: list[Issue] = []
+        self.sources = db.index("sources", "source_id")
+        self.products = db.index("products", "product_id")
+        self.categories = db.index("categories", "category_id")
+
+    # ------------------------------------------------------------------ plumbing
+    def add(self, table: str, row_or_id: Any, code: str, sev: str, msg: str, **details):
+        rid = row_or_id if isinstance(row_or_id, str) else pk_of(table, row_or_id)
+        self.issues.append(Issue(table, rid, code, sev, msg, details))
+
+    def run(self) -> list[Issue]:
+        for fn in (self.check_foreign_keys, self.check_sources, self.check_products, self.check_observations,
+                   self.check_labor, self.check_equipment_and_crews, self.check_productivity, self.check_work_items,
+                   self.check_assemblies, self.check_calculation_runs):
+            fn()
+        return self.issues
+
+    # ---------------------------------------------------------------- foreign keys
+    def check_foreign_keys(self):
+        pk_cache: dict[tuple[str, str], set] = {}
+        for table, cols in self.db.meta.items():
+            for c in cols:
+                if not c.references:
+                    continue
+                rt, rc = c.references
+                key = (rt, rc)
+                if key not in pk_cache:
+                    pk_cache[key] = {r[rc] for r in self.db[rt]}
+                for r in self.db[table]:
+                    v = r.get(c.name)
+                    if v is not None and v not in pk_cache[key]:
+                        self.add(table, r if table not in ("calculation_run_lines",) else r, "FK_BROKEN", "error",
+                                 f"{table}.{c.name}={v!r} not found in {rt}.{rc}")
+        wis = {(r["work_item_id"], r["version"]) for r in self.db["work_items"]}
+        asm = {(r["assembly_id"], r["version"]) for r in self.db["assemblies"]}
+        for r in self.db["work_item_components"]:
+            if (r["work_item_id"], r["work_item_version"]) not in wis:
+                self.add("work_item_components", r, "FK_BROKEN", "error", "work item version not found")
+        for r in self.db["assembly_components"]:
+            if (r["assembly_id"], r["assembly_version"]) not in asm:
+                self.add("assembly_components", r, "FK_BROKEN", "error", "assembly version not found")
+            if (r["work_item_id"], r["work_item_version"]) not in wis:
+                self.add("assembly_components", r, "ASM_WI_MISSING", "error",
+                         f"work item {r['work_item_id']} v{r['work_item_version']} not found")
+        for t in self.db.meta:
+            seen = set()
+            for r in self.db[t]:
+                k = pk_of(t, r) if t not in ("validation_issues",) else None
+                if k is None:
+                    continue
+                if k in seen:
+                    self.add(t, k, "ID_DUPLICATE", "error", "duplicate primary key")
+                seen.add(k)
+
+    # ---------------------------------------------------------------------- sources
+    def _source(self, row) -> Optional[dict]:
+        return self.sources.get(row.get("source_id"))
+
+    def check_sources(self):
+        for s in self.db["sources"]:
+            if not s.get("evidence_quote"):
+                self.add("sources", s, "SRC_NO_EVIDENCE", "warning", "source has no evidence quote")
+            if s["reuse_status"] == "prohibited" and s["review_status"] == "validated":
+                self.add("sources", s, "SRC_PROHIBITED_VALIDATED", "error", "a prohibited source cannot be 'validated' for data use")
+            if s["verification_method"] == "synthetic_test_fixture" and self.production:
+                self.add("sources", s, "SRC_SYNTHETIC_IN_PRODUCTION", "error", "synthetic test fixture present in production data")
+            if s["review_status"] == "validated" and s["verification_method"] not in ("fetched_primary", "synthetic_test_fixture"):
+                self.add("sources", s, "SRC_VALIDATED_WITHOUT_FETCH", "error",
+                         "source marked validated although its primary document was never fetched")
+        for t in OBSERVED_TABLES + ("indices", "labor_rates"):
+            for r in self.db[t]:
+                sid = r.get("source_id")
+                if not sid or sid not in self.sources:
+                    continue
+                src = self.sources[sid]
+                if src["reuse_status"] == "prohibited":
+                    self.add(t, r, "SRC_PROHIBITED_IN_USE", "error", f"record uses prohibited source {sid}")
+                if src["verification_method"] == "synthetic_test_fixture" and self.production:
+                    self.add(t, r, "SRC_SYNTHETIC_IN_PRODUCTION", "error", f"record uses synthetic fixture source {sid}")
+                if r.get("review_status") == "validated" and src["verification_method"] not in ("fetched_primary", "synthetic_test_fixture") \
+                        and t != "products":
+                    self.add(t, r, "VALIDATED_FROM_SNIPPET", "error",
+                             "record is 'validated' but its source was only seen in search snippets")
+
+    # --------------------------------------------------------------------- products
+    def check_products(self):
+        for p in self.db["products"]:
+            cat = self.categories.get(p["category_id"])
+            req = (cat or {}).get("required_product_attributes") or []
+            if not req:
+                self.add("products", p, "PRD_CATEGORY_NOT_LEAF", "error", "category defines no required attributes; use a leaf category")
+                continue
+            try:
+                key = spec_key(p["category_id"], p["spec_attributes"] or {}, req)
+            except SpecError as e:
+                self.add("products", p, "PRD_ATTR_MISSING", "error", str(e))
+                continue
+            if key != p["spec_key"]:
+                self.add("products", p, "PRD_SPEC_KEY_MISMATCH", "error", "stored spec_key differs from recomputed key",
+                         stored=p["spec_key"], recomputed=key)
+            if p["content_unit_id"] not in self.units:
+                self.add("products", p, "UNIT_UNKNOWN", "error", f"unknown content unit {p['content_unit_id']}")
+        seen: dict[tuple, str] = {}
+        for p in self.db["products"]:
+            if p.get("mpn") and p.get("manufacturer"):
+                k = (p["manufacturer"].lower(), p["mpn"].lower())
+                if k in seen:
+                    self.add("products", p, "PRD_DUP_MPN", "error", f"duplicate manufacturer+MPN with {seen[k]}")
+                seen[k] = p["product_id"]
+            if not p.get("mpn") and not p.get("brand"):
+                self.add("products", p, "PRD_NO_IDENTITY", "warning", "no MPN and no brand: cannot be re-identified")
+
+    # ----------------------------------------------------------------- observations
+    def check_observations(self):
+        by_spec_region: dict[tuple, list[tuple[dict, Decimal]]] = defaultdict(list)
+        dupes: dict[tuple, str] = {}
+        for o in self.db["price_observations"]:
+            p = self.products.get(o["product_id"])
+            if p is None:
+                continue
+            if o["pack_content_unit_id"] != p["content_unit_id"] or Decimal(o["pack_content_qty"]) != Decimal(p["content_qty"]):
+                self.add("price_observations", o, "OBS_PACK_MISMATCH", "error",
+                         "observation pack content differs from the product's pack (different SKU?)",
+                         obs=f"{o['pack_content_qty']} {o['pack_content_unit_id']}", product=f"{p['content_qty']} {p['content_unit_id']}")
+            if o["observed_at"] > self.today:
+                self.add("price_observations", o, "OBS_FUTURE_DATE", "error", "observed_at is in the future")
+            if str(o["retrieved_at"])[:10] < o["observed_at"].isoformat():
+                self.add("price_observations", o, "OBS_RETRIEVED_BEFORE_OBSERVED", "error", "retrieved_at precedes observed_at")
+            if (self.today - o["observed_at"]).days > 365:
+                self.add("price_observations", o, "OBS_STALE", "warning", f"{(self.today - o['observed_at']).days} days old")
+            if o["price_amount"] == 0:
+                self.add("price_observations", o, "OBS_PRICE_ZERO", "warning", "zero price")
+            if o["is_contractor_cost"] and o["price_channel"] in ("retail_public", "retail_promo", "manufacturer_msrp"):
+                self.add("price_observations", o, "OBS_RETAIL_AS_CONTRACTOR", "error", "retail/MSRP price marked as contractor cost")
+            if o.get("region_id") is None:
+                self.add("price_observations", o, "OBS_NO_REGION", "warning", "no region_id: cannot be used by the engine (map ZIP to county first)")
+            if o.get("sales_tax_included") is None or o.get("delivery_included") is None:
+                self.add("price_observations", o, "OBS_TAX_DELIVERY_UNKNOWN", "info", "tax/delivery inclusion not recorded")
+            k = (o["product_id"], o["source_id"], o.get("store_ref"), o.get("zip"), o["observed_at"], str(o["price_amount"]), o["price_channel"])
+            if k in dupes:
+                self.add("price_observations", o, "OBS_DUP", "warning", f"same product/store/day/price as {dupes[k]}")
+            dupes[k] = o["observation_id"]
+            if not o["promo_flag"] and o["price_channel"] != "manufacturer_msrp":
+                by_spec_region[(p["spec_key"], o.get("region_id"))].append((o, Decimal(o["price_amount"]) / Decimal(o["pack_content_qty"])))
+        for (key, reg), items in by_spec_region.items():
+            latest: dict[str, tuple[dict, Decimal]] = {}
+            for o, unit_price in items:
+                cur = latest.get(o["product_id"])
+                if cur is None or o["observed_at"] > cur[0]["observed_at"]:
+                    latest[o["product_id"]] = (o, unit_price)
+            if len(latest) >= 3:
+                med = median([v[1] for v in latest.values()])
+                for o, up in latest.values():
+                    if med > 0 and (up > med * 3 or up < med / 3):
+                        self.add("price_observations", o, "OBS_OUTLIER", "warning",
+                                 f"unit price {up} is >3x or <1/3 of the median {med} for spec {key}")
+
+    # ------------------------------------------------------------------------ labor
+    def check_labor(self):
+        rates = self.db.index("labor_rates", "labor_rate_id")
+        tol = D("0.0002")
+        for r in self.db["labor_rates"]:
+            if r["rate_type"] in ("prevailing_wage", "federal_wage_determination") and r["use_context"] != "public_works_only":
+                self.add("labor_rates", r, "LAB_PW_SCOPE", "error", "prevailing/federal rate must be public_works_only")
+            if r["rate_type"] == "stat_wage" and r["includes_fringe"]:
+                self.add("labor_rates", r, "LAB_STAT_INCLUDES_FRINGE", "error", "statistical wage cannot include fringe")
+            if r["effective_to"] and r["effective_to"] < r["effective_from"]:
+                self.add("labor_rates", r, "LAB_PERIOD", "error", "effective_to before effective_from")
+            if (self.today - r["effective_from"]).days > 800 and r["origin"] == "observed":
+                self.add("labor_rates", r, "LAB_STALE", "warning", f"rate period starts {(self.today - r['effective_from']).days} days ago")
+            if r["rate_type"] == "loaded_employer_cost":
+                parts = sum((D(r[k] or 0) for k in ("base_wage_hr", "fringe_hr", "payroll_tax_hr", "workers_comp_hr", "other_employer_cost_hr")), D(0))
+                if r["total_hr"] is None or abs(parts - D(r["total_hr"])) > tol:
+                    self.add("labor_rates", r, "LAB_LOADED_SUM", "error", "loaded total does not equal the sum of its components",
+                             parts=str(parts), total=str(r["total_hr"]))
+                for sid in r["derived_from"] or []:
+                    src = rates.get(sid)
+                    if not src:
+                        continue
+                    if src["includes_fringe"] and D(r["fringe_hr"] or 0) != D(src["fringe_hr"] or 0):
+                        self.add("labor_rates", r, "LAB_DOUBLE_FRINGE", "error",
+                                 "source rate already includes fringe but the loaded rate carries a different fringe amount",
+                                 source_fringe=str(src["fringe_hr"]), loaded_fringe=str(r["fringe_hr"]))
+                    if src["includes_payroll_taxes"] and D(r["payroll_tax_hr"] or 0) != D(src["payroll_tax_hr"] or 0):
+                        self.add("labor_rates", r, "LAB_DOUBLE_PAYROLL_TAX", "error", "payroll taxes added on top of a rate that includes them")
+                    if src["includes_workers_comp"] and D(r["workers_comp_hr"] or 0) != D(src["workers_comp_hr"] or 0):
+                        self.add("labor_rates", r, "LAB_DOUBLE_WC", "error", "workers' comp added on top of a rate that includes it")
+        for b in self.db["burden_rates"]:
+            if b["basis"] == "pct_of_wages" and b["rate"] is not None and Decimal(b["rate"]) > 1:
+                self.add("burden_rates", b, "BRD_PCT_GT_1", "error",
+                         f"pct_of_wages rate {b['rate']} > 1: store percentages as fractions (0.062 = 6.2%)")
+
+    # ----------------------------------------------------------- equipment & crews
+    def check_equipment_and_crews(self):
+        for e in self.db["equipment_rates"]:
+            if e["fuel_cost_hr"] is not None and e["operating_cost_hr"] is not None and e["fuel_included"]:
+                self.add("equipment_rates", e, "EQP_FUEL_DOUBLE", "warning",
+                         "fuel_cost_hr and operating_cost_hr both present while fuel_included=true: fuel may be counted twice")
+        erates = self.db.index("equipment_rates", "equipment_rate_id")
+        members = defaultdict(list)
+        for m in self.db["crew_members"]:
+            members[m["crew_id"]].append(m)
+        eq_by_type: dict[str, list[dict]] = defaultdict(list)
+        for e in self.db["equipment_rates"]:
+            eq_by_type[e["equipment_type_code"]].append(e)
+        for cid, ms in members.items():
+            has_operator = any(m["member_kind"] == "labor" and m["is_operator"] for m in ms)
+            for m in ms:
+                if m["member_kind"] != "equipment":
+                    continue
+                pinned = erates.get(m["equipment_rate_id"]) if m["equipment_rate_id"] else None
+                if has_operator and pinned and pinned["operator_included"]:
+                    self.add("crew_members", m, "CREW_OPERATOR_DOUBLE", "error",
+                             "operator is listed as crew labor AND included in the pinned equipment rate")
+                elif has_operator and not pinned and any(e["operator_included"] for e in eq_by_type[m["equipment_type_code"]]):
+                    self.add("crew_members", m, "CREW_OPERATOR_AMBIGUOUS", "warning",
+                             "some rates for this equipment include an operator; engine will refuse those for this crew")
+        prods = self.db.index("productivity_observations", "productivity_id")
+        for p in self.db["productivity_observations"]:
+            if p["origin"] != "observed" or not p["crew_id"] or p["crew_size"] is None:
+                continue
+            size = sum(D(m["quantity"]) for m in members.get(p["crew_id"], []) if m["member_kind"] == "labor")
+            if size and size != D(p["crew_size"]):
+                self.add("productivity_observations", p, "CREW_SIZE_MISMATCH", "error",
+                         f"norm observed for crew size {p['crew_size']} but crew {p['crew_id']} has {size}")
+
+    # ----------------------------------------------------------------- productivity
+    def check_productivity(self):
+        for p in self.db["productivity_observations"]:
+            if p["output_unit_id"] not in self.units:
+                self.add("productivity_observations", p, "UNIT_UNKNOWN", "error", f"unknown unit {p['output_unit_id']}")
+            if p["origin"] == "observed" and p["person_hours_per_unit_reported"] is not None \
+                    and p["crew_size"] is not None and p["shift_hours"] is not None and p["daily_output"] is not None:
+                derived = D(p["crew_size"]) * D(p["shift_hours"]) / D(p["daily_output"])
+                rep = D(p["person_hours_per_unit_reported"])
+                if abs(derived - rep) / rep > D("0.01"):
+                    self.add("productivity_observations", p, "PROD_RECON", "error",
+                             "reported person-hours/unit differs from crew×shift/daily output by more than 1%",
+                             reported=str(rep), derived=str(derived))
+
+    # ------------------------------------------------------------------- work items
+    def check_work_items(self):
+        comps_by = defaultdict(list)
+        for c in self.db["work_item_components"]:
+            comps_by[(c["work_item_id"], c["work_item_version"])].append(c)
+        specs = defaultdict(list)
+        for p in self.db["products"]:
+            specs[p["spec_key"]].append(p)
+        prods = self.db.index("productivity_observations", "productivity_id")
+        for w in self.db["work_items"]:
+            key = (w["work_item_id"], w["version"])
+            if not w["spec_attributes"]:
+                self.add("work_items", w, "WI_SPEC_EMPTY", "error", "work item has no measurable spec")
+            if w["output_unit_id"] not in self.units:
+                self.add("work_items", w, "UNIT_UNKNOWN", "error", f"unknown output unit {w['output_unit_id']}")
+            bad = GLOBAL_EXCLUDED_TOKENS & set(w["included_scope"] or [])
+            if bad:
+                self.add("work_items", w, "WI_GLOBAL_SCOPE_INCLUDED", "error",
+                         f"shared activities must be excluded, not included: {sorted(bad)}")
+            missing_excl = GLOBAL_EXCLUDED_TOKENS - set(w["excluded_scope"] or [])
+            if missing_excl:
+                self.add("work_items", w, "WI_GLOBAL_SCOPE_NOT_EXCLUDED", "warning", f"not excluded explicitly: {sorted(missing_excl)}")
+            cs = comps_by.get(key, [])
+            if not any(c["component_kind"] == "labor" for c in cs):
+                self.add("work_items", w, "WI_NO_LABOR", "warning", "no labor component")
+            tag_owner: dict[str, str] = {}
+            for c in cs:
+                for t in c["cost_tags"] or []:
+                    if t in tag_owner and tag_owner[t] != c["component_id"]:
+                        self.add("work_item_components", c, "WI_DUP_TAG", "warning", f"cost tag '{t}' also on {tag_owner[t]}")
+                    tag_owner.setdefault(t, c["component_id"])
+                if c["qty_unit_id"] and c["qty_unit_id"] not in self.units:
+                    self.add("work_item_components", c, "UNIT_UNKNOWN", "error", f"unknown unit {c['qty_unit_id']}")
+                if c["component_kind"] in ("material", "other_direct") and c["product_spec_key"] and c["qty_unit_id"]:
+                    for p in specs.get(c["product_spec_key"], []):
+                        if not self.units.compatible(c["qty_unit_id"], p["content_unit_id"]) and c["qty_mode"] == "fixed":
+                            self.add("work_item_components", c, "WI_UNIT_MISMATCH", "error",
+                                     f"component unit {c['qty_unit_id']} cannot be converted from product content unit {p['content_unit_id']}")
+                if c["productivity_id"]:
+                    pr = prods.get(c["productivity_id"])
+                    if pr and pr["output_unit_id"] in self.units and not self.units.compatible(pr["output_unit_id"], w["output_unit_id"]):
+                        self.add("work_item_components", c, "WI_PRODUCTIVITY_UNIT", "error",
+                                 f"productivity unit {pr['output_unit_id']} incompatible with work item unit {w['output_unit_id']}")
+                if c["waste_factor"] is not None and not c["waste_basis"]:
+                    self.add("work_item_components", c, "WI_WASTE_NO_BASIS", "error", "waste factor without a stated basis")
+
+    # -------------------------------------------------------------------- assemblies
+    def check_assemblies(self):
+        wis = self.db.index("work_items", "work_item_id", "version")
+        comps = defaultdict(list)
+        for c in self.db["assembly_components"]:
+            comps[(c["assembly_id"], c["assembly_version"])].append(c)
+        for a in self.db["assemblies"]:
+            if not a["spec_attributes"]:
+                self.add("assemblies", a, "ASM_SPEC_EMPTY", "error", "assembly has no measurable spec (no generic averaged assemblies)")
+            owner: dict[str, str] = {}
+            for c in comps.get((a["assembly_id"], a["version"]), []):
+                wi = wis.get((c["work_item_id"], c["work_item_version"]))
+                if not wi:
+                    continue
+                if not self.units.compatible(c["qty_unit_id"], wi["output_unit_id"]):
+                    self.add("assembly_components", c, "ASM_UNIT_MISMATCH", "error",
+                             f"component unit {c['qty_unit_id']} vs work item unit {wi['output_unit_id']}")
+                for t in wi["included_scope"] or []:
+                    if t in owner and owner[t] != wi["work_item_id"]:
+                        self.add("assemblies", a, "ASM_SCOPE_OVERLAP", "error",
+                                 f"scope '{t}' included by both {owner[t]} and {wi['work_item_id']}: double counting")
+                    owner.setdefault(t, wi["work_item_id"])
+            if not comps.get((a["assembly_id"], a["version"])):
+                self.add("assemblies", a, "ASM_EMPTY", "error", "assembly has no components")
+
+    # -------------------------------------------------------------- calculation runs
+    def check_calculation_runs(self, engine: Optional[Engine] = None):
+        lines = defaultdict(list)
+        for ln in self.db["calculation_run_lines"]:
+            lines[ln["run_id"]].append(ln)
+        for r in self.db["calculation_runs"]:
+            if r["status"] == "complete" and r["missing_inputs"]:
+                self.add("calculation_runs", r, "CALC_COMPLETE_HAS_MISSING", "error", "complete run lists missing inputs")
+            if r["mode"] == "strict" and r["has_assumptions"]:
+                self.add("calculation_runs", r, "CALC_STRICT_ASSUMED", "error", "strict run used assumptions")
+            for ln in lines.get(r["run_id"], []):
+                if not ln["formula"]:
+                    self.add("calculation_run_lines", ln, "CALC_LINE_NO_FORMULA", "error", "line without formula")
+                for inp in ln["inputs"] or []:
+                    tbl, rid = inp.get("table"), inp.get("id")
+                    if tbl in self.db.tables and tbl not in ("assumptions",):
+                        try:
+                            exists = any(pk_of(tbl, x) == rid for x in self.db[tbl])
+                        except KeyError:
+                            exists = True
+                        if not exists:
+                            self.add("calculation_run_lines", ln, "CALC_INPUT_NOT_FOUND", "error", f"input {tbl}:{rid} does not exist")
+                    if inp.get("review_status") in ("flagged", "rejected"):
+                        self.add("calculation_run_lines", ln, "CALC_INPUT_FLAGGED", "error", f"uses {inp.get('review_status')} input {tbl}:{rid}")
+            if r["status"] == "complete" and engine is not None and r["target_type"] in ("unit_cost", "assembly"):
+                params = RunParams.from_canonical(r["parameters"], run_at=r["run_at"])
+                res = (engine.unit_cost if r["target_type"] == "unit_cost" else engine.assembly_cost)(r["target_id"], r["target_version"], params)
+                if res.total != r["direct_cost_total"]:
+                    self.add("calculation_runs", r, "CALC_NOT_REPRODUCIBLE", "error",
+                             "recomputation gives a different total", stored=str(r["direct_cost_total"]), recomputed=str(res.total))
+
+
+def validate(db: Database, today: Optional[date] = None, production: bool = True, engine: Optional[Engine] = None) -> list[Issue]:
+    v = Validator(db, today, production)
+    v.run()
+    if engine is not None:
+        v.check_calculation_runs(engine)
+    return v.issues
+
+
+def promote_validated(db: Database, issues: list[Issue], reviewer: str, when: str) -> dict[str, int]:
+    """Strict promotion of OBSERVED records to review_status='validated'. Returns counts per table."""
+    sources = db.index("sources", "source_id")
+    bad = {(i.record_table, i.record_id) for i in issues if i.severity == "error"}
+    promoted: dict[str, int] = defaultdict(int)
+    for t in OBSERVED_TABLES:
+        for r in db[t]:
+            if r.get("review_status") != "unreviewed" or r.get("origin") != "observed":
+                continue
+            if (t, pk_of(t, r)) in bad:
+                continue
+            sid = r.get("source_id")
+            src = sources.get(sid)
+            if not src or src["verification_method"] != "fetched_primary":
+                continue
+            if t in ("price_observations", "labor_rates", "equipment_rates", "burden_rates") and not r.get("evidence_excerpt"):
+                continue
+            r["review_status"] = "validated"
+            r["reviewed_by"] = reviewer
+            r["reviewed_at"] = when
+            promoted[t] += 1
+    return dict(promoted)

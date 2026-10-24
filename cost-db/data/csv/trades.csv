@@ -1,0 +1,19 @@
+trade_code,name,soc_code,soc_status,description,origin,review_status,notes
+TR-LAB,Construction laborer,47-2061,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-CARP,Carpenter,47-2031,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-DRYW,Drywall installer,47-2081,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-TAPE,Drywall taper / finisher,47-2082,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-PNT,"Painter, construction",47-2141,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-PLB,Plumber / pipefitter,47-2152,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-ELE,Electrician,47-2111,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-HVAC,HVAC / refrigeration mechanic-installer,49-9021,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-CEM,Cement mason / concrete finisher,47-2051,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-REB,Reinforcing iron / rebar worker,47-2171,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-ROF,Roofer,47-2181,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-INS,"Insulation worker, floor/ceiling/wall",47-2131,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-SHM,Sheet metal worker,47-2211,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-OPR,Operating engineer / equipment operator,47-2073,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-FLR,"Floor installer (non-carpet, non-tile)",47-2042,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-TILE,Tile and stone setter,47-2044,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-GLZ,Glazier,47-2121,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.
+TR-SUP,Foreman / first-line supervisor,47-1011,pending_verification,,assumed,unreviewed,SOC code from model knowledge; verify against BLS OEWS file.

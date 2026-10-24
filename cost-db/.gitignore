@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# raw downloads from primary sources are stored outside git (hash-named); only their SHA-256 goes into the database
+data/raw_downloads/
+.env

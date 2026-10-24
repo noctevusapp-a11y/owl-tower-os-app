@@ -1,0 +1,17 @@
+equipment_type_code,name,description,typically_needs_operator,origin,review_status,notes
+EQ-SKID,Skid-steer loader,,true,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-MINIEX,Mini excavator,,true,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-CMIXER,Portable concrete mixer,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-CVIB,Concrete vibrator,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-PTROWEL,Power trowel,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-CSAW,Walk-behind concrete saw,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-BREAKER,Demolition / breaker hammer,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-COMPR,Air compressor,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-SCISSOR,Scissor lift,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-BOOM,Boom lift,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-SCAFF,Scaffolding system,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-DUMPBIN,Roll-off debris bin,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-HVACVAC,Refrigerant vacuum pump,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-MLIFT,Material / panel hoist,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-CPUMP,Concrete pump,,true,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
+EQ-SPRAYER,Airless sprayer,,false,assumed,unreviewed,Own code; flag 'typically needs operator' is a planning hint only.
