@@ -63,7 +63,10 @@ def fetch(series_ids: list[str], start_year: int, end_year: int, raw_dir: Path, 
     import requests  # imported lazily so parsing works without the dependency
     key = os.environ.get("BLS_API_KEY") or None
     sess = session or requests.Session()
-    sess.headers["User-Agent"] = "OwlTowerCostDB/0.1 (contact: noctevusapp@gmail.com)"
+    contact = os.environ.get("COSTDB_CONTACT")
+    if not contact:
+        raise BlsError("set COSTDB_CONTACT to an e-mail address or URL BLS can use to reach you (it is sent in the User-Agent header)")
+    sess.headers["User-Agent"] = f"OwlTowerCostDB/0.2 (contact: {contact})"
     raw_dir.mkdir(parents=True, exist_ok=True)
     out: list[Path] = []
     for chunk, y0, y1 in batches(series_ids, start_year, end_year, key):

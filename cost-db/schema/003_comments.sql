@@ -153,7 +153,7 @@ COMMENT ON COLUMN costdb.price_observations.delivery_included IS 'Whether delive
 COMMENT ON COLUMN costdb.price_observations.sales_tax_included IS 'Whether sales tax is included (NULL = not recorded).';
 COMMENT ON COLUMN costdb.price_observations.promo_flag IS 'True for promotional/limited-time prices (excluded from costing by default).';
 COMMENT ON COLUMN costdb.price_observations.qty_limit_text IS 'Purchase-limit text of the listing.';
-COMMENT ON COLUMN costdb.price_observations.qty_tier_min IS 'Minimum quantity for which this price applies.';
+COMMENT ON COLUMN costdb.price_observations.qty_tier_min IS 'Minimum purchase quantity, in pack_content_unit_id units (not in packs), for which this price applies; a tier price is used only when RunParams.quantity shows the order reaches it.';
 COMMENT ON COLUMN costdb.price_observations.url IS 'Listing URL.';
 COMMENT ON COLUMN costdb.price_observations.source_locator IS 'Where inside the source the value sits: page / table / row / URL fragment.';
 COMMENT ON COLUMN costdb.price_observations.evidence_excerpt IS 'Verbatim text or JSON excerpt from the source that supports the stored value.';
@@ -186,6 +186,9 @@ COMMENT ON COLUMN costdb.calculation_runs.direct_cost_total IS 'Total direct cos
 COMMENT ON COLUMN costdb.calculation_runs.missing_inputs IS 'JSON list of unresolved inputs with reason and how to fill them.';
 COMMENT ON COLUMN costdb.calculation_runs.warnings IS 'JSON list of warnings (e.g. RETAIL_PRICE_NOT_CONTRACTOR_COST).';
 COMMENT ON COLUMN costdb.calculation_runs.code_ref IS 'Repository revision of the calculation code.';
+COMMENT ON COLUMN costdb.calculation_runs.price_basis IS 'none / contractor_quote / public_list / retail_proxy / assumed / mixed: what kind of material prices the result rests on. retail_proxy means retail prices stood in for contractor cost (explicit opt-in, RunParams.accept_retail_proxy).';
+COMMENT ON COLUMN costdb.calculation_runs.input_review_floor IS 'Lowest review status accepted for inputs (validated, or unreviewed for exploratory runs).';
+COMMENT ON COLUMN costdb.calculation_runs.price_total IS 'Price including overhead, contingency and profit (markup runs only); direct_cost_total keeps the underlying direct cost.';
 COMMENT ON COLUMN costdb.calculation_runs.origin IS 'Where the value came from: observed (read from a source), derived (computed by a recorded calculation), assumed (expert assumption), missing (looked for and not found; value fields stay NULL).';
 COMMENT ON COLUMN costdb.calculation_runs.review_status IS 'Independent-check result: unreviewed / validated / flagged / rejected. Only ''validated'' records feed verified calculations; flagged and rejected are never used.';
 COMMENT ON COLUMN costdb.calculation_runs.reviewed_by IS 'Person or agent that set review_status.';
@@ -199,6 +202,7 @@ COMMENT ON COLUMN costdb.calculation_run_lines.component_ref IS 'Component/crew/
 COMMENT ON COLUMN costdb.calculation_run_lines.description IS 'Line description.';
 COMMENT ON COLUMN costdb.calculation_run_lines.quantity IS 'Quantity per result unit (person-hours or crew-hours for labor/equipment lines).';
 COMMENT ON COLUMN costdb.calculation_run_lines.quantity_unit_id IS 'Unit of quantity.';
+COMMENT ON COLUMN costdb.calculation_run_lines.quantity_kind IS 'What quantity means: material_qty / person_hours / crew_hours / equipment_hours / work_item_qty / none. Person-hours, crew-hours and equipment-hours are never mixed.';
 COMMENT ON COLUMN costdb.calculation_run_lines.unit_cost IS 'Cost per quantity unit.';
 COMMENT ON COLUMN costdb.calculation_run_lines.extended_cost IS 'Cost per result unit (quantity incl. waste x unit cost).';
 COMMENT ON COLUMN costdb.calculation_run_lines.formula IS 'Readable formula with the numbers used.';
@@ -223,6 +227,8 @@ COMMENT ON COLUMN costdb.labor_rates.total_hr IS 'Total hourly cost as defined b
 COMMENT ON COLUMN costdb.labor_rates.includes_fringe IS 'True if fringe benefits are already inside the rate (never add them again).';
 COMMENT ON COLUMN costdb.labor_rates.includes_payroll_taxes IS 'True if payroll taxes are already inside the rate.';
 COMMENT ON COLUMN costdb.labor_rates.includes_workers_comp IS 'True if workers'' comp is already inside the rate.';
+COMMENT ON COLUMN costdb.labor_rates.includes_overhead IS 'True if company overhead is already inside the rate (such a rate is not a labor cost and is refused).';
+COMMENT ON COLUMN costdb.labor_rates.includes_profit IS 'True if profit is already inside the rate (refused as a labor cost).';
 COMMENT ON COLUMN costdb.labor_rates.wage_basis IS 'straight_time / overtime_1_5x / overtime_2x / n/a.';
 COMMENT ON COLUMN costdb.labor_rates.project_type IS 'building / residential / heavy / highway / n/a (determination classes).';
 COMMENT ON COLUMN costdb.labor_rates.use_context IS 'public_works_only (prevailing/federal) / statistical_reference / employer_internal. Public-works rates are not applied to private projects.';
@@ -386,6 +392,7 @@ COMMENT ON COLUMN costdb.work_item_components.description IS 'Component descript
 COMMENT ON COLUMN costdb.work_item_components.product_spec_key IS 'Material equivalence key whose observations may price this line.';
 COMMENT ON COLUMN costdb.work_item_components.product_id IS 'Optional pinned product.';
 COMMENT ON COLUMN costdb.work_item_components.qty_mode IS 'fixed / from_product_consumption (manufacturer coverage) / from_productivity (crew norm).';
+COMMENT ON COLUMN costdb.work_item_components.equipment_type_code IS 'Equipment type an equipment line prices (only that crew member''s cost enters the line).';
 COMMENT ON COLUMN costdb.work_item_components.qty_per_unit IS 'Quantity per ONE unit of work-item output, before waste.';
 COMMENT ON COLUMN costdb.work_item_components.qty_unit_id IS 'Unit of qty_per_unit.';
 COMMENT ON COLUMN costdb.work_item_components.qty_formula IS 'Derivation of the quantity from the spec geometry.';
@@ -396,6 +403,7 @@ COMMENT ON COLUMN costdb.work_item_components.waste_basis IS 'Source or reasonin
 COMMENT ON COLUMN costdb.work_item_components.crew_id IS 'Crew for labor/equipment lines.';
 COMMENT ON COLUMN costdb.work_item_components.productivity_id IS 'Productivity record for labor/equipment lines.';
 COMMENT ON COLUMN costdb.work_item_components.consumption_application IS 'Application name to look up in product_consumption.';
+COMMENT ON COLUMN costdb.work_item_components.consumption_selector IS 'JSON object that picks ONE product_consumption row when a product has several for the application: keys film_thickness, substrate_condition, application_method, conditions (case-insensitive equality). Several matching rows without a selector make the run incomplete (CONSUMPTION_AMBIGUOUS).';
 COMMENT ON COLUMN costdb.work_item_components.coats_applied IS 'Number of coats applied by this component (coverage-based lines).';
 COMMENT ON COLUMN costdb.work_item_components.cost_tags IS 'Tags for detecting duplicated cost within a work item.';
 COMMENT ON COLUMN costdb.work_item_components.is_optional IS 'Optional component flag.';
@@ -546,6 +554,8 @@ COMMENT ON COLUMN costdb.capture_targets.required_by IS 'Work items / uses that 
 COMMENT ON COLUMN costdb.capture_targets.recommended_source_ids IS 'Source-register ids suggested for this target.';
 COMMENT ON COLUMN costdb.capture_targets.status IS 'open / in_progress / captured / blocked.';
 COMMENT ON COLUMN costdb.capture_targets.blocked_reason IS 'Why it is blocked.';
+COMMENT ON COLUMN costdb.capture_targets.origin IS 'Where the value came from: observed (read from a source), derived (computed by a recorded calculation), assumed (expert assumption), missing (looked for and not found; value fields stay NULL).';
+COMMENT ON COLUMN costdb.capture_targets.review_status IS 'Independent-check result: unreviewed / validated / flagged / rejected. Only ''validated'' records feed verified calculations; flagged and rejected are never used.';
 COMMENT ON COLUMN costdb.capture_targets.notes IS 'Free-text remarks. Never holds data that calculations depend on.';
 COMMENT ON TABLE costdb.validation_issues IS 'Findings of the independent validation, one row per violation.';
 COMMENT ON COLUMN costdb.validation_issues.issue_id IS 'Sequence id.';
@@ -560,4 +570,13 @@ COMMENT ON COLUMN costdb.validation_issues.details IS 'JSON details.';
 COMMENT ON COLUMN costdb.validation_issues.status IS 'open / resolved / waived.';
 COMMENT ON COLUMN costdb.validation_issues.resolution_note IS 'Required when not open.';
 COMMENT ON COLUMN costdb.validation_issues.resolved_at IS 'When resolved.';
+COMMENT ON TABLE costdb.review_events IS 'Append-only log of every change of review_status (written by a trigger): who, when, old and new status.';
+COMMENT ON COLUMN costdb.review_events.event_id IS 'Sequence id.';
+COMMENT ON COLUMN costdb.review_events.record_table IS 'Table of the reviewed record.';
+COMMENT ON COLUMN costdb.review_events.record_id IS 'Primary key of the record (composite keys joined with ''|'').';
+COMMENT ON COLUMN costdb.review_events.old_status IS 'Status before the change.';
+COMMENT ON COLUMN costdb.review_events.new_status IS 'Status after the change.';
+COMMENT ON COLUMN costdb.review_events.changed_by IS 'reviewed_by of the new row.';
+COMMENT ON COLUMN costdb.review_events.changed_at IS 'reviewed_at of the new row (or now()).';
+COMMENT ON COLUMN costdb.review_events.db_user IS 'Database session user that made the change.';
 COMMIT;

@@ -33,7 +33,7 @@ TODAY = date(2026, 10, 24)
 def row(**over):
     m = S.pilot.MATS["gyp_half_reg_4x8"]
     base = {k: "" for k in retail.TEMPLATE_COLUMNS}
-    base.update(retailer_source_id="SRC-LOWES-TERMS-OF-USE", retailer_sku="SKU-1", manufacturer="TESTBRAND", brand="TESTBRAND", mpn="TB-1",
+    base.update(retailer_source_id="SRC-HOMEDEPOT-TERMS-AMPSERVICES", retailer_sku="SKU-1", manufacturer="TESTBRAND", brand="TESTBRAND", mpn="TB-1",
               product_name="TEST gypsum board 1/2 x 4x8", category_id=m["cat"], spec_attributes_json=json.dumps(m["attrs"]),
               sale_unit_label="each sheet", pack_content_qty="32", pack_content_unit_id="SF", price_amount="12.98",
               original_price_text="$12.98", price_channel="retail_public", observed_date="2026-10-20",
@@ -59,12 +59,21 @@ class RetailImportTest(unittest.TestCase):
         self.assertEqual(o["pack_content_qty"], D("32"))
         self.assertEqual(o["capture_method"], "manual_browser")
         self.assertEqual(self.db["products"][0]["spec_key"], S.pilot.MATS["gyp_half_reg_4x8"]["spec_key"])
-        self.assertTrue(any("prohibited" in w for _, w in rep.warnings))     # terms warning for a prohibited-terms source
+        self.assertTrue(any("restricted_no_automated_access" in w for _, w in rep.warnings))     # terms warning for a manual-only source
 
-    def test_automated_capture_from_prohibited_source_is_refused(self):
+    def test_automated_capture_from_a_manual_only_source_is_refused(self):
         rep = self.run_rows(row(capture_method="official_api"))
         self.assertEqual(len(rep.accepted_observations), 0)
         self.assertIn("manual_browser", rep.rejected[0][1][0])
+
+    def test_sources_that_bar_data_use_are_refused_whatever_the_capture_method(self):
+        for src, status in (("SRC-LOWES-TERMS-OF-USE", "prohibited"), ("SRC-CSI-MASTERFORMAT-TERMS", "licence_required"), ("SRC-FRED-API", "restricted_no_storage")):
+            for method in ("manual_browser", "licensed_feed"):
+                rep = self.run_rows(row(retailer_source_id=src, capture_method=method))
+                self.assertEqual(len(rep.accepted_observations), 0, (src, method))
+                self.assertTrue(any(status in e for e in rep.rejected[0][1]), (src, method, rep.rejected))
+        self.assertEqual(self.db["price_observations"], [])
+        self.assertEqual(self.db["products"], [])
 
     def test_source_with_no_storage_terms_is_refused(self):
         rep = self.run_rows(row(retailer_source_id="SRC-FRED-API"))
@@ -87,13 +96,41 @@ class RetailImportTest(unittest.TestCase):
         rep = self.run_rows(row(evidence_excerpt="TEST listing: now only $9.99"))
         self.assertTrue(any("evidence_excerpt" in e for e in rep.rejected[0][1]))
 
+    def test_price_must_match_a_whole_number_token_of_the_excerpt(self):
+        rep = self.run_rows(row(price_amount="2.50", original_price_text="$2.50", evidence_excerpt="TEST listing: now only $12.50 per sheet"))
+        self.assertTrue(any("evidence_excerpt" in e for e in rep.rejected[0][1]), rep.rejected)
+        rep2 = self.run_rows(row(price_amount="1250", original_price_text="$1,250.00", evidence_excerpt="TEST listing: $1,250.00 pallet"))
+        self.assertEqual(rep2.rejected, [], rep2.rejected)
+        self.assertEqual(retail.price_tokens("was $12.50, now 9.99 (2 for $20)"), {D("12.50"), D("9.99"), D("2"), D("20")})
+        rep3 = self.run_rows(row(price_amount="12.98", original_price_text="$11.98", evidence_excerpt="TEST listing: $12.98"))
+        self.assertTrue(any("original_price_text" in e for e in rep3.rejected[0][1]), rep3.rejected)
+
+    def test_naive_timestamps_are_refused(self):
+        rep = self.run_rows(row(retrieved_at="2026-10-20T15:00:00"))
+        self.assertTrue(any("time zone" in e for e in rep.rejected[0][1]), rep.rejected)
+
+    def test_a_same_day_recapture_at_another_price_is_a_new_observation(self):
+        self.assertEqual(self.run_rows(row(price_amount="12.80", original_price_text="$12.80", evidence_excerpt="TEST listing: $12.80")).rejected, [])
+        rep = self.run_rows(row(price_amount="11.80", original_price_text="$11.80", evidence_excerpt="TEST listing: $11.80",
+                                retrieved_at="2026-10-20T18:00:00+00:00"))
+        self.assertEqual((rep.rejected, len(rep.accepted_observations), len(rep.skipped_duplicates)), ([], 1, 0))
+        self.assertEqual(sorted(str(o["price_amount"]) for o in self.db["price_observations"]), ["11.80", "12.80"])     # both kept: append-only
+
+    def test_id_collision_of_different_content_is_rejected(self):
+        self.run_rows(row())
+        o = self.db["price_observations"][0]
+        o["price_amount"] = D("99.00")                     # same id, different content (as after a hash collision)
+        rep = self.run_rows(row())
+        self.assertEqual(len(rep.skipped_duplicates), 0)
+        self.assertTrue(any("collides" in e for e in rep.rejected[0][1]), rep.rejected)
+
     def test_retail_price_cannot_be_contractor_cost(self):
         rep = self.run_rows(row(is_contractor_cost="true"))
         self.assertTrue(any("contractor" in e for e in rep.rejected[0][1]))
 
     def test_dates_and_required_fields(self):
         self.assertTrue(self.run_rows(row(observed_date="2026-12-01")).rejected)
-        self.assertTrue(self.run_rows(row(retrieved_at="2026-10-19T00:00:00+00:00")).rejected)
+        self.assertTrue(self.run_rows(row(retrieved_at="2026-10-18T00:00:00+00:00")).rejected)
         r = self.run_rows(row(captured_by=""))
         self.assertIn("captured_by", r.rejected[0][1][0])
 
@@ -128,6 +165,18 @@ class RetailImportTest(unittest.TestCase):
 class BlsApiTest(unittest.TestCase):
     def setUp(self):
         self.data = json.loads((ROOT / "tests" / "fixtures" / "bls_api_format_fixture.json").read_text())
+
+    def test_contact_address_is_configuration_not_code(self):
+        import os
+        old = os.environ.pop("COSTDB_CONTACT", None)
+        try:
+            with self.assertRaises(bls.BlsError):
+                bls.fetch(["CUUR0000SA0"], 2024, 2025, Path(tempfile.mkdtemp()), session=object())
+        finally:
+            if old is not None:
+                os.environ["COSTDB_CONTACT"] = old
+        src = (ROOT / "pipeline" / "connectors" / "bls_api.py").read_text(encoding="utf-8")
+        self.assertNotIn("@", src.replace("@dataclass", ""), "no personal e-mail address may be hard-coded")
 
     def test_limits_enforced_and_key_not_in_payload_without_key(self):
         with self.assertRaises(bls.BlsError):

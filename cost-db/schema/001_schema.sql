@@ -117,6 +117,21 @@ BEGIN
   RETURN NEW;
 END $$;
 
+-- index_values have no source column of their own: they inherit the terms and fetch status of their series' source.
+CREATE FUNCTION check_index_value_source() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE rs text; vm text;
+BEGIN
+  SELECT s.reuse_status, s.verification_method INTO rs, vm FROM indices i JOIN sources s ON s.source_id = i.source_id WHERE i.index_id = NEW.index_id;
+  IF rs IS NULL THEN RETURN NEW; END IF;
+  IF rs IN ('prohibited','restricted_no_storage','licence_required') THEN
+    RAISE EXCEPTION 'index_values: series % has a source with reuse_status % - values must not be stored from it', NEW.index_id, rs;
+  END IF;
+  IF NEW.review_status = 'validated' AND vm NOT IN ('fetched_primary','synthetic_test_fixture') THEN
+    RAISE EXCEPTION 'index_values: cannot be validated - the series source was never fetched (verification_method=%)', vm;
+  END IF;
+  RETURN NEW;
+END $$;
+
 -- ---------------------------------------------------------------------
 -- Reference: units
 -- ---------------------------------------------------------------------
@@ -135,12 +150,13 @@ CREATE TABLE units (
   CONSTRAINT units_factor_chk CHECK (
     (is_fixed_conversion AND to_base_num > 0 AND to_base_den > 0)
     OR (NOT is_fixed_conversion AND to_base_num IS NULL AND to_base_den IS NULL)),
+  -- NULL-safe: a bare TON or GAL (qualifier NULL) must fail these checks, not slip through as "unknown"
   CONSTRAINT units_qualifier_chk CHECK (
-    (base_code IN ('TON','GAL') AND qualifier IN ('short','long','metric','refrigeration','us_liquid','imperial'))
+    (base_code IN ('TON','GAL') AND qualifier IS NOT NULL AND qualifier IN ('short','long','metric','refrigeration','us_liquid','imperial'))
     OR (base_code NOT IN ('TON','GAL') AND qualifier IS NULL)),
   CONSTRAINT units_qualifier_match_chk CHECK (
-    (base_code <> 'TON' OR qualifier IN ('short','long','metric','refrigeration'))
-    AND (base_code <> 'GAL' OR qualifier IN ('us_liquid','imperial')))
+    (base_code <> 'TON' OR (qualifier IS NOT NULL AND qualifier IN ('short','long','metric','refrigeration')))
+    AND (base_code <> 'GAL' OR (qualifier IS NOT NULL AND qualifier IN ('us_liquid','imperial'))))
 );
 
 -- every unit must convert to a unit of the same dimension, and base units must exist
@@ -212,7 +228,7 @@ BEGIN
   IF req IS NULL OR jsonb_array_length(req) = 0 THEN
     RAISE EXCEPTION 'category % is not a leaf category (it defines no required product attributes)', cat;
   END IF;
-  FOR nm IN SELECT jsonb_array_elements_text(req) AS n ORDER BY n COLLATE "C" LOOP
+  FOR nm IN SELECT e.n FROM jsonb_array_elements_text(req) AS e(n) ORDER BY e.n COLLATE "C" LOOP
     val := CASE WHEN attrs -> nm IS NULL THEN NULL ELSE norm_attr(attrs -> nm) END;
     IF val IS NULL OR val = '' OR val IN ('unspecified','unknown','n/a','tbd') THEN
       RAISE EXCEPTION 'category %: required attribute % is missing - equivalence is never guessed', cat, nm;
@@ -1147,6 +1163,7 @@ BEGIN
     EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I CHECK (review_status <> ''validated'' OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL))',
                    t, t || '_validated_reviewer_chk');
   END LOOP;
+  CREATE TRIGGER index_values_source_gate BEFORE INSERT OR UPDATE ON index_values FOR EACH ROW EXECUTE FUNCTION check_index_value_source();
   -- source terms / fetch status gate
   FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
                            'productivity_observations','bid_benchmarks','indices','adjustment_factors'] LOOP
@@ -1155,5 +1172,15 @@ BEGIN
 END $$;
 
 CREATE TRIGGER review_events_append_only BEFORE UPDATE OR DELETE ON review_events FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
+
+-- Trigger/check functions read tables by bare name: pin their search_path so they work from any session (and cannot be hijacked by a shadow table).
+DO $$
+DECLARE f record;
+BEGIN
+  FOR f IN SELECT p.oid::regprocedure AS sig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+           WHERE n.nspname = 'costdb' AND p.prokind = 'f' AND p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'plpgsql') LOOP
+    EXECUTE format('ALTER FUNCTION %s SET search_path = costdb, pg_catalog', f.sig);
+  END LOOP;
+END $$;
 
 COMMIT;

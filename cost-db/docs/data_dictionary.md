@@ -220,7 +220,7 @@ Append-only price history. Every observation keeps source, store/ZIP, dates, pac
 | `sales_tax_included` | boolean | Whether sales tax is included (NULL = not recorded). |
 | `promo_flag` | boolean | True for promotional/limited-time prices (excluded from costing by default). |
 | `qty_limit_text` | text | Purchase-limit text of the listing. |
-| `qty_tier_min` | numeric(18,6) | Minimum quantity for which this price applies. |
+| `qty_tier_min` | numeric(18,6) | Minimum purchase quantity, in pack_content_unit_id units (not in packs), for which this price applies; a tier price is used only when RunParams.quantity shows the order reaches it. |
 | `url` | text | Listing URL. |
 | `source_locator` | text | Where inside the source the value sits: page / table / row / URL fragment. |
 | `evidence_excerpt` | text | Verbatim text or JSON excerpt from the source that supports the stored value. |
@@ -259,6 +259,9 @@ One row per calculation: target, parameters, status, subtotals and the exact cal
 | `missing_inputs` | jsonb | JSON list of unresolved inputs with reason and how to fill them. |
 | `warnings` | jsonb | JSON list of warnings (e.g. RETAIL_PRICE_NOT_CONTRACTOR_COST). |
 | `code_ref` | text | Repository revision of the calculation code. |
+| `price_basis` | text | none / contractor_quote / public_list / retail_proxy / assumed / mixed: what kind of material prices the result rests on. retail_proxy means retail prices stood in for contractor cost (explicit opt-in, RunParams.accept_retail_proxy). |
+| `input_review_floor` | text | Lowest review status accepted for inputs (validated, or unreviewed for exploratory runs). |
+| `price_total` | numeric(18,6) | Price including overhead, contingency and profit (markup runs only); direct_cost_total keeps the underlying direct cost. |
 | `origin` | origin_t | Where the value came from: observed (read from a source), derived (computed by a recorded calculation), assumed (expert assumption), missing (looked for and not found; value fields stay NULL). |
 | `review_status` | review_status_t | Independent-check result: unreviewed / validated / flagged / rejected. Only 'validated' records feed verified calculations; flagged and rejected are never used. |
 | `reviewed_by` | text | Person or agent that set review_status. |
@@ -278,6 +281,7 @@ Cost lines of a run: quantity, unit, unit cost, formula text and exact input rec
 | `description` | text | Line description. |
 | `quantity` | numeric(24,10) | Quantity per result unit (person-hours or crew-hours for labor/equipment lines). |
 | `quantity_unit_id` | text → `units.unit_id` | Unit of quantity. |
+| `quantity_kind` | text | What quantity means: material_qty / person_hours / crew_hours / equipment_hours / work_item_qty / none. Person-hours, crew-hours and equipment-hours are never mixed. |
 | `unit_cost` | numeric(24,10) | Cost per quantity unit. |
 | `extended_cost` | numeric(24,10) | Cost per result unit (quantity incl. waste x unit cost). |
 | `formula` | text | Readable formula with the numbers used. |
@@ -308,6 +312,8 @@ Labor rates in separate layers: statistical wages, prevailing/federal determinat
 | `includes_fringe` | boolean | True if fringe benefits are already inside the rate (never add them again). |
 | `includes_payroll_taxes` | boolean | True if payroll taxes are already inside the rate. |
 | `includes_workers_comp` | boolean | True if workers' comp is already inside the rate. |
+| `includes_overhead` | boolean | True if company overhead is already inside the rate (such a rate is not a labor cost and is refused). |
+| `includes_profit` | boolean | True if profit is already inside the rate (refused as a labor cost). |
 | `wage_basis` | text | straight_time / overtime_1_5x / overtime_2x / n/a. |
 | `project_type` | text | building / residential / heavy / highway / n/a (determination classes). |
 | `use_context` | text | public_works_only (prevailing/federal) / statistical_reference / employer_internal. Public-works rates are not applied to private projects. |
@@ -513,6 +519,7 @@ Material, labor, equipment and other direct components of a work item, with quan
 | `product_spec_key` | text | Material equivalence key whose observations may price this line. |
 | `product_id` | id_t → `products.product_id` | Optional pinned product. |
 | `qty_mode` | text | fixed / from_product_consumption (manufacturer coverage) / from_productivity (crew norm). |
+| `equipment_type_code` | id_t → `equipment_types.equipment_type_code` | Equipment type an equipment line prices (only that crew member's cost enters the line). |
 | `qty_per_unit` | numeric(24,10) | Quantity per ONE unit of work-item output, before waste. |
 | `qty_unit_id` | text → `units.unit_id` | Unit of qty_per_unit. |
 | `qty_formula` | text | Derivation of the quantity from the spec geometry. |
@@ -523,6 +530,7 @@ Material, labor, equipment and other direct components of a work item, with quan
 | `crew_id` | id_t → `crews.crew_id` | Crew for labor/equipment lines. |
 | `productivity_id` | id_t | Productivity record for labor/equipment lines. |
 | `consumption_application` | text | Application name to look up in product_consumption. |
+| `consumption_selector` | jsonb | JSON object that picks ONE product_consumption row when a product has several for the application: keys film_thickness, substrate_condition, application_method, conditions (case-insensitive equality). Several matching rows without a selector make the run incomplete (CONSUMPTION_AMBIGUOUS). |
 | `coats_applied` | numeric(4,1) | Number of coats applied by this component (coverage-based lines). |
 | `cost_tags` | text[] | Tags for detecting duplicated cost within a work item. |
 | `is_optional` | boolean | Optional component flag. |
@@ -721,6 +729,8 @@ Work queue: data still to be collected (material specs, labor, equipment, norms,
 | `recommended_source_ids` | text[] | Source-register ids suggested for this target. |
 | `status` | text | open / in_progress / captured / blocked. |
 | `blocked_reason` | text | Why it is blocked. |
+| `origin` | origin_t | Where the value came from: observed (read from a source), derived (computed by a recorded calculation), assumed (expert assumption), missing (looked for and not found; value fields stay NULL). |
+| `review_status` | review_status_t | Independent-check result: unreviewed / validated / flagged / rejected. Only 'validated' records feed verified calculations; flagged and rejected are never used. |
 | `notes` | text | Free-text remarks. Never holds data that calculations depend on. |
 
 ### `validation_issues`
@@ -741,3 +751,18 @@ Findings of the independent validation, one row per violation.
 | `status` | text | open / resolved / waived. |
 | `resolution_note` | text | Required when not open. |
 | `resolved_at` | timestamptz | When resolved. |
+
+### `review_events`
+
+Append-only log of every change of review_status (written by a trigger): who, when, old and new status.
+
+| column | type | description |
+|---|---|---|
+| `event_id` | bigint (generated) | Sequence id. |
+| `record_table` | text | Table of the reviewed record. |
+| `record_id` | text | Primary key of the record (composite keys joined with '/'). |
+| `old_status` | text | Status before the change. |
+| `new_status` | text | Status after the change. |
+| `changed_by` | text | reviewed_by of the new row. |
+| `changed_at` | timestamptz | reviewed_at of the new row (or now()). |
+| `db_user` | text | Database session user that made the change. |

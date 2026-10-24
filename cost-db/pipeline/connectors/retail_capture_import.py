@@ -5,15 +5,18 @@ This is the COMPLIANT route for retailer prices: a person (or a licensed feed / 
 records exactly what a listing shows; this importer validates and normalises it. It never fetches websites.
 
 Row rules (a row failing any rule is rejected with its reasons and nothing is written for it):
-  * source must exist in the source register; if its reuse_status is 'prohibited' or 'restricted_no_automated_access'
-    the capture_method must be 'manual_browser' (a human looked at the page) and a warning is raised
+  * source must exist in the source register. A source whose reuse_status bars data use or storage ('prohibited',
+    'restricted_no_storage', 'licence_required' - see costdb.enums.NO_DATA_USE) is refused whatever the capture method; a source
+    that only bars AUTOMATED access ('restricted_no_automated_access') accepts capture_method='manual_browser' with a warning
   * product identity: manufacturer+MPN (or brand+name+pack) -> stable product_id; re-seeing a known MPN must agree
     on spec_key and pack content, otherwise the row is rejected (different SKU configuration)
   * spec_attributes must contain every attribute the category requires; spec_key is computed, never typed by hand
-  * the price text shown must appear in the evidence excerpt (the excerpt has to support the number)
+  * the price must appear in the evidence excerpt as a whole number token ('$12.50' does not support 2.50)
+  * retrieved_at must carry a time zone (a naive time would be read in the server's zone)
   * units must exist (TON/GAL are always qualified, e.g. TON_SHORT, GAL_US); pack content > 0
   * observed date not in the future; retrieved_at not earlier than the observed date
-  * observations are append-only: an identical observation id is skipped, never overwritten
+  * observations are append-only: the observation id covers price and retrieval time, so a re-capture at another price is a NEW
+    observation; only an identical observation (same natural key) is skipped, an id collision of different content is rejected
 
 Usage:
   python3 -I pipeline/connectors/retail_capture_import.py capture.csv [--zip-map zip_region_map.csv] [--write]
@@ -25,13 +28,14 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pipeline"))
+from costdb.enums import MANUAL_ONLY, NO_DATA_USE  # noqa: E402
 from costdb.ids import SpecError, make_id, spec_key  # noqa: E402
 from costdb.store import Database  # noqa: E402
 from costdb.units import Units  # noqa: E402
@@ -75,6 +79,17 @@ def _b(v: str) -> Optional[bool]:
     raise ValueError(f"bad boolean {v!r}")
 
 
+_NUM_TOKEN = re.compile(r"(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(?![\d])")
+
+
+def price_tokens(text: str) -> set:
+    """Every number written in `text` as a WHOLE token ('$12.50' yields 12.50, never 2.50)."""
+    out = set()
+    for m in _NUM_TOKEN.finditer(text):
+        out.add(Decimal(m.group(1).replace(",", "") + (m.group(2) or "")))
+    return out
+
+
 def _dec(v: str, name: str) -> Decimal:
     try:
         return Decimal(v.strip().replace(",", ""))
@@ -91,7 +106,12 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
     sources = db.index("sources", "source_id")
     regions = db.index("regions", "region_id")
     products = db.index("products", "product_id")
-    existing_obs = {o["observation_id"] for o in db["price_observations"]}
+    def nat_key(o: dict) -> tuple:
+        ts = o["retrieved_at"]
+        return (o["product_id"], o["source_id"], o.get("retailer_sku"), o.get("store_ref"), o.get("zip"), str(o["observed_at"]),
+                o["price_channel"], Decimal(o["qty_tier_min"]) if o.get("qty_tier_min") is not None else None, Decimal(o["price_amount"]),
+                datetime.fromisoformat(str(ts).replace("Z", "+00:00")).astimezone(timezone.utc).isoformat() if ts else None)
+    existing_obs = {o["observation_id"]: nat_key(o) for o in db["price_observations"]}
     mpn_index = {(p["manufacturer"].lower(), p["mpn"].lower()): p for p in db["products"] if p.get("mpn") and p.get("manufacturer")}
     rep = ImportReport()
 
@@ -132,13 +152,16 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 errs.append(f"unknown unit {g['pack_content_unit_id']} (use TON_SHORT/GAL_US etc.)")
             observed = date.fromisoformat(g["observed_date"])
             retrieved = datetime.fromisoformat(g["retrieved_at"].replace("Z", "+00:00"))
+            if retrieved.tzinfo is None:
+                errs.append("retrieved_at has no time zone (use e.g. 2026-10-24T09:30:00-07:00 or ...Z)")
             if observed > today:
                 errs.append("observed_date is in the future")
-            if retrieved.date() < observed:
+            if retrieved.tzinfo is not None and retrieved.astimezone(timezone.utc).date() < observed - timedelta(days=1):
                 errs.append("retrieved_at is earlier than observed_date")
-            shown = g["original_price_text"] or f"{price:.2f}"
-            if shown not in g["evidence_excerpt"] and f"{price:.2f}" not in g["evidence_excerpt"]:
-                errs.append("the price shown does not appear in evidence_excerpt (excerpt must support the number)")
+            if price not in price_tokens(g["evidence_excerpt"]):
+                errs.append("the price does not appear in evidence_excerpt as a whole number token (excerpt must support the number)")
+            if g["original_price_text"] and price not in price_tokens(g["original_price_text"]):
+                errs.append("original_price_text does not show the price_amount")
             currency = (g["currency"] or "USD").upper()
             if currency != "USD":
                 errs.append("only USD is supported")
@@ -153,9 +176,9 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 errs.append(f"unknown region_id {region_id}")
             if g["zip"] and not re.fullmatch(r"\d{5}", g["zip"]):
                 errs.append("zip must be 5 digits")
-            if src and src["reuse_status"] == "restricted_no_storage":
-                errs.append(f"source terms are 'restricted_no_storage': values from {src['source_id']} must not be stored")
-            if src and src["reuse_status"] in ("prohibited", "restricted_no_automated_access"):
+            if src and src["reuse_status"] in NO_DATA_USE:
+                errs.append(f"source terms are '{src['reuse_status']}': values from {src['source_id']} must not be stored or used, whatever the capture method")
+            elif src and src["reuse_status"] in MANUAL_ONLY:
                 if g["capture_method"] != "manual_browser":
                     errs.append(f"source terms are '{src['reuse_status']}': only capture_method=manual_browser is acceptable")
                 else:
@@ -184,6 +207,11 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
             if pid in products:
                 existing = products[pid]
             if existing:
+                same_id = ((existing.get("manufacturer") or "").lower(), (existing.get("mpn") or "").lower()) == (g["manufacturer"].lower(), g["mpn"].lower()) \
+                    if (g["manufacturer"] and g["mpn"]) else True
+                if not same_id:
+                    rep.rejected.append((n, [f"product id {pid} collides with {existing['manufacturer']}/{existing['mpn']}: refusing to merge two products"]))
+                    continue
                 if existing["spec_key"] != key or Decimal(existing["content_qty"]) != qty or existing["content_unit_id"] != g["pack_content_unit_id"]:
                     rep.rejected.append((n, [f"product {pid} already exists with a different spec_key/pack: this listing is a different "
                                              f"configuration (existing: {existing['spec_key']}, {existing['content_qty']} {existing['content_unit_id']})"]))
@@ -203,10 +231,17 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 rep.accepted_products.append(pid)
 
             oid = make_id("OBS", pid, g["retailer_source_id"], g["retailer_sku"], g["store_ref"], g["zip"], g["observed_date"],
-                          g["price_channel"], g["qty_tier_min"])
+                          g["price_channel"], g["qty_tier_min"], str(price), retrieved.isoformat())
+            this_key = (pid, g["retailer_source_id"], g["retailer_sku"] or None, g["store_ref"] or None, g["zip"] or None, observed.isoformat(),
+                        g["price_channel"], _dec(g["qty_tier_min"], "qty_tier_min") if g["qty_tier_min"] else None, price,
+                        retrieved.astimezone(timezone.utc).isoformat())
             if oid in existing_obs:
-                rep.skipped_duplicates.append(oid); continue
-            existing_obs.add(oid)
+                if existing_obs[oid] == this_key:
+                    rep.skipped_duplicates.append(oid)
+                else:
+                    rep.rejected.append((n, [f"observation id {oid} collides with an observation of different content; not imported"]))
+                continue
+            existing_obs[oid] = this_key
             db.add("price_observations", {
                 "observation_id": oid, "product_id": pid, "source_id": g["retailer_source_id"],
                 "retailer_sku": g["retailer_sku"] or None, "store_ref": g["store_ref"] or None, "zip": g["zip"] or None,

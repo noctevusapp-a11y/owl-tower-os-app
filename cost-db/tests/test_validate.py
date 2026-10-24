@@ -317,5 +317,171 @@ class CalcRunRulesTest(unittest.TestCase):
         self.assertIn("CALC_STRICT_ASSUMED", rule_codes(db))
 
 
+class ReviewFixRulesTest(unittest.TestCase):
+    """Rules added after the independent review F1 (F1-004, 020, 023, 024, 025, 031, 039)."""
+
+    def test_every_restricted_reuse_status_is_an_error_in_use_and_when_validated(self):
+        for status in ("prohibited", "restricted_no_storage", "licence_required"):
+            db = S.priced_drywall_db()
+            for s in db["sources"]:
+                if s["source_id"] == S.SRC:
+                    s["reuse_status"] = status                       # the fixture source is also 'validated'
+            c = rule_codes(db)
+            self.assertTrue({"SRC_PROHIBITED_IN_USE", "SRC_PROHIBITED_VALIDATED"} <= c, (status, c))
+
+    def test_one_issue_per_rule_and_labor_row(self):
+        db = S.priced_drywall_db()
+        for s in db["sources"]:
+            if s["source_id"] == S.SRC:
+                s["reuse_status"] = "prohibited"
+        issues = [i for i in validate(db, today=TODAY, production=False) if i.rule_code == "SRC_PROHIBITED_IN_USE" and i.record_table == "labor_rates"]
+        self.assertEqual(len(issues), len({i.record_id for i in issues}), "labor rows were reported twice")
+
+    def test_validated_record_needs_a_named_reviewer(self):
+        db = S.priced_drywall_db()
+        obs(db)["reviewed_by"] = None
+        self.assertIn("VALIDATED_WITHOUT_REVIEWER", rule_codes(db))
+
+    def test_naive_retrieval_time_is_an_error(self):
+        db = S.priced_drywall_db()
+        obs(db)["retrieved_at"] = "2026-09-01T12:00:00"
+        self.assertIn("OBS_NAIVE_TIMESTAMP", rule_codes(db))
+
+    def test_thresholds_are_a_documented_configurable_policy(self):
+        from costdb.validate import DEFAULT_POLICY
+        db = S.priced_drywall_db()
+        self.assertTrue(all(isinstance(v[1], str) and len(v[1]) > 20 for v in DEFAULT_POLICY.values()), "every threshold states its basis")
+        self.assertNotIn("OBS_STALE", rule_codes(db))
+        issues = validate(db, today=date(2026, 12, 31), production=False, policy={"price_stale_days": 30})
+        stale = [i for i in issues if i.rule_code == "OBS_STALE"]
+        self.assertTrue(stale)
+        self.assertEqual(stale[0].details["threshold_days"], 30)
+
+    def test_work_item_component_must_price_the_specification_it_states(self):
+        db = S.priced_drywall_db()
+        wic = next(c for c in db["work_item_components"] if c["work_item_id"] == S.WI and "CAT-DRY-BRD" in (c["product_spec_key"] or ""))
+        wic["product_spec_key"] = S.pilot.MATS["gyp_58_x_4x8"]["spec_key"]           # the work item says 1/2 in regular, the component prices 5/8 Type X
+        self.assertIn("WI_SPEC_COMPONENT_MISMATCH", rule_codes(db))
+        db = S.priced_drywall_db()
+        w = next(w for w in db["work_items"] if w["work_item_id"] == S.WI)
+        w["spec_attributes"]["material_specs"][0]["attributes"]["thickness_in"] = 0.625          # attributes no longer reproduce the stated key
+        self.assertIn("WI_SPEC_ATTRS_MISMATCH", rule_codes(db))
+        db = S.priced_drywall_db()
+        w = next(w for w in db["work_items"] if w["work_item_id"] == S.WI)
+        w["spec_attributes"]["material_specs"].append({"line": 99, "attributes": {}, "spec_key": "x"})
+        self.assertIn("WI_SPEC_ORPHAN", rule_codes(db))
+
+    def test_assembly_spec_must_list_its_real_children(self):
+        db = S.priced_drywall_db()
+        a = next(a for a in db["assemblies"] if a["assembly_id"] == "ASM-WALL-001")
+        a["spec_attributes"]["work_items"][1]["work_item_id"] = "WI-DRY-002"                    # spec says 5/8 board, components hang 1/2 in
+        self.assertIn("ASM_SPEC_CHILD_MISMATCH", rule_codes(db))
+
+    def test_assembly_inclusions_and_exclusions_are_checked_against_the_children(self):
+        db = S.priced_drywall_db()
+        a = next(a for a in db["assemblies"] if a["assembly_id"] == "ASM-WALL-001")
+        a["included_scope"] = []
+        self.assertIn("ASM_NO_INCLUSIONS", rule_codes(db))
+        db = S.priced_drywall_db()
+        a = next(a for a in db["assemblies"] if a["assembly_id"] == "ASM-WALL-001")
+        a["included_scope"] = a["included_scope"] + ["gas_piping"]
+        self.assertIn("ASM_INCLUDED_NOT_PRICED", rule_codes(db))
+        db = S.priced_drywall_db()
+        a = next(a for a in db["assemblies"] if a["assembly_id"] == "ASM-WALL-001")
+        a["excluded_scope"] = [t for t in a["excluded_scope"] if t != "blocking"]
+        self.assertIn("ASM_CHILD_EXCLUSION_NOT_SURFACED", rule_codes(db))
+
+    def test_duplicate_cost_tags_are_errors_in_work_items_and_assemblies(self):
+        db = S.priced_drywall_db()
+        for c in db["work_item_components"]:
+            if c["work_item_id"] == S.WI and c["component_kind"] == "material":
+                c["cost_tags"] = ["fasteners"]
+        self.assertIn("WI_DUP_TAG", rule_codes(db))
+        db = S.priced_drywall_db()
+        for c in db["assembly_components"]:
+            if c["assembly_id"] == "ASM-WALL-001":
+                c["cost_tags"] = ["x"]
+        self.assertIn("ASM_DUP_TAG", rule_codes(db))
+        sev = {i.severity for i in validate(db, today=TODAY, production=False) if i.rule_code == "ASM_DUP_TAG"}
+        self.assertEqual(sev, {"error"})
+
+    def test_assumption_rules(self):
+        db = S.priced_drywall_db()
+        S.add_assumption(db, "TEST-ASU-1", "waste", "waste:X", "0.1", approved_by="tests", expires_on=None)
+        S.add_assumption(db, "TEST-ASU-2", "waste", "waste:Y", "0.1")
+        S.add_assumption(db, "TEST-ASU-3", "waste", "waste:Y", "0.2")
+        c = rule_codes(db)
+        self.assertTrue({"ASU_NO_EXPIRY", "ASU_SELF_APPROVED", "ASU_DUPLICATE_APPROVED"} <= c, c)
+
+    def test_run_level_rules(self):
+        db = S.priced_drywall_db()
+        eng = Engine(db)
+        res = eng.unit_cost(S.WI, 1, S.params())
+        run = db.add("calculation_runs", res.run)
+        for ln in res.lines:
+            db.add("calculation_run_lines", ln)
+        self.assertEqual([i for i in validate(db, today=TODAY, production=False, engine=eng) if i.severity == "error"], [])
+        run["parameters"] = {**run["parameters"], "accept_retail_proxy": False}
+        self.assertIn("CALC_RETAIL_WITHOUT_OPT_IN", rule_codes(db))
+        run["parameters"] = res.run["parameters"]
+        run["input_review_floor"] = "unreviewed"
+        self.assertIn("CALC_REVIEW_FLOOR_MISMATCH", rule_codes(db))
+        run["input_review_floor"] = "validated"
+        run["direct_cost_total"] = D("5.000000")
+        self.assertIn("CALC_TOTAL_NOT_LINE_SUM", rule_codes(db))
+
+    def test_run_that_uses_an_unapproved_assumption_is_an_error(self):
+        db = S.priced_drywall_db()
+        c = next(c for c in db["work_item_components"] if c["work_item_id"] == S.WI and "CAT-DRY-BRD" in (c["product_spec_key"] or ""))
+        c.update(waste_factor=None, waste_origin=None, waste_basis=None)
+        S.add_assumption(db, "TEST-ASU-W", "waste", f"waste:{c['component_id']}", "0.10")
+        eng = Engine(db)
+        res = eng.unit_cost(S.WI, 1, S.params(mode="with_assumptions"))
+        self.assertEqual(res.status, "complete")
+        run = db.add("calculation_runs", res.run)
+        for ln in res.lines:
+            db.add("calculation_run_lines", ln)
+        next(a for a in db["assumptions"] if a["assumption_id"] == "TEST-ASU-W")["status"] = "rejected"
+        self.assertIn("CALC_ASSUMPTION_NOT_APPROVED", rule_codes(db))
+
+
+class PromotionGapsTest(unittest.TestCase):
+    def setUp(self):
+        self.db = S.priced_drywall_db()
+        S.add_source(self.db, "TEST-SRC-FETCH", method="fetched_primary", review="unreviewed")
+        S.add_source(self.db, "TEST-SRC-SNIP", method="search_snippet_only", review="unreviewed")
+        self.when = "2026-10-24T00:00:00+00:00"
+
+    def promote(self):
+        return promote_validated(self.db, validate(self.db, today=TODAY, production=False), "tests", self.when)
+
+    def test_index_values_inherit_the_source_of_their_series_and_are_logged(self):
+        S.add_index(self.db, "TEST-IDX-A", {date(2026, 9, 1): 100}, review="unreviewed")
+        S.add_index(self.db, "TEST-IDX-B", {date(2026, 9, 1): 100}, review="unreviewed")
+        next(i for i in self.db["indices"] if i["index_id"] == "TEST-IDX-A")["source_id"] = "TEST-SRC-FETCH"
+        next(i for i in self.db["indices"] if i["index_id"] == "TEST-IDX-B")["source_id"] = "TEST-SRC-SNIP"
+        counts = self.promote()
+        self.assertEqual(counts.get("index_values"), 1)
+        st = {v["index_id"]: v["review_status"] for v in self.db["index_values"]}
+        self.assertEqual(st, {"TEST-IDX-A": "validated", "TEST-IDX-B": "unreviewed"})
+        ev = [e for e in self.db["review_events"] if e["record_table"] == "index_values"]
+        self.assertEqual((len(ev), ev[0]["new_status"], ev[0]["changed_by"]), (1, "validated", "tests"))
+
+    def test_products_without_evidence_are_not_promoted(self):
+        for pid, ev in (("TEST-PRD-E1", "excerpt"), ("TEST-PRD-E2", None)):
+            p = S.add_product(self.db, pid, "gyp_half_reg_4x8", 32, "SF", "TESTBRAND-" + pid[-2:], "T-" + pid[-2:], source="TEST-SRC-FETCH")
+            p.update(review_status="unreviewed", reviewed_by=None, reviewed_at=None, evidence_excerpt=ev)
+        self.promote()
+        st = {p["product_id"]: p["review_status"] for p in self.db["products"] if p["product_id"].startswith("TEST-PRD-E")}
+        self.assertEqual(st, {"TEST-PRD-E1": "validated", "TEST-PRD-E2": "unreviewed"})
+
+    def test_rows_of_a_source_that_bars_data_use_are_never_promoted(self):
+        S.add_source(self.db, "TEST-SRC-LIC", method="fetched_primary", review="unreviewed", reuse="licence_required")
+        S.add_product(self.db, "TEST-PRD-P1", "gyp_half_reg_4x8", 32, "SF", "TESTBRAND-P1", "TP-1")
+        o = S.add_obs(self.db, "TEST-OBS-P1", "TEST-PRD-P1", "12.00", 32, "SF", review="unreviewed", source="TEST-SRC-LIC")
+        self.promote()
+        self.assertEqual(o["review_status"], "unreviewed")
+
+
 if __name__ == "__main__":
     unittest.main()
