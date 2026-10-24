@@ -146,16 +146,35 @@ class Parts:
 
 
 # ----------------------------------------------------------------------------------------------- header / columns
+def header_name(t: str) -> Optional[str]:
+    """Which column header a token is, allowing the usual OCR damage (Lobor, Moterial, ourpuT, EQUIP., INCLO&P)."""
+    t = re.sub(r"[^A-Za-z&]", "", t).lower()
+    if len(t) < 3:
+        return None
+    for hname in HEADERS:
+        h = hname.lower()
+        if t == h or (len(t) >= 4 and h.startswith(t)) or (t.startswith(h) and len(t) <= len(h) + 3):
+            return hname
+        if len(t) >= 4 and abs(len(t) - len(h)) <= 2 and _lev(t[:len(h) + 1], h) <= (1 if len(h) <= 5 else 2):
+            return hname
+    if t.startswith("equip"):
+        return "Equipment"
+    if t.startswith("mat") and len(t) <= 9:
+        return "Material"
+    if t.startswith("incl"):
+        return "Incl"
+    return None
+
+
 def find_header(rows: list[list[dict]]) -> Optional[dict]:
     best = None
     for i, r in enumerate(rows):
         toks = {}
         for z in r:
-            t = z["t"].strip(".,:;|=~-_'\"")
-            for hname in HEADERS:
-                if t.lower().startswith(hname.lower()) and len(t) <= len(hname) + 3:
-                    toks.setdefault(hname, (z["x0"] + z["x1"]) / 2)
-        if len(toks) >= 5 and "Material" in toks and "Labor" in toks:
+            hname = header_name(z["t"])
+            if hname:
+                toks.setdefault(hname, (z["x0"] + z["x1"]) / 2)
+        if len(toks) >= 5 and "Material" in toks and ("Labor" in toks or "Equipment" in toks) and "Crew" in toks:
             if best is None or len(toks) > len(best[1]):
                 best = (i, toks)
     if best is None:
@@ -299,6 +318,14 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
 
     # ---- money: the printed total is the exact sum of the printed components
     best, best_score, ties = None, None, 0
+    if not any(W[k] for k in ("material", "labor", "equipment")) and W["total"]:
+        # a cost printed under Total only (testing, allowances, subcontract items): nothing to add up
+        good = sorted(((w, v) for v, w in W["total"].items()), reverse=True)
+        if good[0][0] >= 2.0 and (len(good) == 1 or good[0][0] > good[1][0]):
+            vals["total"], conf["total"] = good[0][1], good[0][0]
+            best = ("lone_total",)
+        else:
+            flags.append("MONEY_UNSETTLED")
     for m in opts("material"):
         for l in opts("labor"):
             for e in opts("equipment"):
@@ -311,7 +338,9 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                         best, best_score, ties = (m, l, e, t), score, 0
                     elif abs(score - best_score) <= 1e-9 and (m, l, e, t) != best:
                         ties += 1
-    if best and ties == 0:
+    if best == ("lone_total",):
+        pass
+    elif best and ties == 0:
         vals["material"], vals["labor"], vals["equipment"], vals["total"] = best
         for k, v in zip(("material", "labor", "equipment", "total"), best):
             conf[k] = W[k].get(v) if v is not None else None
@@ -423,7 +452,20 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 flags.append("OUTPUT_FROM_LABOR_CHECK")
                 flags[:] = [f for f in flags if f not in ("OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "HOURS_DERIVED_FROM_CREW")]
             else:
-                flags.append("LABOR_CREW_MISMATCH")
+                # invert the book's own rule: output = crew daily labor / labor, where labor was printed rounded. When exactly one
+                # integer lies in the interval the printed output is determined (outputs of 20 and more are printed as integers).
+                step = rstep(vals["labor"])
+                lo, hi = daily / (vals["labor"] + step / 2), daily / (vals["labor"] - step / 2)
+                ints = [i for i in range(int(lo) + 1, int(hi) + 1) if lo <= i <= hi] if hi >= 20 else []
+                if len(ints) == 1 and (conf.get("labor") or 0) >= 2.0 and (lh_known is None or vals["hours"] is None
+                                                                             or abs(ints[0] * vals["hours"] - lh_known) <= Decimal("0.1") or "HOURS_DERIVED_FROM_CREW" in flags):
+                    vals["output"], conf["output"] = Decimal(ints[0]), None
+                    if lh_known is not None:
+                        vals["hours"] = (lh_known / vals["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                    flags[:] = [f for f in flags if f not in ("OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "HOURS_DERIVED_FROM_CREW")]
+                    flags.append("OUTPUT_DERIVED_FROM_LABOR")
+                else:
+                    flags.append("LABOR_CREW_MISMATCH")
     # the crew says whether an equipment cost exists at all; with labor confirmed, a total that does not add up pins the material
     if crew and crew.get("bare_labor_daily") is not None and vals["labor"] is not None and vals["output"] and vals["total"] is not None \
             and "LABOR_CREW_MISMATCH" not in flags and (crew.get("bare_equip_daily") or 0) == 0 and conf.get("total", 0) and conf["total"] >= 2.0:
@@ -464,8 +506,8 @@ def normalise_crew(s: str, known: set[str]) -> Optional[str]:
         if trade in TRADES and qty:
             return f"{qty} {trade[0].upper() + trade[1:]}"
         close = sorted({tr for tr in TRADES if _lev(tr, trade) <= 1})
-        if len(close) != 1 and re.fullmatch(r"\d|\.5|1\.5|\d\.\d", pre):
-            close = sorted({tr for tr in TRADES if _lev(tr, trade) <= 2})       # a printed count makes a looser match safe
+        if len(close) != 1 and pre:
+            close = sorted({tr for tr in TRADES if _lev(tr, trade) <= 2})       # a printed count (or its OCR shadow) makes a looser match safe
         if len(close) == 1 and qty:
             return f"{qty} {close[0][0].upper() + close[0][1:]}"
     m = re.match(r"^([A-Za-z])-?(\d{1,2})([A-Za-z]?)$", t)
@@ -578,6 +620,11 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     trows = rows_of(tw, tol=16)
     irows = rows_of(iw, tol=16)
     hdr = find_header(trows)
+    if hdr is None and irows:
+        hdr = find_header(irows)
+        if hdr is not None:
+            # anchor the row index on the tesseract rows nearest to that y
+            hdr["row"] = min(range(len(trows)), key=lambda j: abs(trows[j][0]["_yc"] - hdr["y"])) if trows else 0
     out = {"pdf_page": pdf_page, "book_page": pdf_page - 14, "header_found": hdr is not None, "lines": [], "sections": [], "divisions": []}
     if hdr is None:
         return out
