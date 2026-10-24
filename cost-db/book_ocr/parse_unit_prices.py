@@ -210,6 +210,104 @@ def find_header(rows: list[list[dict]]) -> Optional[dict]:
     return {"row": i, "centres": c, "bounds": bounds, "desc_end": order[0] - 95, "y": rows[i][0]["_yc"]}
 
 
+def template_header(pdf_page: int, book: Path) -> Optional[dict]:
+    """No header could be read on this page (the band is printed but OCR lost its words). Pages on the same side of the spread
+    share the column layout (material centre moves by a few px, up to ~45 px between neighbours; the other side is ~120 px
+    off), so take the header of the nearest same-side page whose header was read; the money columns are then re-fitted to this
+    page's own number clusters and the left columns shifted by the fitted offset (see parse_page)."""
+    for d in (2, -2, 4, -4, 6, -6, 8, -8, 10, -10):
+        q = pdf_page + d
+        f = book / "ocr" / f"p{q:04d}.tsv"
+        if q < 24 or not f.exists():
+            continue
+        w, h, tw = load_tess(f)
+        hdr = find_header(rows_of(tw, tol=16))
+        if hdr is None:
+            ia = book / "ia" / f"p{q:04d}.json"
+            if ia.exists():
+                hdr = find_header(rows_of(load_ia(ia, w, h), tol=16))
+        if hdr is not None:
+            hdr = dict(hdr)
+            hdr["row"] = -1                                    # no header row to skip on this page
+            hdr["template_from"] = q
+            hdr["template_rows"] = rows_of(tw, tol=16)
+            return hdr
+    return None
+
+
+NUMERIC_TOKEN = re.compile(r"^[\d][\d,]*(\.\d+)?$|^\.\d+$")
+
+
+def column_anchors(bounds: dict, rows: list[list[dict]], y_min: float) -> dict[str, float]:
+    """Right edge of the numbers in every numeric column of a page whose columns are known (median over >= 3 tokens)."""
+    xs: dict[str, list[float]] = {k: [] for k in NUM_COLS}
+    for r in rows:
+        if r[0]["_yc"] <= y_min:
+            continue
+        for z in r:
+            if z["x0"] < 230 or not NUMERIC_TOKEN.match(z["t"].replace(" ", "")) or (z["x1"] - z["x0"]) >= 260:
+                continue
+            k = col_of((z["x0"] + z["x1"]) / 2, bounds)
+            if k in xs:
+                xs[k].append(z["x1"])
+    return {k: sorted(v)[len(v) // 2] for k, v in xs.items() if len(v) >= 3}
+
+
+def template_bounds(thdr: dict, trows_template: list[list[dict]], rows: list[list[dict]], page_w: int) -> tuple[dict, float]:
+    """Columns of a page without a readable header, from the page's own numbers: the right-edge clusters of its numeric tokens
+    are labelled by the nearest column anchor of the template page (same side of the spread, so the layout differs by a
+    few px, far less than the ~185 px column pitch), the median offset between the two pages is removed, and the boundary
+    between two numeric columns is the midpoint of their right edges. Text columns (crew, unit) and the description edge
+    take the template's bounds shifted by that offset."""
+    tb = calibrate_bounds(thdr, trows_template, page_w)
+    t_anchor = column_anchors(tb, trows_template, thdr["y"])
+    for k in NUM_COLS:                                          # a column empty on the template page: its header centre + offset of the others
+        if k not in t_anchor:
+            name = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment",
+                    "total": "Total", "total_op": "Incl"}[k]
+            offs = [t_anchor[j] - thdr["centres"][{"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor",
+                                                   "equipment": "Equipment", "total": "Total", "total_op": "Incl"}[j]] for j in t_anchor]
+            t_anchor[k] = thdr["centres"][name] + (sorted(offs)[len(offs) // 2] if offs else 60)
+    # right-edge clusters of this page's numeric tokens (line numbers and description numbers excluded)
+    xs = sorted(z["x1"] for r in rows for z in r
+                if z["x0"] >= tb["crew"][0] - 80 and NUMERIC_TOKEN.match(z["t"].replace(" ", "")) and (z["x1"] - z["x0"]) < 260)
+    clusters: list[list[float]] = []
+    for x in xs:
+        if clusters and x - clusters[-1][-1] <= 45:
+            clusters[-1].append(x)
+        else:
+            clusters.append([x])
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    matched: dict[str, float] = {}
+    shift = 0.0
+    for _ in range(2):
+        matched = {}
+        for m in meds:
+            k = min(t_anchor, key=lambda kk: abs(t_anchor[kk] + shift - m))
+            d = abs(t_anchor[k] + shift - m)
+            if d <= 70 and (k not in matched or d < abs(t_anchor[k] + shift - matched[k])):
+                matched[k] = m
+        if len(matched) >= 2:
+            diffs = sorted(matched[k] - t_anchor[k] for k in matched)
+            shift = diffs[len(diffs) // 2]
+    anchor = {k: matched.get(k, t_anchor[k] + shift) for k in NUM_COLS}
+    bounds: dict = {}
+    bounds["crew"] = (tb["crew"][0] + shift, tb["crew"][1] + shift)
+    bounds["output"] = (bounds["crew"][1], (anchor["output"] + anchor["hours"]) / 2)
+    bounds["hours"] = (bounds["output"][1], tb["hours"][1] + shift)
+    bounds["unit"] = (bounds["hours"][1], tb["material"][0] + shift)
+    prev_right = bounds["unit"][1]
+    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):
+        mid = (anchor[a] + anchor[b]) / 2
+        bounds[a] = (prev_right, mid)
+        prev_right = mid
+    bounds["total_op"] = (prev_right, 10 ** 6)
+    bounds["_anchors"] = {k: v for k, v in matched.items()}
+    bounds["_shift"] = shift
+    bounds["_matched"] = sorted(matched)
+    return bounds, thdr["desc_end"] + shift
+
+
 def calibrate_bounds_header(hdr: dict, rows: list[list[dict]]) -> dict:
     """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column. Re-fit the
     column boundaries to those clusters (the header words alone are off by a few mm on skewed or cut pages)."""
@@ -375,6 +473,8 @@ def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
             if kind == "hours":
                 if len(s2) >= 3:
                     out.append((Decimal((s2[:-3] or "0") + "." + s2[-3:]), "point_restored"))
+                if len(s2) <= 2:
+                    out.append((n, "as_read"))                 # whole labor-hours are printed without decimals (2, 8, 16)
             elif kind == "output":
                 out.append((n, "as_read"))
                 if len(s2) >= 3:
@@ -847,13 +947,27 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         if hdr is not None:
             # anchor the row index on the tesseract rows nearest to that y
             hdr["row"] = min(range(len(trows)), key=lambda j: abs(trows[j][0]["_yc"] - hdr["y"])) if trows else 0
-    out = {"pdf_page": pdf_page, "book_page": pdf_page - 14, "header_found": hdr is not None, "lines": [], "sections": [], "divisions": []}
+    template = False
+    if hdr is None:
+        # a table page whose header band OCR lost: at least three rows start with a line number in the left margin
+        def line_row(r):
+            return (LINE_RE.fullmatch(r[0]["t"]) and r[0]["x0"] < 230) or (re.fullmatch(r"\d{2,3}", r[0]["t"]) and r[0]["x0"] < 60)
+        n_line_rows = sum(1 for r in trows if line_row(r)) + sum(1 for r in irows if line_row(r))
+        if n_line_rows >= 3:
+            hdr = template_header(pdf_page, book)
+            template = hdr is not None
+    out = {"pdf_page": pdf_page, "book_page": pdf_page - 14, "header_found": hdr is not None, "lines": [], "sections": [], "divisions": [],
+           "header_source": (f"template:{hdr['template_from']}" if template else "read") if hdr else None}
     if hdr is None:
         return out
     img = parts.image(pdf_page)
     if img is not None and img.shape[1] != w:
         img = None                                             # OCR was run at another size; no geometry then
-    bounds, desc_end = (calibrate_bounds(hdr, trows, w) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
+    if template:
+        bounds, desc_end = template_bounds(hdr, hdr["template_rows"], trows, w)
+        out["template_columns"] = {"matched": bounds["_matched"], "shift": round(bounds["_shift"])}
+    else:
+        bounds, desc_end = (calibrate_bounds(hdr, trows, w) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
     irow_by_y = [(r[0]["_yc"], r) for r in irows]
     known = set(crews)
 
@@ -905,13 +1019,19 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
 
     for r in trows:
         txt = " ".join(z["t"] for z in r)
-        if r is trows[hdr["row"]]:
+        if hdr["row"] >= 0 and r is trows[hdr["row"]]:
             sec = section_from(r)
             if sec:
                 section = sec
                 out["sections"].append(sec)
             continue
         if r[0]["_yc"] < hdr["y"]:
+            if template:
+                sec = section_from(r)                          # the page's first section id sits in the (unread) header band
+                if sec:
+                    section = sec
+                    out["sections"].append(sec)
+                    continue
             dv = division(txt)
             if dv:
                 if dv[0] == "div3":
@@ -944,8 +1064,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
                 # the two readings differ: keep the one that continues the numbering
                 if not (int(first) > last_line) and int(ia_first) > last_line:
                     line_no = ia_first
-        elif re.fullmatch(r"\d{3}", first) and r[0]["x0"] < 60:
-            line_no, partial = first, True                     # left edge of the page cut off: thousands digit missing
+        elif re.fullmatch(r"\d{2,3}", first) and r[0]["x0"] < 60:
+            line_no, partial = first, True                     # left edge of the page cut off: thousands (and hundreds) digit missing
         elif r[0]["x0"] >= 60 and ia_first and (not (ir[0]["x0"] < 60) or len(ia_first) == 4):
             line_no, partial, body = ia_first, len(ia_first) == 3, r   # tesseract missed the number, the text layer has it
         elif r[0]["x0"] >= 150 and not division(txt) \
@@ -1017,6 +1137,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
             flags.append("LINE_NUMBER_MISSING")
         if order_flag:
             flags.append(order_flag)
+        if template:
+            flags.append("HEADER_TEMPLATE")                    # columns from a neighbouring page's header, re-fitted to this page's numbers
         out["lines"].append({
             "line": line_no, "line_partial": partial, "section_id": section["section_id"] if section else None, "pdf_page": pdf_page,
             "book_page": pdf_page - 14, "description": desc_t, "description_alt": desc_i if desc_i != desc_t else None, "indent_px": indent,
@@ -1037,6 +1159,7 @@ def main() -> int:
     ap.add_argument("first", type=int)
     ap.add_argument("last", type=int)
     ap.add_argument("--crews", default=None)
+    ap.add_argument("--pages", default=None, help="comma-separated pdf pages to parse instead of the first..last range")
     a = ap.parse_args()
     book = Path(a.book_dir)
     crews = {}
@@ -1049,7 +1172,8 @@ def main() -> int:
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     n_lines = n_pages = 0
-    for p in range(a.first, a.last + 1):
+    pages = [int(x) for x in a.pages.split(",")] if a.pages else range(a.first, a.last + 1)
+    for p in pages:
         if not (book / "ocr" / f"p{p:04d}.tsv").exists():
             continue
         res = parse_page(p, book, parts, crews)

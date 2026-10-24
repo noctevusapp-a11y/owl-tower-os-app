@@ -59,7 +59,8 @@ def main() -> int:
           "| `…/reference/crews_all_2022.csv`, `trade_rates_2022.csv`, `cci_los_angeles_2022.csv` | crews (labor-hours and daily cost per crew), trade rates, Los Angeles city cost index |",
           "| `cost-db/docs/price_update_factors.md` | the BLS/EIA factors 2022-01 → latest, with sources |", "",
           "## Numbers of this build", "",
-          f"* {rep['pages']} table pages (of 689; 38 with a damaged header are not parsed), {rep['sections']} sections, {rep['lines']} printed lines; "
+          f"* {rep['pages']} table pages (all unit-price table pages of the scan; {rep.get('pages_template', 0)} with an unreadable header read through "
+          f"the neighbouring page's column anchors), {rep['sections']} sections, {rep['lines']} printed lines; "
           f"**{priced} priced lines**: **{st['verified']} verified**, {st['machine_read']} machine_read (not verified), {st['flagged']} flagged (not verified), "
           f"{st['percent_add']} percentage-add lines, {st['header']} description-only lines.",
           f"* {drep['priced_latest']} lines carry a derived Los Angeles {latest.replace('M', '-')} value ({drep['verified_latest']} of them on verified lines).",

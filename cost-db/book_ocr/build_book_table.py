@@ -35,7 +35,7 @@ VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
               "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING", "EQUIPMENT_DERIVED_FROM_SUM",
               "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN"}
-INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED",
+INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED", "HEADER_TEMPLATE",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
               "PERCENT_ADD", "TOTAL_OP_UNREADABLE", "EQUIP_CREW_DIFFERS"}
@@ -67,10 +67,14 @@ def main() -> int:
     ap.add_argument("--crews", default=None)
     a = ap.parse_args()
     pages = []
+    skipped = []
     for p in sorted(Path(a.parsed_dir).glob("p*.json")):
         d = json.loads(p.read_text(encoding="utf-8"))
         if d.get("header_found"):
             pages.append(d)
+        else:
+            skipped.append(d["pdf_page"])
+    n_template = sum(1 for d in pages if str(d.get("header_source", "")).startswith("template"))
     crews = {}
     if a.crews and Path(a.crews).exists():
         with open(a.crews, encoding="utf-8") as f:
@@ -182,19 +186,34 @@ def main() -> int:
             for it in grp:
                 it["sec"], it["carried"] = None, False
     check_order(items)
-    # partial numbers: the thousands digit from the neighbours that are in order
+    # partial numbers (left edge of the scan cut one or two leading digits): the number is restored only when exactly one
+    # value with that tail lies strictly between the previous and the next fully read, in-order line numbers of the section
+    # (the book numbers lines in increasing order inside a section); otherwise the line keeps no number
+    next_ok: list[Optional[int]] = [None] * len(items)
+    seen: dict[str, int] = {}
+    for i in range(len(items) - 1, -1, -1):
+        it = items[i]
+        if it["sec"]:
+            next_ok[i] = seen.get(it["sec"])
+            if it["line_no"] and not it["ln"].get("line_partial") and not it["order_bad"]:
+                seen[it["sec"]] = int(it["line_no"])
     last_ok: dict[str, int] = {}
-    for it in items:
+    for i, it in enumerate(items):
         sec, ln = it["sec"], it["ln"]
         if not sec:
             continue
         if ln.get("line_partial") and it["line_no"]:
             prev = last_ok.get(sec)
-            tail = int(it["line_no"][-3:])
-            cand = tail if prev is None else next((k * 1000 + tail for k in range(0, 10) if k * 1000 + tail > prev), None)
-            if cand is not None:
-                it["line_no"] = f"{cand:04d}"
+            nxt = next_ok[i]
+            tail = it["line_no"]
+            step = 10 ** len(tail)
+            lo = prev if prev is not None else -1
+            hi = nxt if nxt is not None else 10000
+            cands = [v for v in range(int(tail), 10000, step) if lo < v < hi]
+            if len(cands) == 1:
+                it["line_no"] = f"{cands[0]:04d}"
                 it["reconstructed"] = True
+                last_ok[sec] = cands[0]
             else:
                 it["line_no"] = None
         elif it["line_no"] and not it["order_bad"]:
@@ -292,7 +311,8 @@ def main() -> int:
                 seen.add(s["section_id_fixed"])
                 w.writerow([s["section_id_fixed"], s["title"], s["section_id_fixed"][:2], DIVISION_NAMES.get(s["section_id_fixed"][:2]), s["pdf_page"],
                             s.get("division_raw") if s.get("division_uncertain") else ""])
-    rep = {"pages": len(pages), "lines": len(rows), "sections": len(seen), **{k: v for k, v in sorted(report.items())}}
+    rep = {"pages": len(pages), "pages_template": n_template, "pages_skipped": len(skipped), "skipped_pdf_pages": skipped,
+           "lines": len(rows), "sections": len(seen), **{k: v for k, v in sorted(report.items())}}
     (out / "build_report.json").write_text(json.dumps(rep, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in rep.items() if not k.startswith("flag:")}, indent=1))
     print({k: v for k, v in rep.items() if k.startswith("flag:")})

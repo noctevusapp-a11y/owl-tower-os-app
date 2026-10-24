@@ -96,7 +96,9 @@ def main() -> int:
              "(digit-glyph count and decimal-point position on the page image). A value is kept only when the readings agree or the table's arithmetic "
              "selects it: `total = material + labor + equipment`; `labor-hours = crew labor-hours / daily output`; `labor = crew daily labor cost / output`; "
              "`total incl. O&P = 1.10 × material + crew O&P labor / output + 1.10 × equipment`.",
-             f"* Table pages parsed: **{rep['pages']}** of 689 unit-price pages (38 pages with a damaged header are not parsed); sections: **{rep['sections']}**; "
+             f"* Table pages parsed: **{rep['pages']}** (every unit-price table page of the scan; on {rep.get('pages_template', 0)} of them the column header "
+             "was unreadable and the columns were fitted to the page's own number clusters, labelled by the anchors of the neighbouring same-side page: "
+             f"`HEADER_TEMPLATE`); pages without a table skipped: {rep.get('pages_skipped', '?')} (division intro, Division Notes, reference); sections: **{rep['sections']}**; "
              f"printed lines: **{rep['lines']}** (priced lines {len(priced)}, description-only lines {st.get('header', 0)}, percentage-add lines {st.get('percent_add', 0)}).",
              f"* Crew table (book pages 749–785): {len(crews)} crews parsed, {crews_ok} pass every identity (member sums, labor-hours, cost per labor-hour); "
              f"single-trade crews (`1 Carp` …) are built from the trade-rate table (inside back cover: {len(trades)} trades, {trades_ok} pass the row identities).",
@@ -150,7 +152,9 @@ def main() -> int:
               "* The 2022 values are what the book printed, read by machine: the verified set is machine-verified by the rule above, not human-verified line by line; "
               "the spot checks in section 3 are the only human-read sample.",
               "* machine_read and flagged lines must be checked against the book page (`book_page`) before use.",
-              "* 38 unit-price pages are not parsed (damaged column header); lines on them are absent, not approximated.",
+              "* Line numbers cut at the left edge of the scan (one or two leading digits lost) are restored only when exactly one value with that tail "
+              "fits between the previous and the next fully read line numbers of the section (`LINE_NUMBER_RECONSTRUCTED`); otherwise the line keeps no number "
+              "and is flagged (`LINE_NUMBER_MISSING`).",
               "* Total incl. O&P is missing on right-hand pages where the scan cut the column; where the crew is known it can be recomputed by the formula above.",
               "* Descriptions are OCR text (cleaned); `description_path` applies the book's indentation rule mechanically and can over-include a sibling line.",
               "* The derived latest values are budget-level references, not prices observed in Los Angeles in 2026.", ""]
