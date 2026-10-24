@@ -61,6 +61,14 @@ class RetailImportTest(unittest.TestCase):
         self.assertEqual(self.db["products"][0]["spec_key"], S.pilot.MATS["gyp_half_reg_4x8"]["spec_key"])
         self.assertTrue(any("restricted_no_automated_access" in w for _, w in rep.warnings))     # terms warning for a manual-only source
 
+    def test_observation_ids_depend_on_price_and_capture_time(self):
+        """Append-only history: the same listing seen again at another price, or captured again later, is a NEW observation."""
+        rep = self.run_rows(row(), row(price_amount="13.50", original_price_text="$13.50", evidence_excerpt="TEST listing: $13.50 each"),
+                            row(retrieved_at="2026-10-20T18:00:00+00:00"))
+        self.assertEqual(rep.rejected, [], rep.rejected)
+        self.assertEqual(len(set(rep.accepted_observations)), 3, rep.accepted_observations)
+        self.assertEqual(len(self.db["price_observations"]), 3)
+
     def test_automated_capture_from_a_manual_only_source_is_refused(self):
         rep = self.run_rows(row(capture_method="official_api"))
         self.assertEqual(len(rep.accepted_observations), 0)

@@ -16,7 +16,7 @@ An independent, source-traceable cost database for Owl Tower Construction Group,
 | labor / burden / equipment / norms observed | 1 / 3 / 0 / 0 | one national BLS median (carpenter), FICA ×2, CA ETT — all `unreviewed`, search-snippet evidence |
 | calculation runs (strict, LA County) | 35 | **0 complete · 35 incomplete · 0 failed** — each lists exactly what is missing (prices, waste, crews, norms, coverage, and that the work-item definitions still await a human review) |
 | records `validated` | **0** | the promotion gate refuses anything whose source was not fetched |
-| automated tests | 229 (19 run against a real PostgreSQL that the test harness starts itself) | pass; see `docs/validation_report.md`. Includes one regression test per defect of the independent review F1 |
+| automated tests | 309 (30 run against a real PostgreSQL that the test harness starts itself) | pass; see `docs/validation_report.md`. Includes a regression test per defect of the independent reviews F1 and F3 and tests added for every mutant that survived the mutation analysis |
 
 The database **does not contain a single estimated or remembered market number.** Where a value is needed and not found it is `origin = missing` and calculations stop with a precise missing-input list.
 
@@ -34,7 +34,7 @@ The database **does not contain a single estimated or remembered market number.*
 
 | path | content |
 |---|---|
-| `schema/001_schema.sql` | PostgreSQL 14+/Supabase schema, schema `costdb`: 28 tables, constraints, append-only triggers, views |
+| `schema/001_schema.sql` | PostgreSQL 14+/Supabase schema, schema `costdb`: 30 tables, constraints, append-only triggers, views |
 | `schema/003_comments.sql` | `COMMENT ON` for every table and column (generated) · `002` is intentionally absent: reference rows are imported from `data/csv` |
 | `data/csv/*.csv` | one CSV per table, ready for `\copy` (load order: `costdb/pg.py`); empty tables carry headers only |
 | `data/json/costdb.json` | the same data as one JSON; `source_register.json`, `pilot_status.json` |
@@ -43,7 +43,7 @@ The database **does not contain a single estimated or remembered market number.*
 | `data/raw_agent_returns/` | raw returns of the research and review agents + host reachability test |
 | `docs/data_dictionary.md` | every column of every table (generated from one dictionary) |
 | `docs/methodology.md` | formulas, layers, statuses, double-counting rules, limitations |
-| `docs/validation_report.md` | automated validation + test results · `independent_review_F1.md` (code/arithmetic/schema, 42 findings), `independent_review_F2.md` (source claims), `independent_review_F3.md` (re-check of the fixes, when present) |
+| `docs/validation_report.md` | automated validation + test results · `independent_review_F1.md` (code/arithmetic/schema, 42 findings), `independent_review_F2.md` (source claims), `independent_review_F3.md` (re-check of the F1 fixes, 34 further findings, with the resolution table and the mutation re-run) |
 | `docs/coverage_matrix.md` | categories × regions × cost components |
 | `docs/data_gaps_backlog.md` | what is missing, how to fill it, what blocks it |
 | `docs/network_allowlist.md` | hosts to open, in order of value |
@@ -51,7 +51,7 @@ The database **does not contain a single estimated or remembered market number.*
 | `examples/worked_examples.md` | reproducible unit-cost / labor / markup / index / assembly examples (**synthetic inputs, clearly marked**) and the real-data refusal |
 | `templates/price_capture_template.csv` | header of the manual price-capture sheet |
 | `pipeline/` | `costdb/` (engine, validator, units, store), `connectors/`, `scripts/` |
-| `tests/` | 229 tests; synthetic fixtures live only here; `test_review_fixes.py` holds the counter-example of every engine defect found by review F1 |
+| `tests/` | 309 tests; synthetic fixtures live only here; `test_review_fixes.py` holds the counter-example of every engine defect found by review F1, `test_f3_fixes.py` those of review F3 and the mutation survivors |
 
 ## How to use
 
@@ -88,4 +88,4 @@ Supabase notes: tables live in schema `costdb` (add it to *Exposed schemas* for 
 
 ## Independent verification
 
-The system was built by one process and then attacked by independent reviewers who had not written it: **F2** checked the source claims (22 corrections applied), **F1** audited code, arithmetic, schema and data (42 findings: 3 critical, 21 major, 18 minor — all reproduced; the engine was rewritten and every finding has a regression test or a documented decision, see the *Resolution* section of `docs/independent_review_F1.md`), **F3** re-checked the fixes. Reviewers' raw findings are in `data/raw_agent_returns/`.
+The system was built by one process and then attacked by independent reviewers who had not written it: **F2** checked the source claims (22 corrections applied), **F1** audited code, arithmetic, schema and data (42 findings: 3 critical, 21 major, 18 minor — all reproduced; the engine was rewritten and every finding has a regression test or a documented decision, see the *Resolution* section of `docs/independent_review_F1.md`), **F3** re-checked the fixes and found 34 further findings (13 major; all but a few residual limits fixed, see the *Resolution* section of `docs/independent_review_F3.md`). The F3 fixes themselves were verified by the author's tests and a mutation re-run (148 mutants executed in two rounds; after the added tests every one is killed by a test, except the calc-version-fingerprint mutant, which the harness itself pins), **not** by a further independent code review. Reviewers' raw findings are in `data/raw_agent_returns/`.

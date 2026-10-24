@@ -335,6 +335,14 @@ class PostgresTest(unittest.TestCase):
         self.reject(crew % ("TEST-CRW-1", "TEST-SRC-SNIP-C", "validated", "'x',now()"), "never fetched")
         self.reject(crew % ("TEST-CRW-2", "TEST-SRC-PROH-C", "unreviewed", "null,null"), "must not be stored")
 
+    def test_a_source_with_prohibited_or_licence_terms_cannot_be_validated(self):
+        for reuse in ("prohibited", "restricted_no_storage", "licence_required"):
+            sid = f"TEST-SRC-TERMS-{reuse[:4]}"
+            self.source(sid, method="fetched_primary", reuse=reuse)
+            self.reject(f"update costdb.sources set review_status='validated', reviewed_by='x', reviewed_at=now() where source_id='{sid}'", "sources_validated_terms_chk")
+        self.source("TEST-SRC-TERMS-OK", method="fetched_primary", reuse="open_license")
+        psql("update costdb.sources set review_status='validated', reviewed_by='x', reviewed_at=now() where source_id='TEST-SRC-TERMS-OK'")        # control
+
     def test_sources_cannot_be_flipped_up_validated_against_and_flipped_back(self):
         self.reject("insert into costdb.sources (source_id, title, owner, source_kind, verification_method) values ('TEST-SRC-NOEV','t','o','internal','fetched_primary')",
                     "sources_fetched_evidence_chk")

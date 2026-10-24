@@ -430,6 +430,19 @@ class F328ReviewIsAsOf(unittest.TestCase):
         self.assertIsNone(e._why_not(o, S.params(as_of=date(2026, 10, 23), known_at=date(2026, 10, 24))))
         self.assertIsNone(e._why_not(o, S.params(as_of=date(2026, 10, 23), min_review="unreviewed")))
 
+    def test_a_row_retrieved_after_known_at_is_not_known_to_the_run(self):
+        """The row filter itself (not the review-as-of rule): the observation is reviewed long before as_of but captured after known_at."""
+        db = S.priced_drywall_db()
+        obs(db, "TEST-OBS-BOARDA")["retrieved_at"] = "2026-10-25T12:00:00+00:00"
+        r = run(db)                                                                  # known_at defaults to as_of (2026-10-24)
+        self.assertEqual(r.status, "incomplete")
+        self.assertIn("PRICE_MISSING", codes(r))
+        self.assertIsNone(r.run["direct_cost_total"])
+        self.assertIn("after known_at 2026-10-24", [m for m in r.run["missing_inputs"] if m["code"] == "PRICE_MISSING"][0]["reason"])
+        r2 = run(db, known_at=date(2026, 10, 25))
+        self.assertEqual(r2.status, "complete")
+        self.assertAlmostEqual(float(r2.run["direct_cost_total"]), 0.999188, places=6)
+
     def test_definition_review_is_as_of_too(self):
         db = S.priced_drywall_db()
         row(db, "work_items", "work_item_id", WI)["reviewed_at"] = "2026-10-24T00:00:00+00:00"
@@ -564,3 +577,106 @@ class MutantSurvivors(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ------------------------------------------------------------------------------- second mutation round (author's re-run after the fixes)
+class MutantSurvivorsRound2(unittest.TestCase):
+    def indexed(self, vintage, retrieved=None, review=None):
+        db = S.priced_drywall_db()
+        for o in db["price_observations"]:
+            o["observed_at"] = date(2026, 1, 10)
+            o["retrieved_at"] = "2026-01-11T00:00:00+00:00"
+        S.add_index(db, "TEST-IDX-V", {date(2026, 1, 1): 100, date(2026, 10, 1): 125, date(2026, 9, 1): 120}, vintage=vintage)
+        for v in db["index_values"]:
+            if retrieved:
+                v["retrieved_at"] = retrieved
+            if review:
+                v["review_status"], v["reviewed_by"], v["reviewed_at"] = review, None, None
+        return db
+
+    def test_an_unreviewed_index_value_is_not_used_although_its_series_is_validated(self):
+        self.assertEqual(run(self.indexed(date(2026, 10, 20)), time_index_id="TEST-IDX-V").status, "complete")           # control
+        r = run(self.indexed(date(2026, 10, 20), review="unreviewed"), time_index_id="TEST-IDX-V")
+        self.assertEqual(r.status, "incomplete")
+        self.assertIn("PRICE_MISSING", codes(r))
+        self.assertEqual(run(self.indexed(date(2026, 10, 20), review="unreviewed"), time_index_id="TEST-IDX-V", min_review="unreviewed").status, "complete")
+
+    def test_the_vintage_date_alone_makes_an_index_value_unknown(self):
+        """retrieved_at claims an early capture (an inconsistent row), but the value was published after known_at."""
+        db = self.indexed(date(2026, 10, 30), retrieved="2026-10-01T00:00:00+00:00")
+        r = run(db, time_index_id="TEST-IDX-V")
+        self.assertEqual(r.status, "incomplete")
+        self.assertIn("PRICE_MISSING", codes(r))
+        self.assertEqual(run(db, time_index_id="TEST-IDX-V", known_at=date(2026, 11, 1)).status, "complete")
+
+    def test_the_requested_wage_statistic_is_the_one_used(self):
+        db = S.real_db()
+        S.trust_regions(db)
+        S.add_source(db)
+        S.add_all_burdens(db)
+        S.add_stat_wage(db, "TEST-W-MEAN", "TR-DRYW", 30, statistic="mean")
+        S.add_stat_wage(db, "TEST-W-MED", "TR-DRYW", 50, statistic="median", effective_from=date(2026, 4, 1))
+        base = lambda **kw: Engine(db).labor_rate("TR-DRYW", S.params(labor_basis="stat_loaded", annual_paid_hours=D(2080), **kw))["components"]["base_wage"]
+        self.assertEqual(base(labor_statistic="mean"), D(30))
+        self.assertEqual(base(labor_statistic="median"), D(50))
+        res = Engine(db).loaded_labor_rate("TR-DRYW", S.params(labor_basis="stat_loaded", labor_statistic="p90", annual_paid_hours=D(2080)))
+        self.assertIn("LABOR_RATE_MISSING", codes(res))
+
+    def test_a_crew_without_labor_cannot_price_a_labor_component(self):
+        db = S.priced_drywall_db()
+        S.set_crew(db, "CRW-DRY-HANG", 8, [("equipment", "EQ-SCAFF", 1, False)])
+        r = run(db)
+        self.assertIn("CREW_NO_LABOR", codes(r))
+        self.assertIsNone(r.run["direct_cost_total"])
+
+    def test_origin_missing_is_never_usable_whatever_the_floor(self):
+        db = S.priced_drywall_db()
+        o = obs(db, "TEST-OBS-BOARDA")
+        o["origin"] = "missing"
+        e = Engine(db)
+        for floor in ("validated", "unreviewed"):
+            for mode in ("strict", "with_assumptions"):
+                self.assertEqual(e._why_not(o, S.params(min_review=floor, mode=mode), "price_observations"), "origin=missing", (floor, mode))
+
+    def test_a_pin_may_name_an_apprentice_or_overtime_row_but_automatic_selection_never_does(self):
+        for fld, val in (("apprentice", True), ("wage_basis", "overtime_1_5x")):
+            db = S.priced_drywall_db()
+            S.add_labor_actual(db, "TEST-LRT-ALT", "TR-DRYW", 100)
+            alt = row(db, "labor_rates", "labor_rate_id", "TEST-LRT-ALT")
+            alt["effective_from"] = date(2026, 6, 1)
+            alt[fld] = val
+            self.assertEqual(run(db).run["labor_cost"], D("0.550000"), fld)                  # automatic: the newest row is NOT taken
+            for m in db["crew_members"]:
+                if m["trade_code"] == "TR-DRYW":
+                    m["labor_rate_id"] = "TEST-LRT-ALT"
+            r = run(db)
+            self.assertEqual(r.run["labor_cost"], D("1.150000"), fld)                        # pinned: the person's explicit choice
+            self.assertNotIn("LABOR_RATE_PIN_UNUSABLE", codes(r), fld)
+
+    # ----- the guards that other checks pre-empt: each is tested on its own so that removing it is noticed
+    def test_zero_coats_applied_is_not_a_quantity(self):
+        db = S.paint_db()
+        comp = next(c for c in db["work_item_components"] if c["work_item_id"] == S.PNT and c["qty_mode"] == "from_product_consumption")
+        comp["coats_applied"] = D("0")
+        r = Engine(db).unit_cost(S.PNT, 1, S.params())
+        self.assertNotEqual(r.status, "complete")
+        self.assertIsNone(r.run["direct_cost_total"])
+        self.assertIn("must be positive", " ".join(m["reason"] for m in r.run["missing_inputs"]))
+
+    def test_an_inline_assumed_quantity_is_refused_by_its_own_rule_not_only_by_the_strict_leak_guard(self):
+        db = S.priced_drywall_db()
+        comp = next(c for c in db["work_item_components"] if c["work_item_id"] == WI and c["component_kind"] == "material" and "CAT-FRM-FAS" in (c["product_spec_key"] or ""))
+        comp["qty_origin"] = "assumed"
+        r = run(db)
+        self.assertIn("QUANTITY_ASSUMED", codes(r))
+        self.assertNotIn("ASSUMED_INPUT_LEAKED_INTO_STRICT_RUN", r.run["warnings"])
+
+    def test_the_last_line_strict_guard_fails_a_run_that_nevertheless_carries_an_assumed_input(self):
+        e = Engine(S.priced_drywall_db())
+        totals = {k: D(0) for k in ("material", "labor", "equipment", "other_direct")}
+        res = e._finish("unit_cost", WI, 1, S.params(), "SF", [], [], [], totals, True, {})
+        self.assertEqual(res.status, "failed")
+        self.assertIn("ASSUMED_INPUT_LEAKED_INTO_STRICT_RUN", res.run["warnings"])
+        res2 = e._finish("unit_cost", WI, 1, S.params(mode="with_assumptions"), "SF", [], [], [], totals, True, {})
+        self.assertNotIn("ASSUMED_INPUT_LEAKED_INTO_STRICT_RUN", res2.run["warnings"])
+

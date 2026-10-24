@@ -34,7 +34,7 @@ total                                                  = 0.9991875 per SF (store
 person-hours per SF = 3 × 8 / 1600 = 0.015;  crew-hours per SF = 8 / 1600 = 0.005
 ```
 
-Engine: `direct_cost_total = 0.999188`  · run id `RUN-108a79791e25` (deterministic) · warnings: PRICE_NOT_TIME_ADJUSTED, RETAIL_PRICE_NOT_CONTRACTOR_COST
+Engine: `direct_cost_total = 0.999188`  · run id `RUN-eab1da247035` (deterministic) · warnings: PRICE_NOT_TIME_ADJUSTED, RETAIL_PRICE_NOT_CONTRACTOR_COST, SINGLE_PRODUCT_PRICE
 
 Run basis recorded on the run: `price_basis = retail_proxy`, `input_review_floor = validated`.
 The retail-price warning is deliberate: this is not a contractor purchase price.

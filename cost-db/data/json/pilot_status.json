@@ -24,7 +24,7 @@
  "promoted_to_validated": {},
  "region": "REG-CA-037",
  "as_of": "2026-10-24",
- "git_ref": "066c70a+uncommitted",
+ "git_ref": "16a4001+uncommitted",
  "run_policy": {
   "accept_retail_proxy": false,
   "annual_paid_hours": "2080",
