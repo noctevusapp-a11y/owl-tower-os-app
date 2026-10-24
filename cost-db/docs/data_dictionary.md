@@ -754,7 +754,7 @@ Findings of the independent validation, one row per violation.
 
 ### `review_events`
 
-Append-only log of every change of review_status (written by a trigger): who, when, old and new status.
+Append-only log of every change of review_status or of the recorded reviewer (written by a trigger): who, when, old and new status.
 
 | column | type | description |
 |---|---|---|
@@ -763,6 +763,21 @@ Append-only log of every change of review_status (written by a trigger): who, wh
 | `record_id` | text | Primary key of the record (composite keys joined with '/'). |
 | `old_status` | text | Status before the change. |
 | `new_status` | text | Status after the change. |
-| `changed_by` | text | reviewed_by of the new row. |
+| `changed_by` | text | reviewed_by of the new row (a change of reviewer with an unchanged status is logged too). |
 | `changed_at` | timestamptz | reviewed_at of the new row (or now()). |
+| `db_user` | text | Database session user that made the change. |
+
+### `change_log`
+
+Append-only log of every UPDATE/DELETE of reference and approval data that stays editable (sources, regions, categories, trades, equipment types, assumption approvals): complete old and new row, written by a trigger.
+
+| column | type | description |
+|---|---|---|
+| `event_id` | bigint (generated) | Sequence id. |
+| `table_name` | text | Table of the changed record. |
+| `record_id` | text | Primary key of the changed record. |
+| `op` | text | UPDATE or DELETE. |
+| `old_row` | jsonb | The whole row before the change (JSON). |
+| `new_row` | jsonb | The whole row after the change (JSON); NULL for DELETE. |
+| `changed_at` | timestamptz | When the change was made. |
 | `db_user` | text | Database session user that made the change. |

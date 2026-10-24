@@ -199,7 +199,7 @@ class PostgresTest(unittest.TestCase):
 
     def test_restricted_sources_cannot_hold_observed_values(self):
         for status in ("prohibited", "restricted_no_storage", "licence_required"):
-            psql(f"insert into costdb.sources (source_id, title, owner, source_kind, verification_method, reuse_status) values ('TEST-SRC-R-{status[:4]}','t','o','internal','fetched_primary','{status}')")
+            psql(f"insert into costdb.sources (source_id, title, owner, source_kind, verification_method, reuse_status, evidence_quote, evidence_url) values ('TEST-SRC-R-{status[:4]}','t','o','internal','fetched_primary','{status}','q','u')")
             self.reject("insert into costdb.products (product_id, category_id, name, spec_attributes, spec_key, sale_unit_label, content_qty, content_unit_id, source_id) "
                         f"select 'TEST-PRD-R-{status[:4]}', category_id, 'r', spec_attributes, spec_key, sale_unit_label, content_qty, content_unit_id, 'TEST-SRC-R-{status[:4]}' "
                         "from costdb.products where product_id='TEST-PRD-SCREW'", "must not be stored")
@@ -232,9 +232,17 @@ class PostgresTest(unittest.TestCase):
             want = spec_key(m["cat"], m["attrs"], cats[m["cat"]]["required_product_attributes"])
             got = self.scalar(f"select costdb.compute_spec_key('{m['cat']}', $j${json.dumps(m['attrs'])}$j$::jsonb)")
             self.assertEqual(got, want, k)
-        for v in (0.5, "0.50", " 0.5 ", 5, "5_8", "NaN", "1e3", "15/32", True, "Mixed  CASE", -0.0, "0.0", "007", 12.50):
-            sql = self.scalar(f"select costdb.norm_attr($j${json.dumps(v)}$j$::jsonb)")
+        for v in (0.5, "0.50", " 0.5 ", 5, "5_8", "NaN", "1e3", "15/32", True, "Mixed  CASE", -0.0, "0.0", "007", 12.50, " 5.50", "5.50 ", "\t7.0\n",
+                  "A\t\tb  C", "vinyl_coated", "Vinyl-Coated 3-1/4 in", "I", "", "  ", 1e22, "-0.50", "+5"):
+            sql = self.scalar(f"select costdb.norm_attr($j${json.dumps(v)}$j$::jsonb)") if v != "" else self.scalar("select costdb.norm_attr('\"\"'::jsonb)")
             self.assertEqual(sql, norm_attr_value(v), repr(v))
+        from costdb.ids import SpecError
+        for bad in ("a\u00a0b", "\u0130", "\u00bd in", "caf\u00e9", "a\x01b"):                      # non-ASCII / control: refused on both sides
+            with self.assertRaises(SpecError, msg=repr(bad)):
+                norm_attr_value(bad)
+            r = psql(f"select costdb.norm_attr($j${json.dumps(bad)}$j$::jsonb)", ok=False)
+            self.assertNotEqual(r.returncode, 0, repr(bad))
+            self.assertIn("non-ASCII", r.stderr)
 
     def test_definitions_are_frozen_but_status_may_move(self):
         self.reject("update costdb.work_item_components set qty_per_unit = 99 where work_item_id='WI-FRM-001' and line_no=1", "append-only")
@@ -287,6 +295,131 @@ class PostgresTest(unittest.TestCase):
     def test_latest_validated_view_keeps_regions_apart(self):
         n = self.scalar("select count(*) from costdb.v_price_latest_validated")
         self.assertGreaterEqual(int(n), 1)
+
+    # ------------------------------------------------------------------ protections added after the independent review F3
+    OBS_SQL = ("insert into costdb.price_observations (observation_id, product_id, source_id, store_ref, observed_at, retrieved_at, price_amount, price_channel, "
+               "sold_as_label, pack_content_qty, pack_content_unit_id, evidence_excerpt, capture_method, captured_by{cols}) values "
+               "('{oid}','TEST-PRD-BOARDA','{src}','s','2026-09-01','2026-09-01T12:00:00Z',12,'retail_public','p',32,'SF','e','manual_browser','t'{vals})")
+
+    def obs_sql(self, oid, src="TEST-SRC-SYN", validated=False):
+        cols = ", review_status, reviewed_by, reviewed_at" if validated else ""
+        vals = ", 'validated','x',now()" if validated else ""
+        return self.OBS_SQL.format(cols=cols, vals=vals, oid=oid, src=src)
+
+    def source(self, sid, method="search_snippet_only", reuse="open_license"):
+        ev = ",'q','u'" if method == "fetched_primary" else ",null,null"
+        psql(f"insert into costdb.sources (source_id, title, owner, source_kind, verification_method, reuse_status, evidence_quote, evidence_url) "
+             f"values ('{sid}','t','o','internal','{method}','{reuse}'{ev}) on conflict do nothing")
+
+    def test_a_temp_table_cannot_shadow_the_database_gates(self):
+        self.source("TEST-SRC-SNIP-T")
+        self.reject(self.obs_sql("TEST-OBS-T0", "TEST-SRC-SNIP-T", validated=True), "never fetched")                                  # control
+        attack = ("create temp table sources (source_id text, reuse_status text, verification_method text); "
+                  "insert into sources values ('TEST-SRC-SNIP-T','open_license','fetched_primary'); " + self.obs_sql("TEST-OBS-T1", "TEST-SRC-SNIP-T", validated=True))
+        r = pg.run_psql(["-d", DB, "-c", attack])
+        self.assertNotEqual(r.returncode, 0, "a temp table must not be able to open the source gate")
+        self.assertIn("never fetched", r.stderr)
+        psql(self.obs_sql("TEST-OBS-T2"))
+        before = int(self.scalar("select count(*) from costdb.review_events where record_id = 'TEST-OBS-T2'"))
+        r = pg.run_psql(["-d", DB, "-c", "create temp table review_events (record_table text, record_id text, old_status text, new_status text, changed_by text, "
+                         "changed_at timestamptz, db_user text); update costdb.price_observations set review_status='flagged', reviewed_by='x', reviewed_at=now() "
+                         "where observation_id='TEST-OBS-T2'"])
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(int(self.scalar("select count(*) from costdb.review_events where record_id = 'TEST-OBS-T2'")), before + 1, "the real log must get the row")
+
+    def test_crews_are_behind_the_source_gate(self):
+        self.source("TEST-SRC-SNIP-C")
+        self.source("TEST-SRC-PROH-C", method="fetched_primary", reuse="prohibited")
+        crew = ("insert into costdb.crews (crew_id, name, shift_hours, source_id, source_locator, origin, review_status, reviewed_by, reviewed_at) "
+                "values ('%s','n',8,'%s','x','observed','%s',%s)")
+        self.reject(crew % ("TEST-CRW-1", "TEST-SRC-SNIP-C", "validated", "'x',now()"), "never fetched")
+        self.reject(crew % ("TEST-CRW-2", "TEST-SRC-PROH-C", "unreviewed", "null,null"), "must not be stored")
+
+    def test_sources_cannot_be_flipped_up_validated_against_and_flipped_back(self):
+        self.reject("insert into costdb.sources (source_id, title, owner, source_kind, verification_method) values ('TEST-SRC-NOEV','t','o','internal','fetched_primary')",
+                    "sources_fetched_evidence_chk")
+        self.source("TEST-SRC-FLIP", method="fetched_primary")
+        psql(self.obs_sql("TEST-OBS-F1", "TEST-SRC-FLIP", validated=True))
+        self.reject("update costdb.sources set verification_method = 'search_snippet_only' where source_id = 'TEST-SRC-FLIP'", "depend on it")
+        self.reject("update costdb.sources set reuse_status = 'prohibited' where source_id = 'TEST-SRC-FLIP'", "depend on it")
+        self.source("TEST-SRC-FREE", method="search_snippet_only")                      # no dependants: may change, and the change is logged
+        psql("update costdb.sources set reuse_status = 'prohibited', notes = 'terms read' where source_id = 'TEST-SRC-FREE'")
+        row = self.scalar("select old_row ->> 'reuse_status', new_row ->> 'reuse_status' from costdb.change_log where table_name='sources' and record_id='TEST-SRC-FREE'")
+        self.assertEqual(row, "open_license|prohibited")
+        self.reject("update costdb.change_log set op = 'DELETE'", "append-only")
+        self.reject("truncate costdb.change_log", "TRUNCATE is forbidden")
+
+    def test_index_series_are_frozen_and_reference_data_changes_are_logged(self):
+        psql("insert into costdb.indices (index_id, publisher, series_code, name, frequency, applies_to, source_id) values ('TEST-IDX-FZ','p','c','n','monthly','material','TEST-SRC-SYN')")
+        self.reject("update costdb.indices set source_id = 'TEST-SRC-FLIP' where index_id = 'TEST-IDX-FZ'", "append-only")
+        self.reject("update costdb.indices set applies_to = 'all' where index_id = 'TEST-IDX-FZ'", "append-only")
+        psql("update costdb.regions set name = name || ' (checked)' where region_id = 'REG-CA-037'")
+        psql("update costdb.trades set name = name || ' (checked)' where trade_code = 'TR-CARP'")
+        psql("update costdb.equipment_types set typically_needs_operator = true where equipment_type_code = 'EQ-CVIB'")
+        psql("update costdb.categories set description = 'x' where category_id = 'CAT-FRM'")
+        for tbl, rid in (("regions", "REG-CA-037"), ("trades", "TR-CARP"), ("equipment_types", "EQ-CVIB"), ("categories", "CAT-FRM")):
+            self.assertEqual(int(self.scalar(f"select count(*) from costdb.change_log where table_name='{tbl}' and record_id='{rid}'")), 1, tbl)
+
+    def test_a_changed_reviewer_is_logged_even_when_the_status_is_unchanged(self):
+        psql(self.obs_sql("TEST-OBS-RV", "TEST-SRC-SYN", validated=True))
+        psql("update costdb.price_observations set reviewed_by = 'someone else' where observation_id = 'TEST-OBS-RV'")
+        ev = self.scalar("select old_status, new_status, changed_by from costdb.review_events where record_id='TEST-OBS-RV' order by event_id desc limit 1")
+        self.assertEqual(ev, "validated|validated|someone else")
+
+    def test_assumption_approvals_are_logged(self):
+        a = ("insert into costdb.assumptions (assumption_id, assumption_type, applies_to_ref, value_numeric, rationale, proposed_by, approved_by, approved_at, status, expires_on) "
+             "values ('TEST-ASU-LOG','waste','waste:y',0.1,'r','alice','bob',now(),'approved','2027-01-01')")
+        psql(a)
+        psql("update costdb.assumptions set expires_on = '2030-01-01' where assumption_id = 'TEST-ASU-LOG'")
+        self.assertEqual(self.scalar("select old_row ->> 'expires_on', new_row ->> 'expires_on' from costdb.change_log where record_id='TEST-ASU-LOG'"), "2027-01-01|2030-01-01")
+
+    def test_zero_price_and_inconsistent_loaded_totals_are_refused(self):
+        self.reject(self.obs_sql("TEST-OBS-Z0").replace(",12,'retail_public'", ",0,'retail_public'"), "price_amount")
+        lr = ("insert into costdb.labor_rates (labor_rate_id, rate_type, trade_code, classification_raw, region_id, base_wage_hr, fringe_hr, payroll_tax_hr, workers_comp_hr, total_hr, "
+              "includes_fringe, includes_payroll_taxes, includes_workers_comp, use_context, effective_from, origin, source_id, source_locator, evidence_excerpt, retrieved_at) "
+              "values ('%s','company_actual','TR-CARP','x','REG-CA-037',10,5,2,1,%s,true,true,true,'employer_internal','2026-01-01','observed','TEST-SRC-SYN','x','x','2026-01-01T00:00:00Z')")
+        self.reject(lr % ("TEST-LRT-T1", "99"), "lr_total_chk")
+        psql(lr % ("TEST-LRT-T2", "18"))
+
+    def test_remaining_check_constraints_and_triggers_each_fire(self):
+        lr = ("insert into costdb.labor_rates (labor_rate_id, rate_type, trade_code, classification_raw, region_id, base_wage_hr, includes_fringe, includes_payroll_taxes, "
+              "includes_workers_comp, includes_overhead, use_context, effective_from, origin, source_id, source_locator, evidence_excerpt, retrieved_at) "
+              "values ('%s','stat_wage','TR-CARP','x','REG-CA-037',30,false,%s,false,%s,'statistical_reference','2026-01-01','observed','TEST-SRC-SYN','x','x','2026-01-01T00:00:00Z')")
+        self.reject(lr % ("TEST-LRT-B1", "true", "false"), "lr_stat_burden_chk")
+        self.reject(lr % ("TEST-LRT-B2", "false", "true"), "lr_ovh_profit_chk")
+        run = ("insert into costdb.calculation_runs (run_id, calc_version, target_type, target_id, mode, status, missing_inputs, %s) values (%s)")
+        self.reject(run % ("price_total", "'TEST-RUN-M1','v','unit_cost','x','strict','incomplete','[]',5"), "cr_markup_chk")
+        self.reject(run % ("direct_cost_total", "'TEST-RUN-M2','v','markup','x','strict','incomplete','[]',5"), "cr_markup_chk")
+        self.reject(run % ("input_review_floor, direct_cost_total, review_status, reviewed_by, reviewed_at", "'TEST-RUN-M3','v','unit_cost','x','strict','complete','[]','unreviewed',5,'validated','x',now()"), "cr_floor_chk")
+        self.reject("insert into costdb.work_item_components (component_id, work_item_id, work_item_version, line_no, component_kind, description, product_spec_key, qty_mode, qty_origin) "
+                    "values ('TEST-WIC-C1','WI-FRM-001',1,95,'material','d','k','from_product_consumption','missing')", "wic_consumption_chk")
+        self.reject("insert into costdb.units (unit_id, base_code, name, dimension, base_unit_id, to_base_num, to_base_den, definition, is_fixed_conversion) "
+                    "values ('XL','XL','x','length','LB',1,1,'d',true)", "must have dimension")
+        psql("insert into costdb.indices (index_id, publisher, series_code, name, frequency, applies_to, source_id) values ('TEST-IDX-LAB','p','l','n','monthly','labor','TEST-SRC-SYN')")
+        self.reject("insert into costdb.adjustment_factors (factor_id, factor_type, applies_to, factor_value, index_id, derivation_formula, origin, assumption_basis) "
+                    "values ('TEST-ADJ-T1','time_index','material',1.1,'TEST-IDX-LAB','f','assumed','b')", "applies to")
+
+    def test_remaining_append_only_triggers_each_fire(self):
+        psql("insert into costdb.adjustment_factors (factor_id, factor_type, applies_to, factor_value, derivation_formula, condition_desc, origin, assumption_basis) "
+             "values ('TEST-ADJ-AO','conditions','labor',1.2,'f','occupied','assumed','b')")
+        self.reject("update costdb.adjustment_factors set factor_value = 9 where factor_id = 'TEST-ADJ-AO'", "append-only")
+        self.reject("update costdb.assembly_components set qty_per_assembly_unit = 9 where assembly_id = 'ASM-WALL-001' and line_no = 1", "append-only")
+        self.reject("delete from costdb.assembly_components where assembly_id = 'ASM-WALL-001' and line_no = 1", "append-only")
+        self.reject("update costdb.crew_members set quantity = 9", "append-only")
+        self.reject("truncate costdb.calculation_run_lines", "TRUNCATE is forbidden")
+        self.reject("truncate costdb.assembly_components", "TRUNCATE is forbidden")
+        self.reject("truncate costdb.adjustment_factors", "TRUNCATE is forbidden")
+
+    def test_index_values_inherit_the_source_gate(self):
+        self.source("TEST-SRC-SNIP-I")
+        self.source("TEST-SRC-PROH-I", method="fetched_primary", reuse="prohibited")
+        ins = "insert into costdb.indices (index_id, publisher, series_code, name, frequency, applies_to, source_id) values ('%s','p','%s','n','monthly','material','%s')"
+        psql(ins % ("TEST-IDX-SN", "sn", "TEST-SRC-SNIP-I"))
+        val = ("insert into costdb.index_values (index_id, period_start, vintage_date, value, retrieved_at, source_locator, review_status, reviewed_by, reviewed_at) "
+               "values ('%s','2026-01-01','2026-02-01',100,'2026-02-01T00:00:00Z','x','%s',%s)")
+        self.reject(val % ("TEST-IDX-SN", "validated", "'x',now()"), "never fetched")
+        psql(val % ("TEST-IDX-SN", "unreviewed", "null,null"))
+        self.reject(ins % ("TEST-IDX-PR", "pr", "TEST-SRC-PROH-I"), "must not be stored")
 
     def test_schema_documentation_is_complete(self):
         n = psql("select count(*) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace "

@@ -419,14 +419,23 @@ TABLES: dict[str, tuple[str, dict[str, str]]] = {
         "recommended_source_ids": "Source-register ids suggested for this target.",
         "status": "open / in_progress / captured / blocked.",
         "blocked_reason": "Why it is blocked."}),
-    "review_events": ("Append-only log of every change of review_status (written by a trigger): who, when, old and new status.", {
+    "review_events": ("Append-only log of every change of review_status or of the recorded reviewer (written by a trigger): who, when, old and new status.", {
         "event_id": "Sequence id.",
         "record_table": "Table of the reviewed record.",
         "record_id": "Primary key of the record (composite keys joined with '|').",
         "old_status": "Status before the change.",
         "new_status": "Status after the change.",
-        "changed_by": "reviewed_by of the new row.",
+        "changed_by": "reviewed_by of the new row (a change of reviewer with an unchanged status is logged too).",
         "changed_at": "reviewed_at of the new row (or now()).",
+        "db_user": "Database session user that made the change."}),
+    "change_log": ("Append-only log of every UPDATE/DELETE of reference and approval data that stays editable (sources, regions, categories, trades, equipment types, assumption approvals): complete old and new row, written by a trigger.", {
+        "event_id": "Sequence id.",
+        "table_name": "Table of the changed record.",
+        "record_id": "Primary key of the changed record.",
+        "op": "UPDATE or DELETE.",
+        "old_row": "The whole row before the change (JSON).",
+        "new_row": "The whole row after the change (JSON); NULL for DELETE.",
+        "changed_at": "When the change was made.",
         "db_user": "Database session user that made the change."}),
     "validation_issues": ("Findings of the independent validation, one row per violation.", {
         "issue_id": "Sequence id.",

@@ -101,9 +101,32 @@ class RetailImportTest(unittest.TestCase):
         self.assertTrue(any("evidence_excerpt" in e for e in rep.rejected[0][1]), rep.rejected)
         rep2 = self.run_rows(row(price_amount="1250", original_price_text="$1,250.00", evidence_excerpt="TEST listing: $1,250.00 pallet"))
         self.assertEqual(rep2.rejected, [], rep2.rejected)
-        self.assertEqual(retail.price_tokens("was $12.50, now 9.99 (2 for $20)"), {D("12.50"), D("9.99"), D("2"), D("20")})
+        self.assertEqual(retail.price_tokens("was $12.50, now 9.99 (2 for $20)"), {D("12.50"), D("20")})       # '$' marks the prices when present
+        self.assertEqual(retail.price_tokens("price 12.50 per sheet, item 5 of 10"), {D("12.50"), D("5"), D("10")})
+        rep4 = self.run_rows(row(price_amount="5", original_price_text="$5", evidence_excerpt="Item 5 of 10: $12.98 each"))
+        self.assertTrue(any("evidence_excerpt" in e for e in rep4.rejected[0][1]), rep4.rejected)             # 5 is not the $ price
+        rep5 = self.run_rows(row(price_amount="8", original_price_text="$8", evidence_excerpt="4x8 sheet $12.98"))
+        self.assertTrue(any("evidence_excerpt" in e for e in rep5.rejected[0][1]), rep5.rejected)
         rep3 = self.run_rows(row(price_amount="12.98", original_price_text="$11.98", evidence_excerpt="TEST listing: $12.98"))
         self.assertTrue(any("original_price_text" in e for e in rep3.rejected[0][1]), rep3.rejected)
+
+    def test_zero_price_scale_promo_channel_and_zip_cross_check(self):
+        self.assertTrue(any("must be > 0" in e for e in self.run_rows(row(price_amount="0", original_price_text="$0", evidence_excerpt="$0 free")).rejected[0][1]))
+        r = self.run_rows(row(price_amount="12.98765", original_price_text="$12.98765", evidence_excerpt="TEST $12.98765"))
+        self.assertTrue(any("more than 4 decimals" in e for e in r.rejected[0][1]))
+        r = self.run_rows(row(price_channel="retail_promo", promo_flag="false"))
+        self.assertTrue(any("promo_flag cannot be false" in e for e in r.rejected[0][1]))
+        ok = self.run_rows(row(price_channel="retail_promo"))
+        self.assertEqual(ok.rejected, [])
+        self.assertTrue(self.db["price_observations"][-1]["promo_flag"])
+        r = retail.import_capture([row(region_id="REG-CA-073", mpn="TB-9", retailer_sku="SKU-9")], self.db, today=TODAY, zip_map={"90245": "REG-CA-037"})
+        self.assertTrue(any("contradicts the zip map" in e for e in r.rejected[0][1]))
+
+    def test_the_same_instant_in_another_offset_is_the_same_observation(self):
+        self.assertEqual(self.run_rows(row(retrieved_at="2026-10-20T15:00:00+00:00")).rejected, [])
+        rep = self.run_rows(row(retrieved_at="2026-10-20T08:00:00-07:00"))
+        self.assertEqual((rep.rejected, len(rep.skipped_duplicates), len(rep.accepted_observations)), ([], 1, 0))
+        self.assertEqual(len(self.db["price_observations"]), 1)
 
     def test_naive_timestamps_are_refused(self):
         rep = self.run_rows(row(retrieved_at="2026-10-20T15:00:00"))
@@ -225,6 +248,27 @@ class OewsTest(unittest.TestCase):
         self.assertTrue(all("row 3" in n for n in notes))
         self.assertEqual({r["base_wage_hr"] for r in out}, {D("30.00"), D("28.50")})
         self.assertIn("oews_fixture.csv, data row 2", out[0]["source_locator"])
+
+    LAYOUT = ("AREA,AREA_TITLE,OCC_CODE,OCC_TITLE,I_GROUP,OWN_CODE,NAICS,O_GROUP,H_MEAN,H_MEDIAN\n"
+              "99999,Testville,47-2081,Drywall installers,cross-industry,1235,000000,detailed,30.10,29.00\n"
+              "99999,Testville,47-2081,Drywall installers,sector,1235,230000,detailed,45.55,44.00\n"
+              "99999,Testville,47-2081,Drywall installers,cross-industry,5,000000,detailed,50.00,49.00\n"
+              "99999,Testville,47-2000,Construction trades,cross-industry,1235,000000,minor,31.00,30.00\n")
+
+    def test_industry_ownership_and_group_rows_are_not_mixed(self):
+        rows = list(csv.DictReader(io.StringIO(self.LAYOUT)))
+        out, notes = oews.parse_oews(rows, {"47-2081": "TR-DRYW", "47-2000": "TR-CARP"}, {"99999": "REG-CA-037"}, "SRC-T", date(2025, 5, 1), "f", None, "t")
+        self.assertEqual(sorted(str(r["base_wage_hr"]) for r in out), ["29.00", "30.10"])             # only the cross-industry, all-ownership, detailed row
+        self.assertEqual(len([n for n in notes if "skipped" in n]), 3)
+        self.assertIn("I_GROUP", out[0]["evidence_excerpt"])
+
+    def test_two_rows_for_one_key_with_different_wages_stop_the_import(self):
+        csv_ = ("AREA,AREA_TITLE,OCC_CODE,OCC_TITLE,H_MEAN,H_MEDIAN\n99999,T,47-2081,D,30.10,29.00\n99999,T,47-2081,D,45.55,44.00\n")
+        with self.assertRaises(oews.OewsError):
+            oews.parse_oews(list(csv.DictReader(io.StringIO(csv_))), {"47-2081": "TR-DRYW"}, {"99999": "REG-CA-037"}, "SRC-T", date(2025, 5, 1), "f", None, "t")
+        same = ("AREA,AREA_TITLE,OCC_CODE,OCC_TITLE,H_MEAN,H_MEDIAN\n99999,T,47-2081,D,30.10,29.00\n99999,T,47-2081,D,30.10,29.00\n")
+        out, _ = oews.parse_oews(list(csv.DictReader(io.StringIO(same))), {"47-2081": "TR-DRYW"}, {"99999": "REG-CA-037"}, "SRC-T", date(2025, 5, 1), "f", None, "t")
+        self.assertEqual(len(out), 2)                                                                # an exact repeat is harmless
 
     def test_missing_columns_fail_loudly(self):
         bad = [{"AREA": "1", "AREA_TITLE": "x", "OCC_CODE": "47-2031", "H_MEAN": "1"}]       # H_MEDIAN absent

@@ -15,7 +15,7 @@ LOAD_ORDER = [
     "crews", "crew_members", "productivity_observations",
     "work_items", "work_item_components", "assemblies", "assembly_components",
     "bid_benchmarks", "indices", "index_values", "adjustment_factors", "assumptions",
-    "capture_targets", "validation_issues", "review_events",
+    "capture_targets", "validation_issues", "review_events", "change_log",
 ]
 
 

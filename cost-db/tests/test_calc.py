@@ -297,6 +297,7 @@ class UnitCostTest(unittest.TestCase):
 class LaborRateTest(unittest.TestCase):
     def setUp(self):
         self.db = S.real_db()
+        S.trust_regions(self.db)
         S.add_source(self.db)
         self.base = dict(use_context="statistical_reference")
 
@@ -391,6 +392,7 @@ class LaborRateTest(unittest.TestCase):
 class CrewEquipmentTest(unittest.TestCase):
     def test_operator_cannot_be_counted_in_labor_and_equipment(self):
         db = S.real_db()
+        S.trust_regions(db)
         S.add_source(db)
         S.add_labor_actual(db, "TEST-LRT-CEM", "TR-CEM", 45)
         S.add_labor_actual(db, "TEST-LRT-OPR", "TR-OPR", 55)

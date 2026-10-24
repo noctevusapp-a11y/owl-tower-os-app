@@ -82,12 +82,18 @@ def _b(v: str) -> Optional[bool]:
 _NUM_TOKEN = re.compile(r"(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(?![\d])")
 
 
+_DOLLAR_TOKEN = re.compile(r"\$\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(?![\d])")
+
+
+def _tokens(rx: "re.Pattern", text: str) -> set:
+    return {Decimal(m.group(1).replace(",", "") + (m.group(2) or "")) for m in rx.finditer(text)}
+
+
 def price_tokens(text: str) -> set:
-    """Every number written in `text` as a WHOLE token ('$12.50' yields 12.50, never 2.50)."""
-    out = set()
-    for m in _NUM_TOKEN.finditer(text):
-        out.add(Decimal(m.group(1).replace(",", "") + (m.group(2) or "")))
-    return out
+    """The prices written in `text`: when the text contains any '$'-marked amount only those count ('Item 5 of 10: $12.98' shows 12.98,
+    not 5 or 10); a text without a '$' falls back to every whole number token ('$12.50' never yields 2.50)."""
+    dollars = _tokens(_DOLLAR_TOKEN, text)
+    return dollars if dollars else _tokens(_NUM_TOKEN, text)
 
 
 def _dec(v: str, name: str) -> Decimal:
@@ -146,8 +152,12 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
             price = _dec(g["price_amount"], "price_amount")
             if qty <= 0:
                 errs.append("pack_content_qty must be > 0")
-            if price < 0:
-                errs.append("price_amount must be >= 0")
+            if price <= 0:
+                errs.append("price_amount must be > 0 (a zero price is a missing number, not a price)")
+            if price != price.quantize(Decimal("0.0001")):
+                errs.append("price_amount has more than 4 decimals: the database would store a different number than the engine uses")
+            if qty != qty.quantize(Decimal("0.000001")):
+                errs.append("pack_content_qty has more than 6 decimals")
             if g["pack_content_unit_id"] not in units:
                 errs.append(f"unknown unit {g['pack_content_unit_id']} (use TON_SHORT/GAL_US etc.)")
             observed = date.fromisoformat(g["observed_date"])
@@ -168,10 +178,17 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
             avail = g["availability"] or "unknown"
             if avail not in AVAIL:
                 errs.append(f"availability must be one of {sorted(AVAIL)}")
+            promo = _b(g["promo_flag"])
+            if g["price_channel"] == "retail_promo":
+                if promo is False:
+                    errs.append("channel retail_promo is a promotional price: promo_flag cannot be false")
+                promo = True
             contractor = _b(g["is_contractor_cost"]) or False
             if contractor and g["price_channel"] not in ("pro_account_quote", "distributor_quote", "supplier_quote"):
                 errs.append("is_contractor_cost=true requires a quote channel; retail prices are not contractor cost")
             region_id = g["region_id"] or (zip_map.get(g["zip"]) if g["zip"] else None) or None
+            if g["region_id"] and g["zip"] and zip_map.get(g["zip"]) not in (None, g["region_id"]):
+                errs.append(f"region_id {g['region_id']} contradicts the zip map ({g['zip']} -> {zip_map[g['zip']]})")
             if region_id and region_id not in regions:
                 errs.append(f"unknown region_id {region_id}")
             if g["zip"] and not re.fullmatch(r"\d{5}", g["zip"]):
@@ -231,7 +248,7 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 rep.accepted_products.append(pid)
 
             oid = make_id("OBS", pid, g["retailer_source_id"], g["retailer_sku"], g["store_ref"], g["zip"], g["observed_date"],
-                          g["price_channel"], g["qty_tier_min"], str(price), retrieved.isoformat())
+                          g["price_channel"], g["qty_tier_min"], str(price), retrieved.astimezone(timezone.utc).isoformat())
             this_key = (pid, g["retailer_source_id"], g["retailer_sku"] or None, g["store_ref"] or None, g["zip"] or None, observed.isoformat(),
                         g["price_channel"], _dec(g["qty_tier_min"], "qty_tier_min") if g["qty_tier_min"] else None, price,
                         retrieved.astimezone(timezone.utc).isoformat())
@@ -250,7 +267,7 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 "is_contractor_cost": contractor, "sold_as_label": g["sale_unit_label"], "pack_content_qty": qty,
                 "pack_content_unit_id": g["pack_content_unit_id"], "availability": avail,
                 "delivery_included": _b(g["delivery_included"]), "sales_tax_included": _b(g["sales_tax_included"]),
-                "promo_flag": _b(g["promo_flag"]) or False, "qty_limit_text": g["qty_limit_text"] or None,
+                "promo_flag": bool(promo), "qty_limit_text": g["qty_limit_text"] or None,
                 "qty_tier_min": _dec(g["qty_tier_min"], "qty_tier_min") if g["qty_tier_min"] else None,
                 "url": g["url"] or None, "source_locator": g["url"] or None, "evidence_excerpt": g["evidence_excerpt"],
                 "raw_file_sha256": None, "capture_method": g["capture_method"], "captured_by": g["captured_by"],

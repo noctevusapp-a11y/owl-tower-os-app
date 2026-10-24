@@ -30,7 +30,6 @@ Validated records in total: **0**. Sources fetched from a primary host: **0** of
 
 ## Automated test suite
 
-`python3 tests/run_tests.py` → **Ran 229 tests in 15.462s, ALL PASSED**   
-(PostgreSQL tests run only when `PGHOST`/`PGPORT`/`PGUSER` point to a scratch server.)
+_(test run skipped in this build)_
 
 Tests cover: exact unit conversions; spec-key equivalence; hand-computed unit cost, labor, markup/margin, index and region adjustments; strict vs assumption modes; missing-input reporting; operator and benefit double counting; prevailing-wage refusal for private projects; assembly aggregation and scope overlap; every validator rule firing on broken data; promotion gate; retail-capture importer; BLS/OEWS/PDF parsers on format fixtures; PostgreSQL constraints, append-only triggers and CSV import; data gates on the real files. Synthetic fixtures live only in `tests/` and are rejected from `data/`.

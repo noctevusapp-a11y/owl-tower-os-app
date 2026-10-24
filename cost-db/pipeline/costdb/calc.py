@@ -17,11 +17,13 @@ Principles (docs/methodology.md):
 """
 from __future__ import annotations
 
+import decimal
+import functools
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field, replace
 from datetime import date, datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Context, Decimal, ROUND_HALF_UP
 from fractions import Fraction
 from typing import Any, Optional
 
@@ -40,10 +42,43 @@ Q6 = D("0.000001")
 CONSUMPTION_SELECTOR_KEYS = ("film_thickness", "substrate_condition", "application_method", "conditions")
 OPERATOR_TRADES = ("TR-OPR",)
 LABOR_BASIS_TYPES = {"stat_loaded": ("stat_wage",), "company_actual": ("company_actual",)}
+EQUIPMENT_RATE_BASES = ("rental_market", "owned_cost_schedule", "dot_schedule", "usace_schedule")
+# Preference among price channels at equal region class: a quote for this buyer beats a published list, which beats retail.
+CHANNEL_RANK = {"pro_account_quote": 0, "distributor_quote": 0, "supplier_quote": 0, "public_price_list": 1, "manufacturer_msrp": 2,
+                "retail_public": 3, "retail_promo": 3}
+# Mirror of the schema CHECK ranges: CSV-loaded rows never passed PostgreSQL, so the engine refuses out-of-range numbers itself.
+RANGES = {
+    "price_observations": (("price_amount", ">", 0), ("pack_content_qty", ">", 0)),
+    "products": (("content_qty", ">", 0),),
+    "labor_rates": (("base_wage_hr", ">=", 0), ("fringe_hr", ">=", 0), ("payroll_tax_hr", ">=", 0), ("workers_comp_hr", ">=", 0),
+                    ("other_employer_cost_hr", ">=", 0), ("total_hr", ">=", 0)),
+    "burden_rates": (("rate", ">=", 0), ("wage_cap_annual", ">", 0)),
+    "equipment_rates": (("ownership_cost_hr", ">=", 0), ("operating_cost_hr", ">=", 0), ("fuel_cost_hr", ">=", 0), ("rental_rate_hr", ">=", 0),
+                        ("rental_rate_day", ">=", 0), ("delivery_pickup_cost", ">=", 0)),
+    "productivity_observations": (("crew_size", ">", 0), ("shift_hours", ">", 0), ("daily_output", ">", 0), ("person_hours_per_unit_reported", ">", 0)),
+    "crews": (("shift_hours", ">", 0), ("shift_hours", "<=", 24)),
+    "crew_members": (("quantity", ">", 0), ("hours_per_shift", ">", 0)),
+    "adjustment_factors": (("factor_value", ">", 0),),
+    "index_values": (("value", ">", 0),),
+    "product_consumption": (("coverage_qty", ">", 0), ("coats", ">", 0), ("per_qty", ">", 0)),
+}
+MAX_ANNUAL_PAID_HOURS = 8784          # hours in a leap year: a larger value cannot be paid hours per year
 
 
 def _d(x: Any) -> Decimal:
     return x if isinstance(x, Decimal) else D(str(x))
+
+
+CALC_CTX = Context(prec=40, rounding=ROUND_HALF_UP)
+
+
+def _in_ctx(fn):
+    """Run a public engine function in its own Decimal context: results never depend on the host application's precision."""
+    @functools.wraps(fn)
+    def wrapper(*a, **kw):
+        with decimal.localcontext(CALC_CTX):
+            return fn(*a, **kw)
+    return wrapper
 
 
 def q10(x: Decimal) -> Decimal:
@@ -116,6 +151,8 @@ class RunParams:
     annual_paid_hours: Optional[Decimal] = None  # needed when a burden has an annual wage cap
     max_rate_age_days: Optional[int] = None      # stale-rate flag only when set
     equipment_basis: str = "hourly"              # hourly | rental_day
+    equipment_rate_basis: Optional[str] = None   # rental_market | owned_cost_schedule | dot_schedule | usace_schedule (None: several = ambiguous)
+    equipment_capacity: Optional[str] = None     # exact capacity_raw to pick when one equipment type has rates for several capacities
     conditions: tuple[str, ...] = ()
     quantity: Optional[Decimal] = None           # quantity of the TARGET (work-item or assembly output unit)
     include_optional: bool = False               # components flagged is_optional are priced only when True
@@ -140,6 +177,9 @@ class RunParams:
         need(self.wage_class in WAGE_CLASSES, f"wage_class must be one of {WAGE_CLASSES}")
         need(self.burden_base in BURDEN_BASES, f"burden_base must be one of {BURDEN_BASES}")
         need(self.equipment_basis in EQUIPMENT_BASES, f"equipment_basis must be one of {EQUIPMENT_BASES}")
+        need(self.equipment_rate_basis is None or self.equipment_rate_basis in EQUIPMENT_RATE_BASES,
+             f"equipment_rate_basis must be None or one of {EQUIPMENT_RATE_BASES}")
+        need(self.equipment_capacity is None or bool(str(self.equipment_capacity).strip()), "equipment_capacity must be non-empty or None")
         self.channels = tuple(self.channels)
         bad = [c for c in self.channels if c not in ALL_CHANNELS]
         need(not bad, f"unknown price channel(s) {bad}")
@@ -150,12 +190,13 @@ class RunParams:
             v = getattr(self, name)
             if v is not None:
                 v = _d(v)
-                need(v > 0, f"{name} must be > 0")
+                need(v.is_finite() and v > 0, f"{name} must be a finite number > 0")
+                need(name != "annual_paid_hours" or v <= MAX_ANNUAL_PAID_HOURS, f"annual_paid_hours must be <= {MAX_ANNUAL_PAID_HOURS} (hours in a leap year)")
                 setattr(self, name, v)
         for name in ("max_price_age_days", "max_rate_age_days"):
             v = getattr(self, name)
             need(v is None or (isinstance(v, int) and not isinstance(v, bool) and v >= 0), f"{name} must be a non-negative integer or None")
-        need(self.known_at is None or isinstance(self.known_at, date), "known_at must be a date or None")
+        need(self.known_at is None or (isinstance(self.known_at, date) and not isinstance(self.known_at, datetime)), "known_at must be a date (not a datetime) or None")
         need(self.classification is None or bool(str(self.classification).strip()), "classification must be non-empty or None")
 
     @property
@@ -202,6 +243,14 @@ class Missing(Exception):
         super().__init__(f"{code}: {needed} - {reason}")
         self.info = {"code": code, "needed": needed, "reason": reason, "how_to_fill": hint}
         self.blocking = blocking
+
+
+DATA_ERRORS = (ArithmeticError, TypeError, ValueError, KeyError, AttributeError, IndexError)
+
+
+def _data_error(ref: str, e: Exception) -> "Missing":
+    """A malformed in-memory row (CSV-loaded data never passed PostgreSQL) is a data error of that component, not a traceback."""
+    return Missing("DATA_ERROR", ref, f"{type(e).__name__}: {e}", "fix the malformed record (run the validator: it names the row)", blocking=True)
 
 
 class MultiMissing(Exception):
@@ -278,75 +327,90 @@ class Engine:
     def _refresh(self) -> None:
         db = self.db
 
-        def group(table: str, key) -> dict:
+        def group(table: str, key, pk) -> dict:
+            """Rows grouped by `key`, each group sorted by primary key: the physical row order never reaches a run id."""
             out: dict = {}
             for r in db[table]:
                 out.setdefault(key(r), []).append(r)
+            for rows in out.values():
+                rows.sort(key=lambda r: str(pk(r)))
             return out
 
         self.units = Units(db["units"])
-        self._chains: dict[str, list[str]] = {}
+        self._chains: dict[tuple, list[str]] = {}
         self._regions = {r["region_id"]: r for r in db["regions"]}
+        self._trades = {r["trade_code"]: r for r in db["trades"]}
         self._sources = {r["source_id"]: r for r in db["sources"]}
         self._products = {r["product_id"]: r for r in db["products"]}
-        self._products_by_key = group("products", lambda r: r["spec_key"])
-        self._obs = group("price_observations", lambda r: r["product_id"])
-        self._consumption = group("product_consumption", lambda r: r["product_id"])
+        self._products_by_key = group("products", lambda r: r["spec_key"], lambda r: r["product_id"])
+        self._obs = group("price_observations", lambda r: r["product_id"], lambda r: r["observation_id"])
+        self._consumption = group("product_consumption", lambda r: r["product_id"], lambda r: r["consumption_id"])
         self._crews = {r["crew_id"]: r for r in db["crews"]}
-        self._members = group("crew_members", lambda r: r["crew_id"])
+        self._members = group("crew_members", lambda r: r["crew_id"], lambda r: r["crew_member_id"])
         self._equip_types = {r["equipment_type_code"]: r for r in db["equipment_types"]}
         self._prod_obs = {r["productivity_id"]: r for r in db["productivity_observations"]}
-        self._labor = group("labor_rates", lambda r: r["trade_code"])
-        self._burden = group("burden_rates", lambda r: r["burden_type"])
-        self._equip_rates = group("equipment_rates", lambda r: r["equipment_type_code"])
+        self._labor = group("labor_rates", lambda r: r["trade_code"], lambda r: r["labor_rate_id"])
+        self._labor_by_id = {r["labor_rate_id"]: r for r in db["labor_rates"]}
+        self._burden = group("burden_rates", lambda r: r["burden_type"], lambda r: r["burden_id"])
+        self._equip_rates = group("equipment_rates", lambda r: r["equipment_type_code"], lambda r: r["equipment_rate_id"])
+        self._equip_by_id = {r["equipment_rate_id"]: r for r in db["equipment_rates"]}
         self._indices = {r["index_id"]: r for r in db["indices"]}
-        self._index_values = group("index_values", lambda r: r["index_id"])
-        self._factors = list(db["adjustment_factors"])
-        self._assumptions = group("assumptions", lambda r: r["applies_to_ref"])
+        self._index_values = group("index_values", lambda r: r["index_id"], lambda r: (r["period_start"], r["vintage_date"]))
+        self._factors = sorted(db["adjustment_factors"], key=lambda r: r["factor_id"])
+        self._assumptions = group("assumptions", lambda r: r["applies_to_ref"], lambda r: r["assumption_id"])
         self._wis = {(r["work_item_id"], r["version"]): r for r in db["work_items"]}
-        self._wi_comps = group("work_item_components", lambda r: (r["work_item_id"], r["work_item_version"]))
+        self._wi_comps = group("work_item_components", lambda r: (r["work_item_id"], r["work_item_version"]), lambda r: r["line_no"])
         self._asms = {(r["assembly_id"], r["version"]): r for r in db["assemblies"]}
-        self._asm_comps = group("assembly_components", lambda r: (r["assembly_id"], r["assembly_version"]))
+        self._asm_comps = group("assembly_components", lambda r: (r["assembly_id"], r["assembly_version"]), lambda r: r["line_no"])
+
+    def _check_params(self, p: RunParams) -> None:
+        if p.region_id not in self._regions:
+            raise ValueError(f"unknown region_id {p.region_id!r}: not in the regions table")
+        if p.time_index_id is not None and p.time_index_id not in self._indices:
+            raise ValueError(f"unknown time_index_id {p.time_index_id!r}")
 
     # ------------------------------------------------------------------------------------------------ regions
-    def _chain(self, region_id: str) -> list[str]:
-        if region_id in self._chains:
-            return self._chains[region_id]
+    def _chain(self, region_id: str, p: RunParams) -> list[str]:
+        """The region and its ancestors. A parent link is followed only from a USABLE region row: strict mode never reads an
+        unreviewed/assumed/flagged/rejected hierarchy (the link is a claim of the child row)."""
+        key = (region_id, p.mode, p.min_review, p.known)
+        if key in self._chains:
+            return self._chains[key]
         chain, seen = [], set()
         cur: Optional[str] = region_id
         while cur and cur not in seen:
             seen.add(cur)
             chain.append(cur)
             row = self._regions.get(cur)
-            cur = row["parent_region_id"] if row else None
-        self._chains[region_id] = chain
+            cur = row["parent_region_id"] if row and self._why_not(row, p) is None else None
+        self._chains[key] = chain
         return chain
 
-    def _state_code(self, region_id: str) -> Optional[str]:
-        for r in self._chain(region_id):
+    def _state_code(self, region_id: str, p: RunParams) -> Optional[str]:
+        for r in self._chain(region_id, p):
             row = self._regions.get(r)
-            if row and row.get("state_code"):
+            if row and row.get("state_code") and self._why_not(row, p) is None:
                 return row["state_code"]
         return None
 
-    def _rank_up(self, row_region: Optional[str], target: str) -> Optional[int]:
+    def _rank_up(self, row_region: Optional[str], target: str, p: RunParams) -> Optional[int]:
         """Rate/burden regions: 0 = exact region, n = n-th ancestor of the target. A rate for a SMALLER area is never
         stretched over a larger one, and an unrelated region is never used. None region = nationwide, least specific."""
         if row_region is None:
             return 99
-        chain = self._chain(target)
+        chain = self._chain(target, p)
         return chain.index(row_region) if row_region in chain else None
 
-    def _price_region_class(self, row_region: Optional[str], target: str) -> Optional[tuple[int, int]]:
+    def _price_region_class(self, row_region: Optional[str], target: str, p: RunParams) -> Optional[tuple[int, int]]:
         """(class, n): 0 exact, 1 sub-region (the row's region lies inside the target), 2 ancestor (covers the target)."""
         if row_region is None:
             return None
         if row_region == target:
             return (0, 0)
-        tchain = self._chain(target)
+        tchain = self._chain(target, p)
         if row_region in tchain:
             return (2, tchain.index(row_region))
-        rchain = self._chain(row_region)
+        rchain = self._chain(row_region, p)
         if target in rchain:
             return (1, rchain.index(target))
         return None
@@ -360,17 +424,43 @@ class Engine:
             return f"source {sid} is {src['review_status']}"
         if src["reuse_status"] in NO_DATA_USE:
             return f"source {sid} reuse_status={src['reuse_status']}: its values are never calculation inputs"
-        if src["verification_method"] == "synthetic_test_fixture" and not p.allow_synthetic:
+        synthetic = src["verification_method"] == "synthetic_test_fixture"
+        if synthetic and not p.allow_synthetic:
             return f"source {sid} is a synthetic test fixture"
+        if p.min_review == "validated" and src["verification_method"] != "fetched_primary" and not synthetic:
+            return f"source {sid} was never fetched (verification_method={src['verification_method']}): a verified result cannot rest on it"
         return None
 
-    def _why_not(self, row: dict, p: RunParams) -> Optional[str]:
-        """The ONE usability test. Returns the reason a record may not be used, or None."""
+    def _range_issue(self, table: str, row: dict) -> Optional[str]:
+        for col, op, lim in RANGES.get(table, ()):
+            v = row.get(col)
+            if v is None:
+                continue
+            try:
+                d = _d(v)
+            except Exception:
+                return f"{col}={v!r} is not a number"
+            if not d.is_finite():
+                return f"{col}={v} is not finite"
+            ok = {">": d > lim, ">=": d >= lim, "<=": d <= lim}[op]
+            if not ok:
+                return f"{col}={v} is out of range (must be {op} {lim})"
+        return None
+
+    def _why_not(self, row: dict, p: RunParams, table: Optional[str] = None) -> Optional[str]:
+        """The ONE usability test. Returns the reason a record may not be used, or None.
+
+        The review status counts as of `known_at`: a 'validated' decision recorded after that date does not exist yet for this run."""
         st = row.get("review_status")
         if st in ("flagged", "rejected"):
             return f"review_status={st}"
-        if p.min_review == "validated" and st != "validated":
-            return f"review_status={st} (floor: validated)"
+        eff = st
+        if st == "validated":
+            ra = _ts(row.get("reviewed_at"))
+            if ra is not None and ra.date() > p.known:
+                eff = "unreviewed"
+        if p.min_review == "validated" and eff != "validated":
+            return f"review_status={st} (floor: validated)" if eff == st else f"validated on {_ts(row['reviewed_at']).date().isoformat()}, after known_at {p.known.isoformat()}"
         if row.get("origin") == "missing":
             return "origin=missing"
         if row.get("origin") == "assumed" and p.mode != "with_assumptions":
@@ -378,6 +468,10 @@ class Engine:
         sid = row.get("source_id")
         if sid:
             why = self._source_issue(sid, p)
+            if why:
+                return why
+        if table:
+            why = self._range_issue(table, row)
             if why:
                 return why
         return None
@@ -436,6 +530,13 @@ class Engine:
                           "supersede all but one", blocking=False)
         return ok[0] if ok else None
 
+    def _assumption_note(self, ref: str, types: tuple, p: RunParams) -> str:
+        """Why a proposed/approved assumption for `ref` could not be used (empty when none exists or strict mode)."""
+        if p.mode != "with_assumptions":
+            return ""
+        notes = [f"{a['assumption_id']}: {self._assumption_issue(a, types, p)}" for a in self._assumptions.get(ref, []) if self._assumption_issue(a, types, p)]
+        return f" (assumption(s) for {ref} not usable - {'; '.join(notes[:3])})" if notes else ""
+
     @staticmethod
     def _assumption_input(a: dict, unit: Optional[str] = None) -> dict:
         return _inp("assumptions", a["assumption_id"], "value_numeric", a["value_numeric"], unit or a.get("unit_id"), "assumed",
@@ -456,7 +557,7 @@ class Engine:
         idx = self._indices.get(index_id)
         if idx is None:
             raise Missing("INDEX_UNKNOWN", f"index {index_id}", "index series not in indices table")
-        why = self._why_not(idx, p)
+        why = self._why_not(idx, p, 'indices')
         if why:
             raise Missing("INDEX_UNUSABLE", f"index {index_id}", why)
         k = "material" if kind == "other_direct" else kind
@@ -467,7 +568,7 @@ class Engine:
     def _index_value(self, idx: dict, d: date, p: RunParams, allow_fallback: bool = False) -> tuple[Decimal, dict]:
         start = self._period_start(idx["frequency"], d)
         vals = [v for v in self._index_values.get(idx["index_id"], [])
-                if self._why_not(v, p) is None and v["vintage_date"] <= p.known and self._known(v, p) is None]
+                if self._why_not(v, p, 'index_values') is None and v["vintage_date"] <= p.known and self._known(v, p) is None]
         exact = [v for v in vals if v["period_start"] == start]
         fallback = False
         if exact:
@@ -484,7 +585,7 @@ class Engine:
 
     # ----------------------------------------------------------------------------------------- factor selection
     def _factor_issue(self, f: dict, kind: str, p: RunParams) -> Optional[str]:
-        why = self._why_not(f, p)
+        why = self._why_not(f, p, 'adjustment_factors')
         if why:
             return why
         if f.get("valid_from") and f["valid_from"] > p.as_of:
@@ -551,7 +652,7 @@ class Engine:
         for o in self._obs.get(prod["product_id"], []):
             oid = o["observation_id"]
             try:
-                why = self._why_not(o, p)
+                why = self._why_not(o, p, 'price_observations')
                 if why:
                     raise Excluded(why)
                 if o["observed_at"] > p.as_of:
@@ -561,7 +662,7 @@ class Engine:
                     raise Excluded(kn)
                 if o["price_channel"] not in p.effective_channels:
                     raise Excluded(f"channel {o['price_channel']} not accepted" + (" (retail needs accept_retail_proxy=True)" if o["price_channel"] in RETAIL_CHANNELS else ""))
-                if o["promo_flag"]:
+                if o["promo_flag"] or o["price_channel"] == "retail_promo":
                     raise Excluded("promotional price")
                 if o.get("currency") not in (None, "USD"):
                     raise Excluded(f"currency {o.get('currency')}")
@@ -580,7 +681,7 @@ class Engine:
                     need_content = need_qty / _frac(m)
                     if need_content < _d(o["qty_tier_min"]):
                         raise Excluded(f"order of {q6(need_content)} {o['pack_content_unit_id']} is below the tier minimum {o['qty_tier_min']}")
-                cls = self._price_region_class(o.get("region_id"), p.region_id)
+                cls = self._price_region_class(o.get("region_id"), p.region_id, p)
                 adj: dict[str, Any] = {}
                 flags: list[str] = []
                 if cls is None:
@@ -589,9 +690,11 @@ class Engine:
                     f = self._region_factor(o["region_id"], p.region_id, kind, p)
                     if f is None:
                         raise Excluded(f"no usable region factor {o['region_id']}->{p.region_id}")
-                    adj["region_factor"] = {"factor_id": f["factor_id"], "factor_value": str(f["factor_value"])}
+                    adj["region_factor"] = {"factor_id": f["factor_id"], "factor_value": str(f["factor_value"]), "origin": f["origin"]}
                     cls = (3, 0)
                     flags.append("REGION_FACTOR_APPLIED")
+                    if f["origin"] == "assumed":
+                        flags.append(f"ASSUMED_REGION_FACTOR:{f['factor_id']}")
                 elif cls[0] == 1:
                     if not p.allow_subregion_prices:
                         raise Excluded(f"region {o['region_id']} is inside {p.region_id} (allow_subregion_prices=False)")
@@ -635,13 +738,21 @@ class Engine:
                 if o.get("qty_tier_min") is not None:
                     flags.append(f"QTY_TIER_PRICE:{o['qty_tier_min']}")
                 rts = _ts(o["retrieved_at"]) or datetime.min.replace(tzinfo=timezone.utc)
-                found.append({"obs": o, "price": price, "per_content": per_content, "adj": adj, "flags": flags, "cls": cls, "age": age,
-                              "sort": (cls, -o["observed_at"].toordinal(), -rts.timestamp(), oid)})
+                tier = _d(o["qty_tier_min"]) if o.get("qty_tier_min") is not None else D(0)
+                # region class, then channel (a quote beats a list beats retail), then the tier that applies to the order, then recency
+                found.append({"obs": o, "price": price, "per_content": per_content, "adj": adj, "flags": flags, "cls": cls, "age": age, "tier": tier,
+                              "sort": (cls, CHANNEL_RANK.get(o["price_channel"], 9), -tier, -o["observed_at"].toordinal(), -rts.timestamp(), oid)})
             except Excluded as e:
                 reasons.append(f"{oid}: {e}")
-        return min(found, key=lambda x: x["sort"]) if found else None
+        if not found:
+            return None
+        best = min(found, key=lambda x: x["sort"])
+        peers = [x for x in found if x["cls"] == best["cls"]]
+        if len({x["tier"] for x in peers}) > 1:
+            best["flags"].append("SEVERAL_PRICE_TIERS_ELIGIBLE")
+        return best
 
-    def _product_pool(self, c: dict, p: RunParams) -> tuple[str, list[dict], list[str]]:
+    def _product_pool(self, c: dict, p: RunParams) -> tuple[str, list[dict], list[str], int]:
         reasons: list[str] = []
         if c.get("product_id"):
             pid = c["product_id"]
@@ -657,12 +768,12 @@ class Engine:
             pool = self._products_by_key.get(key, [])
         usable = []
         for prod in pool:
-            why = self._why_not(prod, p)
+            why = self._why_not(prod, p, 'products')
             if why:
                 reasons.append(f"product {prod['product_id']}: {why}")
             else:
                 usable.append(prod)
-        return key, usable, reasons
+        return key, usable, reasons, len(pool)
 
     def _consumption_qty(self, c: dict, prod: dict, out_unit: str, p: RunParams):
         """Product quantity per unit of OUTPUT for the SAME product that is priced:
@@ -676,7 +787,7 @@ class Engine:
         rows = [r for r in self._consumption.get(pid, []) if r["application"] == app]
         ok, why_not = [], []
         for r in rows:
-            why = self._why_not(r, p)
+            why = self._why_not(r, p, 'product_consumption')
             if why:
                 why_not.append(f"{r['consumption_id']}: {why}")
                 continue
@@ -716,7 +827,8 @@ class Engine:
         if c["qty_origin"] == "missing" or c["qty_per_unit"] is None:
             a = self._assumption(f"quantity:{c['component_id']}", ("other",), p)
             if a is None:
-                raise Missing("QUANTITY_MISSING", f"quantity per unit for {c['description']}", "quantity not derivable from any collected source",
+                raise Missing("QUANTITY_MISSING", f"quantity per unit for {c['description']}",
+                              "quantity not derivable from any collected source" + self._assumption_note(f"quantity:{c['component_id']}", ("other",), p),
                               "derive from geometry/manufacturer data or add an approved assumption")
             unit = a.get("unit_id") or c.get("qty_unit_id")
             if unit is None:
@@ -737,11 +849,14 @@ class Engine:
                               "waste factor is not observed/derived; an assumed value belongs in the assumptions table",
                               "source the waste factor or add an approved assumption (waste:<component_id>)")
             w = _d(c["waste_factor"])
+            if not (D(0) <= w < D(1)):
+                raise Missing("WASTE_INVALID", f"waste factor for {c['description']}", f"waste_factor {w} is outside [0,1)", "fix the component row", blocking=True)
             return w, "observed" if c["waste_origin"] == "observed" else "derived", \
                 [_inp("work_item_components", c["component_id"], "waste_factor", w, None, c["waste_origin"], basis=c["waste_basis"])]
         a = self._assumption(f"waste:{c['component_id']}", ("waste",), p)
         if a is None:
-            raise Missing("WASTE_MISSING", f"waste factor for {c['description']}", "no waste/loss factor recorded (zero is only acceptable with a stated basis)",
+            raise Missing("WASTE_MISSING", f"waste factor for {c['description']}",
+                          "no waste/loss factor recorded (zero is only acceptable with a stated basis)" + self._assumption_note(f"waste:{c['component_id']}", ("waste",), p),
                           "record waste_factor with waste_basis, or an approved assumption")
         return _d(a["value_numeric"]), "assumed", [self._assumption_input(a, "fraction")]
 
@@ -769,9 +884,9 @@ class Engine:
         except Missing as m:
             collect.append(m)
         # ---- products
-        key, pool, reasons = None, [], []
+        key, pool, reasons, n_products = None, [], [], 0
         try:
-            key, pool, reasons = self._product_pool(c, p)
+            key, pool, reasons, n_products = self._product_pool(c, p)
         except Missing as m:
             collect.append(m)
         cands: list[dict] = []
@@ -814,7 +929,7 @@ class Engine:
         if not cands and not sel_missing and key is not None:
             if consumption and (cons_gap or not pool):
                 collect.append(Missing("CONSUMPTION_MISSING", f"manufacturer coverage for {key} / {c['consumption_application']}",
-                                       "no usable product_consumption record for any usable product",
+                                       "no usable product_consumption record for any usable product" + (f" ({'; '.join(reasons[:3])})" if reasons else ""),
                                        "extract spread rate with film thickness, coats and conditions from the product data sheet"))
             if not consumption or price_gap or not pool:
                 qu = fixed[1] if fixed else c.get("qty_unit_id")
@@ -832,7 +947,8 @@ class Engine:
                     collect.append(Missing("ASSUMPTION_UNIT", f"price:{key}", "an assumed price cannot be combined with a coverage-based quantity (no product to pair the coverage with)"))
                 if price_assumption is None and not any(m.info["code"] in ("ASSUMPTION_UNIT", "ASSUMPTION_AMBIGUOUS") for m in collect):
                     collect.append(Missing("PRICE_MISSING", f"validated price observation for spec {key}",
-                                           "; ".join(reasons[:3]) if reasons else "no usable product or observation exists",
+                                           ("; ".join(reasons[:3]) if reasons else "no usable product or observation exists")
+                                           + self._assumption_note(f"price:{key}", ("material_price",), p),
                                            f"capture price for spec_key {key} in {p.region_id} (templates/price_capture_template.csv)"))
         if collect or waste is None or (fixed is None and not consumption):
             return None
@@ -866,6 +982,13 @@ class Engine:
             for f in factors:
                 x["cost"] *= _d(f["factor_value"])
             flags += x["flags"]
+            if x["prod"].get("origin") == "assumed":
+                flags.append(f"ASSUMED_PRODUCT:{x['prod']['product_id']}")
+        if p.price_policy == "median_of_latest_per_product" and len(cands) == 1:
+            flags.append("SINGLE_PRODUCT_PRICE")
+        if n_products > len(cands) and p.price_policy == "median_of_latest_per_product":
+            flags.append(f"PRODUCTS_EXCLUDED:{n_products - len(cands)}")
+        flags += [f"ASSUMED_FACTOR:{f['factor_id']}" for f in factors if f["origin"] == "assumed"]
         inputs: list = list(winput)
         for x in cands:
             o = x["obs"]
@@ -882,6 +1005,9 @@ class Engine:
         adj_note = "".join(f" x {f['factor_value']} [{f['factor_id']}]" for f in factors)
         uniform = len({(x["eff"], x["unit"]) for x in cands}) == 1
         origins = {x["qorigin"] for x in cands} | {worigin, "observed"}
+        if any(f["origin"] == "assumed" for f in factors) or any(x["prod"].get("origin") == "assumed" for x in cands) \
+                or any(x["adj"].get("region_factor", {}).get("origin") == "assumed" for x in cands):
+            origins.add("assumed")
         summary = "assumed" if "assumed" in origins else ("mixed" if len(origins) > 1 else next(iter(origins)))
         basis = _combine_basis({_price_basis_of(x["obs"]["price_channel"]) for x in cands})
         if uniform:
@@ -904,13 +1030,13 @@ class Engine:
         """Best-scoring group of usable burden rows: score = (region rank, trade specificity, -effective_from)."""
         best_score, group = None, []
         for b in self._burden.get(btype, []):
-            if b["origin"] != "observed" or self._why_not(b, p) or self._known(b, p):
+            if b["origin"] != "observed" or self._why_not(b, p, 'burden_rates') or self._known(b, p):
                 continue
             if b.get("trade_code") not in (None, trade) or not self._in_period(b, p.as_of):
                 continue
             if p.wc_class_code is not None and btype == "workers_comp" and b.get("class_code") != p.wc_class_code:
                 continue
-            rank = self._rank_up(b.get("region_id"), p.region_id)
+            rank = self._rank_up(b.get("region_id"), p.region_id, p)
             if rank is None:
                 continue
             score = (rank, 0 if b.get("trade_code") == trade else 1, -b["effective_from"].toordinal())
@@ -949,41 +1075,59 @@ class Engine:
     @staticmethod
     def _burden_input(b: dict) -> dict:
         return _inp("burden_rates", b["burden_id"], "rate", b["rate"], b["basis"], "observed", review_status=b["review_status"],
-                    burden_type=b["burden_type"], region_id=b.get("region_id"), class_code=b.get("class_code"))
+                    burden_type=b["burden_type"], region_id=b.get("region_id"), class_code=b.get("class_code"),
+                    effective_from=b["effective_from"].isoformat(), effective_to=b["effective_to"].isoformat() if b.get("effective_to") else None,
+                    retrieved_at=str(b["retrieved_at"]) if b.get("retrieved_at") else None)
 
     def _payroll_types(self, p: RunParams) -> tuple[str, ...]:
-        state = self._state_code(p.region_id)
-        return BASE_PAYROLL_TYPES + STATE_PAYROLL_EXTRA.get(state or "", ())
+        state = self._state_code(p.region_id, p)
+        if state is None:
+            raise Missing("REGION_STATE_UNKNOWN", f"state of region {p.region_id}",
+                          "the payroll-tax items (state UI, ETT ...) depend on the state, and no usable region row states it "
+                          f"(regions are read under the same review floor: {p.min_review}, origin assumed only in with_assumptions mode)",
+                          "review the region rows (state_code, parent links) against the official delineation, or use a state-level region")
+        return BASE_PAYROLL_TYPES + STATE_PAYROLL_EXTRA.get(state, ())
 
-    def _labor_candidate(self, trade: str, p: RunParams, want: tuple, reasons: list) -> tuple[Optional[dict], int]:
+    def _labor_candidate(self, trade: str, p: RunParams, want: tuple, reasons: list, pin: Optional[str] = None) -> tuple[Optional[dict], int]:
+        """Best labor rate row. With `pin` (crew_members.labor_rate_id) only that row may be used: it still has to pass every usability, period and
+        region test, but the automatic selectors (apprentice, wage basis, statistic, classification) are the person's explicit choice."""
         best_score, group = None, []
-        for r in self._labor.get(trade, []):
+        if pin:
+            row = self._labor_by_id.get(pin)
+            if row is None or row["trade_code"] != trade:
+                raise Missing("LABOR_RATE_PIN_UNKNOWN", f"pinned labor rate {pin} for {trade}", "the pinned rate does not exist or belongs to another trade")
+            rows = [row]
+        else:
+            rows = self._labor.get(trade, [])
+        for r in rows:
             rid = r["labor_rate_id"]
             why = None
             if r["rate_type"] not in want:
-                continue
-            if r["origin"] != "observed":
+                if not pin:
+                    continue
+                why = f"rate_type={r['rate_type']} (this run needs {'/'.join(want)})"
+            elif r["origin"] != "observed":
                 why = f"origin={r['origin']}"
-            elif self._why_not(r, p):
-                why = self._why_not(r, p)
+            elif self._why_not(r, p, 'labor_rates'):
+                why = self._why_not(r, p, 'labor_rates')
             elif self._known(r, p):
                 why = self._known(r, p)
             elif not self._in_period(r, p.as_of):
                 why = "outside its effective period"
-            elif r["apprentice"]:
+            elif r["apprentice"] and not pin:
                 why = "apprentice step"
-            elif r["wage_basis"] not in ("straight_time", "n/a"):
+            elif r["wage_basis"] not in ("straight_time", "n/a") and not pin:
                 why = f"wage_basis={r['wage_basis']}"
-            elif p.labor_basis == "stat_loaded" and r["statistic"] != p.labor_statistic:
+            elif p.labor_basis == "stat_loaded" and r["statistic"] != p.labor_statistic and not pin:
                 why = f"statistic={r['statistic']} (need {p.labor_statistic})"
             elif r["project_type"] != p.wage_class:
                 why = f"project_type={r['project_type']} (need wage_class {p.wage_class})"
             elif (r["includes_overhead"] or r["includes_profit"]):
                 why = "rate includes overhead/profit; marking it up again would double count"
-            elif p.classification is not None and _norm(r["classification_raw"]) != _norm(p.classification):
+            elif p.classification is not None and _norm(r["classification_raw"]) != _norm(p.classification) and not pin:
                 why = f"classification '{r['classification_raw']}'"
             else:
-                rank = self._rank_up(r["region_id"], p.region_id)
+                rank = self._rank_up(r["region_id"], p.region_id, p)
                 if rank is None:
                     why = f"region {r['region_id']} is not {p.region_id} or an ancestor"
                 else:
@@ -995,6 +1139,9 @@ class Engine:
                     continue
             reasons.append(f"{rid}: {why}")
         if not group:
+            if pin:
+                raise Missing("LABOR_RATE_PIN_UNUSABLE", f"pinned labor rate {pin} for {trade}", "; ".join(reasons) or "unusable",
+                              "unpin the rate or fix/validate the pinned row (a pinned rate is never replaced by an automatic pick)")
             return None, 0
         sig = {(r["classification_raw"], r["base_wage_hr"], r["fringe_hr"], r["total_hr"]) for r in group}
         if len(sig) > 1:
@@ -1003,11 +1150,13 @@ class Engine:
                           "set RunParams.classification (exact classification_raw) or supersede the wrong row")
         return sorted(group, key=lambda r: r["labor_rate_id"])[0], best_score[0]
 
+    @_in_ctx
     def labor_rate(self, trade: str, p: RunParams) -> dict:
         self._refresh()
+        self._check_params(p)
         return self._labor_rate(trade, p)
 
-    def _labor_rate(self, trade: str, p: RunParams) -> dict:
+    def _labor_rate(self, trade: str, p: RunParams, pin: Optional[str] = None) -> dict:
         """Loaded employer cost per paid hour for a trade, built from separately sourced components."""
         basis = p.labor_basis
         if basis == "prevailing_loaded" and p.project_type != "public_works":
@@ -1019,7 +1168,7 @@ class Engine:
         else:
             want = LABOR_BASIS_TYPES[basis]
         reasons: list[str] = []
-        rec, rank = self._labor_candidate(trade, p, want, reasons)
+        rec, rank = self._labor_candidate(trade, p, want, reasons, pin)
         flags: list[str] = []
         if p.project_type == "public_works" and basis != "prevailing_loaded":
             flags.append("PUBLIC_WORKS_NOT_ON_PREVAILING_BASIS")
@@ -1032,7 +1181,8 @@ class Engine:
                         "inputs": [self._assumption_input(a, "HR")], "flags": flags + ["ASSUMED_LABOR_RATE"], "origin": "assumed",
                         "governing": {"region_id": p.region_id, "effective_from": p.as_of, "effective_to": None}}
             raise Missing("LABOR_RATE_MISSING", f"{basis} rate for {trade} in {p.region_id}",
-                          f"no usable {'/'.join(want)} record" + (f" ({'; '.join(reasons[:3])})" if reasons else ""),
+                          f"no usable {'/'.join(want)} record" + (f" ({'; '.join(reasons[:3])})" if reasons else "")
+                          + self._assumption_note(f"labor_rate:{trade}:{p.region_id}", ("labor_rate",), p),
                           f"capture {'OEWS/DIR/SAM' if basis != 'company_actual' else 'company payroll'} rate for {trade}")
         if rank:
             flags.append(f"RATE_FROM_ANCESTOR_REGION:{rec['region_id']}")
@@ -1040,7 +1190,9 @@ class Engine:
             flags.append("STALE_RATE")
         inputs = [_inp("labor_rates", rec["labor_rate_id"], "base_wage_hr/fringe_hr/total_hr", rec["base_wage_hr"], "HR", "observed",
                        review_status=rec["review_status"], rate_type=rec["rate_type"], statistic=rec["statistic"], region_id=rec["region_id"],
-                       classification=rec["classification_raw"])]
+                       classification=rec["classification_raw"], effective_from=rec["effective_from"].isoformat(),
+                       effective_to=rec["effective_to"].isoformat() if rec.get("effective_to") else None,
+                       retrieved_at=str(rec["retrieved_at"]) if rec.get("retrieved_at") else None, pinned=bool(pin))]
         governing = {"region_id": rec["region_id"], "effective_from": rec["effective_from"], "effective_to": rec.get("effective_to")}
         if basis == "company_actual":
             if rec.get("total_hr") is None:
@@ -1100,7 +1252,7 @@ class Engine:
                     return
             if a is None:
                 collected.append(Missing(ref_kind + "_MISSING", f"{btype} for {trade} in {p.region_id}", "no usable burden_rates record" +
-                                         ("" if not assumption_ok else " and no approved assumption"),
+                                         ("" if not assumption_ok else " and no approved assumption" + self._assumption_note(f"burden:{btype}:{trade}", ("other",), p)),
                                          f"capture {btype} (IRS/EDD/insurer/ECEC or company cost)"))
                 return
             v = _d(a["value_numeric"])
@@ -1118,7 +1270,12 @@ class Engine:
         if not inc_f:
             burden("employer_benefits", "employer_benefits", True, "BENEFITS")
         if not inc_t:
-            for t in self._payroll_types(p):
+            try:
+                types = self._payroll_types(p)
+            except Missing as m:
+                collected.append(m)
+                types = ()
+            for t in types:
                 burden(t, t, False, "PAYROLL_TAX")
         if not inc_w:
             burden("workers_comp", "workers_comp", True, "WORKERS_COMP")
@@ -1134,43 +1291,67 @@ class Engine:
         return {"total_hr": total, "components": comps, "inputs": inputs, "flags": flags, "origin": origin, "governing": governing}
 
     # ---------------------------------------------------------------------------------------------- equipment
-    def _equipment_rate(self, etype: str, p: RunParams) -> dict:
-        best_score, group, reasons = None, [], []
-        for r in self._equip_rates.get(etype, []):
+    def _equipment_rate(self, etype: str, p: RunParams, pin: Optional[str] = None) -> dict:
+        """Equipment rate for one type. Rows of different basis (rental market / owned-cost schedule / DOT / USACE) or capacity are not
+        interchangeable: unless RunParams names them and only one remains, the choice is ambiguous - never decided by which row is newer.
+        With `pin` (crew_members.equipment_rate_id) only that row may be used (it still has to be usable, in period and in region)."""
+        reasons: list[str] = []
+        if pin:
+            row = self._equip_by_id.get(pin)
+            if row is None or row["equipment_type_code"] != etype:
+                raise Missing("EQUIPMENT_RATE_PIN_UNKNOWN", f"pinned equipment rate {pin} for {etype}", "the pinned rate does not exist or belongs to another equipment type")
+            rows = [row]
+        else:
+            rows = self._equip_rates.get(etype, [])
+        eligible: list[tuple[int, dict]] = []
+        for r in rows:
             why = None
             if r["origin"] != "observed":
                 why = f"origin={r['origin']}"
-            elif self._why_not(r, p):
-                why = self._why_not(r, p)
+            elif self._why_not(r, p, 'equipment_rates'):
+                why = self._why_not(r, p, 'equipment_rates')
             elif self._known(r, p):
                 why = self._known(r, p)
             elif not self._in_period(r, p.as_of):
                 why = "outside its effective period"
+            elif p.equipment_rate_basis is not None and r["rate_basis"] != p.equipment_rate_basis and not pin:
+                why = f"rate_basis={r['rate_basis']} (this run asks for {p.equipment_rate_basis})"
+            elif p.equipment_capacity is not None and _norm(r.get("capacity_raw") or "") != _norm(p.equipment_capacity) and not pin:
+                why = f"capacity '{r.get('capacity_raw')}' (this run asks for '{p.equipment_capacity}')"
             else:
-                rank = self._rank_up(r["region_id"], p.region_id)
+                rank = self._rank_up(r["region_id"], p.region_id, p)
                 if rank is None:
                     why = f"region {r['region_id']} is not {p.region_id} or an ancestor"
                 else:
-                    score = (rank, -r["effective_from"].toordinal())
-                    if best_score is None or score < best_score:
-                        best_score, group = score, [r]
-                    elif score == best_score:
-                        group.append(r)
+                    eligible.append((rank, r))
                     continue
             reasons.append(f"{r['equipment_rate_id']}: {why}")
-        if not group:
+        if not eligible:
+            if pin:
+                raise Missing("EQUIPMENT_RATE_PIN_UNUSABLE", f"pinned equipment rate {pin} for {etype}", "; ".join(reasons) or "unusable",
+                              "unpin the rate or fix/validate the pinned row (a pinned rate is never replaced by an automatic pick)")
             a = self._assumption(f"equipment_rate:{etype}:{p.region_id}", ("equipment_rate",), p)
             if a is not None:
-                return {"basis": "hour", "rate": _d(a["value_numeric"]), "operator_included": False, "fuel_added": D(0),
+                return {"basis": "hour", "rate": _d(a["value_numeric"]), "fuel_hr": D(0), "operator_included": False, "fuel_added": D(0),
                         "inputs": [self._assumption_input(a, "HR")], "flags": ["ASSUMED_EQUIPMENT_RATE"], "origin": "assumed"}
             raise Missing("EQUIPMENT_RATE_MISSING", f"{etype} rate in {p.region_id}", "no usable equipment_rates record" +
-                          (f" ({'; '.join(reasons[:3])})" if reasons else ""), f"capture rental/owned rate for {etype}")
-        if len({(r["rate_basis"], r["rental_rate_hr"], r["rental_rate_day"], r["ownership_cost_hr"], r["operating_cost_hr"], r["operator_included"]) for r in group}) > 1:
+                          (f" ({'; '.join(reasons[:3])})" if reasons else "") + self._assumption_note(f"equipment_rate:{etype}:{p.region_id}", ("equipment_rate",), p),
+                          f"capture rental/owned rate for {etype}")
+        best_rank = min(rk for rk, _ in eligible)
+        nearest = [r for rk, r in eligible if rk == best_rank]
+        kinds = {(r["rate_basis"], _norm(r.get("capacity_raw") or "")) for r in nearest}
+        if len(kinds) > 1:
+            raise Missing("EQUIPMENT_RATE_AMBIGUOUS", f"{etype} rate in {p.region_id}",
+                          "rows of different basis/capacity are not interchangeable: " + "; ".join(sorted(f"{b or '-'} / {c or '-'}" for b, c in kinds)),
+                          "pass RunParams.equipment_rate_basis and/or equipment_capacity, or pin the rate on the crew member")
+        newest = max(r["effective_from"] for r in nearest)
+        group = [r for r in nearest if r["effective_from"] == newest]
+        if len({(r["rental_rate_hr"], r["rental_rate_day"], r["ownership_cost_hr"], r["operating_cost_hr"], r["operator_included"]) for r in group}) > 1:
             raise Missing("EQUIPMENT_RATE_AMBIGUOUS", f"{etype} rate in {p.region_id}",
                           f"{len(group)} rows tie ({', '.join(sorted(r['equipment_rate_id'] for r in group))})", "supersede the wrong row")
         r = sorted(group, key=lambda x: x["equipment_rate_id"])[0]
         flags: list[str] = []
-        if best_score[0]:
+        if best_rank:
             flags.append(f"RATE_FROM_ANCESTOR_REGION:{r['region_id']}")
         if r.get("delivery_pickup_cost") is not None:
             flags.append(f"EQUIPMENT_DELIVERY_PICKUP_EXCLUDED:{r['delivery_pickup_cost']}")
@@ -1179,23 +1360,11 @@ class Engine:
         if r.get("min_rental_period"):
             flags.append(f"MIN_RENTAL_PERIOD_ASSUMED_MET:{r['min_rental_period']}")
         inp = _inp("equipment_rates", r["equipment_rate_id"], "rate", "", "HR", "observed", review_status=r["review_status"],
-                   operator_included=r["operator_included"], region_id=r["region_id"])
-        if p.equipment_basis == "rental_day":
-            if r["rental_rate_day"] is None:
-                raise Missing("EQUIPMENT_DAY_RATE_MISSING", f"day rate for {etype}", "record has no rental_rate_day")
-            inp.update(field="rental_rate_day", value=str(r["rental_rate_day"]), unit="DAY")
-            flags.append("DAY_RATE_ONE_DAY_PER_CREW_SHIFT")
-            return {"basis": "day", "rate": _d(r["rental_rate_day"]), "operator_included": r["operator_included"], "fuel_added": D(0),
-                    "inputs": [inp], "flags": flags, "origin": "observed"}
+                   operator_included=r["operator_included"], region_id=r["region_id"], rate_basis=r["rate_basis"], capacity=r.get("capacity_raw"),
+                   effective_from=r["effective_from"].isoformat(), effective_to=r["effective_to"].isoformat() if r.get("effective_to") else None,
+                   retrieved_at=str(r["retrieved_at"]) if r.get("retrieved_at") else None, pinned=bool(pin))
+        # fuel: the same rule on every path (hourly or day rate)
         fuel = D(0)
-        if r["rental_rate_hr"] is not None:
-            rate = _d(r["rental_rate_hr"])
-            inp["field"] = "rental_rate_hr"
-        elif r["ownership_cost_hr"] is not None and r["operating_cost_hr"] is not None:
-            rate = _d(r["ownership_cost_hr"]) + _d(r["operating_cost_hr"])
-            inp["field"] = "ownership_cost_hr+operating_cost_hr"
-        else:
-            raise Missing("EQUIPMENT_HOURLY_BASIS_MISSING", f"hourly basis for {etype}", "need rental_rate_hr or ownership+operating hourly components")
         if r["fuel_included"] is False:
             if r.get("fuel_cost_hr") is None:
                 raise Missing("FUEL_NOT_PRICED", f"fuel for {etype}", "the rate excludes fuel and no fuel_cost_hr is recorded", "capture fuel_cost_hr")
@@ -1203,11 +1372,26 @@ class Engine:
             flags.append("FUEL_ADDED_SEPARATELY")
         elif r["fuel_included"] is None:
             flags.append("FUEL_INCLUSION_UNKNOWN")
-        elif r.get("fuel_cost_hr") is not None:
-            flags.append("CHECK_FUEL_NOT_DOUBLE_COUNTED")
+        if p.equipment_basis == "rental_day":
+            if r["rental_rate_day"] is None:
+                raise Missing("EQUIPMENT_DAY_RATE_MISSING", f"day rate for {etype}", "record has no rental_rate_day")
+            inp.update(field="rental_rate_day", value=str(r["rental_rate_day"]), unit="DAY", fuel_hr=str(fuel))
+            flags.append("DAY_RATE_ONE_DAY_PER_CREW_SHIFT")
+            return {"basis": "day", "rate": _d(r["rental_rate_day"]), "fuel_hr": fuel, "operator_included": r["operator_included"], "fuel_added": fuel,
+                    "inputs": [inp], "flags": flags, "origin": "observed"}
+        if r["rental_rate_hr"] is not None:
+            rate = _d(r["rental_rate_hr"])
+            inp["field"] = "rental_rate_hr"
+        elif r["ownership_cost_hr"] is not None and r["operating_cost_hr"] is not None:
+            rate = _d(r["ownership_cost_hr"]) + _d(r["operating_cost_hr"])
+            inp["field"] = "ownership_cost_hr+operating_cost_hr"
+            if r["fuel_included"] and r.get("fuel_cost_hr") is not None:
+                flags.append("CHECK_FUEL_NOT_DOUBLE_COUNTED")
+        else:
+            raise Missing("EQUIPMENT_HOURLY_BASIS_MISSING", f"hourly basis for {etype}", "need rental_rate_hr or ownership+operating hourly components")
         inp["value"] = str(rate + fuel)
-        return {"basis": "hour", "rate": rate + fuel, "operator_included": r["operator_included"], "fuel_added": fuel, "inputs": [inp],
-                "flags": flags, "origin": "observed"}
+        return {"basis": "hour", "rate": rate + fuel, "fuel_hr": D(0), "operator_included": r["operator_included"], "fuel_added": fuel,
+                "inputs": [inp], "flags": flags, "origin": "observed"}
 
     # ------------------------------------------------------------------------------------- crew & productivity
     def _crew_costs(self, crew_id: str, p: RunParams) -> dict:
@@ -1216,32 +1400,40 @@ class Engine:
             raise Missing("CREW_UNKNOWN", crew_id, "crew not in crews table")
         if crew["origin"] == "missing":
             raise Missing("CREW_MISSING", f"composition of {crew_id}", "crew composition not found in any source", "capture crew composition")
-        why = self._why_not(crew, p)
+        why = self._why_not(crew, p, 'crews')
         if why:
             raise Missing("CREW_UNUSABLE", f"composition of {crew_id}", why,
                           "run with_assumptions or source it" if crew["origin"] == "assumed" else "validate the crew record")
         members = sorted(self._members.get(crew_id, []), key=lambda m: m["crew_member_id"])
         if not members:
             raise Missing("CREW_EMPTY", crew_id, "crew has no members")
+        bad = next((f"{m['crew_member_id']}: {self._range_issue('crew_members', m)}" for m in members if self._range_issue("crew_members", m)), None)
+        if bad:
+            raise Missing("CREW_MEMBER_INVALID", f"member of {crew_id}", bad, "fix the crew member row", blocking=True)
         shift = _d(crew["shift_hours"])
         issues: list[tuple[str, Missing]] = []
         flags: list[str] = ["ASSUMED_CREW"] if crew["origin"] == "assumed" else []
         lab, eq = [], []
         operator_in_labor = any(m["is_operator"] or m["trade_code"] in OPERATOR_TRADES for m in members if m["member_kind"] == "labor")
-        rate_cache: dict[str, Any] = {}
+        rate_cache: dict[tuple, Any] = {}
         for m in members:
             hrs = _d(m["hours_per_shift"]) if m["hours_per_shift"] is not None else shift
             qty = _d(m["quantity"])
             if m["member_kind"] == "labor":
                 t = m["trade_code"]
-                if t not in rate_cache:
+                trow = self._trades.get(t)
+                if trow is not None and trow.get("review_status") in ("flagged", "rejected"):
+                    issues.append(("labor", Missing("TRADE_UNUSABLE", f"trade {t}", f"review_status={trow['review_status']}")))
+                    continue
+                key = (t, m.get("labor_rate_id"))
+                if key not in rate_cache:
                     try:
-                        rate_cache[t] = self._labor_rate(t, p)
+                        rate_cache[key] = self._labor_rate(t, p, m.get("labor_rate_id"))
                     except MultiMissing as mm:
-                        rate_cache[t] = mm
+                        rate_cache[key] = mm
                     except Missing as mi:
-                        rate_cache[t] = mi
-                lr = rate_cache[t]
+                        rate_cache[key] = mi
+                lr = rate_cache[key]
                 if isinstance(lr, MultiMissing):
                     issues += [("labor", x) for x in lr.items]
                     continue
@@ -1251,22 +1443,28 @@ class Engine:
                 lab.append({"member": m, "qty": qty, "hrs": hrs, "lr": lr, "cost": qty * hrs * lr["total_hr"]})
             else:
                 et = m["equipment_type_code"]
+                etrow = self._equip_types.get(et)
+                if etrow is not None and etrow.get("review_status") in ("flagged", "rejected"):
+                    issues.append((f"equipment:{et}", Missing("EQUIPMENT_TYPE_UNUSABLE", f"equipment type {et}", f"review_status={etrow['review_status']}")))
+                    continue
                 try:
-                    er = self._equipment_rate(et, p)
+                    er = self._equipment_rate(et, p, m.get("equipment_rate_id"))
                 except Missing as mi:
                     issues.append((f"equipment:{et}", mi))
                     continue
-                per = qty * (hrs * er["rate"] if er["basis"] != "day" else er["rate"])
+                per = qty * (hrs * er["rate"] if er["basis"] != "day" else er["rate"] + hrs * er["fuel_hr"])
                 eq.append({"member": m, "qty": qty, "hrs": hrs, "er": er, "cost": per, "etype": et})
         for e in eq:
             et = e["etype"]
+            etrow = self._equip_types.get(et, {})
             if e["er"]["operator_included"] and operator_in_labor:
                 issues.append((f"equipment:{et}", Missing("OPERATOR_DOUBLE_COUNT", f"{et} in {crew_id}",
                                "equipment rate includes the operator and the crew also lists an operator as labor",
                                "remove the operator from crew labor or use a rate that excludes the operator", blocking=True)))
-            elif (not e["er"]["operator_included"]) and not operator_in_labor and self._equip_types.get(et, {}).get("typically_needs_operator"):
+            elif (not e["er"]["operator_included"]) and not operator_in_labor and etrow.get("typically_needs_operator"):
+                hint = "" if etrow.get("review_status") == "validated" and etrow.get("origin") != "assumed" else " (the 'needs an operator' hint is an unreviewed planning hint)"
                 issues.append((f"equipment:{et}", Missing("OPERATOR_NOT_PRICED", f"operator for {et} in {crew_id}",
-                               "the equipment rate excludes the operator, the type normally needs one and the crew has none",
+                               "the equipment rate excludes the operator, the type normally needs one and the crew has none" + hint,
                                "add an operator to the crew or use a rate that includes one")))
         # crew size and person-hours come from the composition itself, never from the members whose rate happened to resolve
         lab_members = [m for m in members if m["member_kind"] == "labor"]
@@ -1285,7 +1483,7 @@ class Engine:
         if prod is None:
             raise Missing("PRODUCTIVITY_UNKNOWN", comp["productivity_id"], "productivity record not found")
         why = None if prod["origin"] != "missing" else "norm not found in any source (origin=missing)"
-        why = why or self._why_not(prod, p) or self._known(prod, p)
+        why = why or self._why_not(prod, p, 'productivity_observations') or self._known(prod, p)
         if why:
             a = self._assumption(f"productivity:{comp['component_id']}", ("productivity",), p)
             if a is not None:
@@ -1293,7 +1491,8 @@ class Engine:
                     raise Missing("ASSUMPTION_UNIT", f"productivity:{comp['component_id']}", "assumed output needs a unit convertible to the work-item unit")
                 daily = _d(a["value_numeric"]) * _frac(self.units.factor(a["unit_id"], out_unit))
                 return daily, [self._assumption_input(a)], ["ASSUMED_PRODUCTIVITY"], "assumed"
-            raise Missing("PRODUCTIVITY_MISSING", f"labor norm {comp['productivity_id']} for '{wi['name']}'", why,
+            raise Missing("PRODUCTIVITY_MISSING", f"labor norm {comp['productivity_id']} for '{wi['name']}'",
+                          why + self._assumption_note(f"productivity:{comp['component_id']}", ("productivity",), p),
                           "extract norm from a government manual / DOT guide with page reference")
         if prod.get("work_item_id") not in (None, wi["work_item_id"]):
             raise Missing("PRODUCTIVITY_WORK_ITEM_MISMATCH", comp["productivity_id"], f"norm belongs to {prod['work_item_id']}, not {wi['work_item_id']}", blocking=True)
@@ -1339,17 +1538,23 @@ class Engine:
             out.append(Missing("DEFINITION_RETIRED", f"{what} {ref}", "this version is retired", "use the current version", blocking=True))
         if row["valid_from"] > p.as_of:
             out.append(Missing("DEFINITION_NOT_YET_VALID", f"{what} {ref}", f"valid from {row['valid_from'].isoformat()}, after as_of", blocking=True))
+        ra = _ts(row.get("reviewed_at")) if row["review_status"] == "validated" else None
+        eff = "unreviewed" if ra is not None and ra.date() > p.known else row["review_status"]
         if row["review_status"] in ("flagged", "rejected"):
             out.append(Missing("DEFINITION_REJECTED", f"{what} {ref}", f"review_status={row['review_status']}", blocking=True))
-        elif p.min_review == "validated" and row["review_status"] != "validated":
+        elif p.min_review == "validated" and eff != "validated":
             out.append(Missing("DEFINITION_NOT_REVIEWED", f"{what} {ref}",
-                               f"definition review_status={row['review_status']}: scope, specification and quantities have not been checked by a reviewer",
+                               f"definition review_status={row['review_status']}"
+                               + (f" (validated only on {ra.date().isoformat()}, after known_at {p.known.isoformat()})" if eff != row["review_status"] else "")
+                               + ": scope, specification and quantities have not been checked by a reviewer",
                                "record an independent review (review_events) or run with min_review='unreviewed'"))
         return out
 
     # ------------------------------------------------------------------------------------------------ unit cost
+    @_in_ctx
     def unit_cost(self, work_item_id: str, version: int, p: RunParams) -> RunResult:
         self._refresh()
+        self._check_params(p)
         applied: set = set()
         res = self._unit_cost(work_item_id, version, p, applied)
         return self._require_conditions(res, p, applied)
@@ -1393,6 +1598,16 @@ class Engine:
                                                          "keep the tag on one component", blocking=True), c["component_id"]))
                 seen.setdefault(t, c["component_id"])
 
+        dup: dict[tuple, str] = {}
+        for c in comps:
+            if c["component_kind"] in ("labor", "equipment") and not (c["is_optional"] and not p.include_optional):
+                k = (c["component_kind"], c["crew_id"], c["productivity_id"], c.get("equipment_type_code"))
+                if k in dup:
+                    missing.append(_missing_info(Missing("DUPLICATE_COMPONENT", f"{c['component_kind']} component of crew {c['crew_id']}",
+                                                         f"{c['component_id']} repeats {dup[k]} (same crew, norm and equipment): it would be costed twice",
+                                                         "remove the duplicate component", blocking=True), c["component_id"]))
+                dup.setdefault(k, c["component_id"])
+
         def add_missing(c: dict, items: list):
             reasons = []
             for m in items:
@@ -1410,7 +1625,11 @@ class Engine:
                 continue
             if kind in ("material", "other_direct"):
                 collect: list[Missing] = []
-                res = self._material_component(c, kind, wi, p, collect, applied)
+                try:
+                    res = self._material_component(c, kind, wi, p, collect, applied)
+                except DATA_ERRORS as e:
+                    add_missing(c, [_data_error(c["description"], e)])
+                    continue
                 if res is None:
                     add_missing(c, collect)
                     continue
@@ -1426,99 +1645,109 @@ class Engine:
                               "formula": res["formula"], "inputs": res["inputs"], "origin_summary": res["summary"], "warnings": res["flags"]})
                 continue
             # ---- labor / equipment: crew composition and productivity are resolved independently
-            errs: list[Missing] = []
-            ci = None
-            cached = crew_cache.get(c["crew_id"])
-            if cached is None:
+            try:
+                errs: list[Missing] = []
+                ci = None
+                cached = crew_cache.get(c["crew_id"])
+                if cached is None:
+                    try:
+                        cached = ("ok", self._crew_costs(c["crew_id"], p))
+                    except Missing as m:
+                        cached = ("err", [m])
+                    crew_cache[c["crew_id"]] = cached
+                if cached[0] == "ok":
+                    ci = cached[1]
+                    scope = "labor" if kind == "labor" else f"equipment:{c['equipment_type_code']}"
+                    errs += [m for sc, m in ci["issues"] if sc == scope]
+                    if kind == "equipment" and not [e for e in ci["equip"] if e["etype"] == c["equipment_type_code"]] \
+                            and not any(sc == scope for sc, _ in ci["issues"]):
+                        errs.append(Missing("CREW_NO_EQUIPMENT", f"{c['equipment_type_code']} in {c['crew_id']}",
+                                            "the equipment component's type is not a member of its crew", "add the equipment to the crew composition or fix the component", blocking=True))
+                    if kind == "labor" and not ci["labor"] and not any(sc == "labor" for sc, _ in ci["issues"]):
+                        errs.append(Missing("CREW_NO_LABOR", c["crew_id"], "the crew has no labor member", blocking=True))
+                else:
+                    errs += cached[1]
+                daily = None
+                dinputs: list = []
+                dflags: list = []
+                dorigin = "observed"
                 try:
-                    cached = ("ok", self._crew_costs(c["crew_id"], p))
+                    daily, dinputs, dflags, dorigin = self._daily_output(c, wi, ci, p)
                 except Missing as m:
-                    cached = ("err", [m])
-                crew_cache[c["crew_id"]] = cached
-            if cached[0] == "ok":
-                ci = cached[1]
-                scope = "labor" if kind == "labor" else f"equipment:{c['equipment_type_code']}"
-                errs += [m for sc, m in ci["issues"] if sc == scope]
-                if kind == "equipment" and not [e for e in ci["equip"] if e["etype"] == c["equipment_type_code"]] \
-                        and not any(sc == scope for sc, _ in ci["issues"]):
-                    errs.append(Missing("CREW_NO_EQUIPMENT", f"{c['equipment_type_code']} in {c['crew_id']}",
-                                        "the equipment component's type is not a member of its crew", "add the equipment to the crew composition or fix the component", blocking=True))
-                if kind == "labor" and not ci["labor"] and not any(sc == "labor" for sc, _ in ci["issues"]):
-                    errs.append(Missing("CREW_NO_LABOR", c["crew_id"], "the crew has no labor member", blocking=True))
-            else:
-                errs += cached[1]
-            daily = None
-            dinputs: list = []
-            dflags: list = []
-            dorigin = "observed"
-            try:
-                daily, dinputs, dflags, dorigin = self._daily_output(c, wi, ci, p)
-            except Missing as m:
-                errs.append(m)
-            adj: list = []
-            try:
-                adj = self._adjust_factors(kind, p, applied)
-            except Missing as m:
-                errs.append(m)
-            if errs or ci is None or daily is None:
-                add_missing(c, errs)
-                continue
-            if kind == "labor":
-                per_shift = ci["labor_per_shift"]
-                members = ci["labor"]
-                hours_per_shift = ci["person_hours_per_shift"]
-                ins = [x for mem in members for x in ([_inp("crew_members", mem["member"]["crew_member_id"], "quantity x hours", f"{mem['qty']}x{mem['hrs']}", "HR",
-                                                              "observed", trade=mem["member"]["trade_code"], rate_total_hr=str(mem["lr"]["total_hr"]),
-                                                              rate_components={k: str(v) for k, v in mem["lr"]["components"].items()})] + mem["lr"]["inputs"])]
-                mflags = [f for mem in members for f in mem["lr"]["flags"]] + ci["flags"]
-                origin = ci["labor_origin"]
-            else:
-                members = [e for e in ci["equip"] if e["etype"] == c["equipment_type_code"]]
-                per_shift = sum((e["cost"] for e in members), D(0))
-                hours_per_shift = sum((e["qty"] * (e["hrs"] if e["er"]["basis"] != "day" else ci["shift"]) for e in members), D(0))
-                ins = [x for e in members for x in ([_inp("crew_members", e["member"]["crew_member_id"], "quantity x hours", f"{e['qty']}x{e['hrs']}", "HR", "observed",
-                                                            equipment_type=e["etype"], rate=str(e["er"]["rate"]), rate_basis=e["er"]["basis"])] + e["er"]["inputs"])]
-                mflags = [f for e in members for f in e["er"]["flags"]] + ci["flags"]
-                origin = "assumed" if any(e["er"]["origin"] == "assumed" for e in members) or ci["crew"]["origin"] == "assumed" else "observed"
-            unit_cost = per_shift / daily
-            hours_scale = D(1)
-            for f in adj:
-                unit_cost *= _d(f["factor_value"])
-                if f["factor_type"] == "productivity_condition" and kind == "labor":
-                    hours_scale *= _d(f["factor_value"])
-            adj_note = "".join(f" x {f['factor_value']} [{f['factor_id']}]" for f in adj)
-            hours_per_unit = hours_per_shift / daily * hours_scale
-            ch = ci["shift"] / daily
-            summary = "assumed" if (origin == "assumed" or dorigin == "assumed") else "observed"
-            if summary == "assumed":
-                any_assumed = True
-            totals[kind] += q10(unit_cost)
-            if kind == "labor":
-                label = (f"person-hours/unit = sum(member qty x hours) {hours_per_shift} / {q10(daily)}"
+                    errs.append(m)
+                adj: list = []
+                try:
+                    adj = self._adjust_factors(kind, p, applied)
+                except Missing as m:
+                    errs.append(m)
+                if daily is not None and daily <= 0:
+                    errs.append(Missing("PRODUCTIVITY_INVALID", c["productivity_id"], f"daily output {daily} must be > 0", blocking=True))
+                if errs or ci is None or daily is None or daily <= 0:
+                    add_missing(c, errs)
+                    continue
+                if kind == "labor":
+                    per_shift = ci["labor_per_shift"]
+                    members = ci["labor"]
+                    hours_per_shift = ci["person_hours_per_shift"]
+                    ins = [x for mem in members for x in ([_inp("crew_members", mem["member"]["crew_member_id"], "quantity x hours", f"{mem['qty']}x{mem['hrs']}", "HR",
+                                                                  "observed", trade=mem["member"]["trade_code"], rate_total_hr=str(mem["lr"]["total_hr"]),
+                                                                  rate_components={k: str(v) for k, v in mem["lr"]["components"].items()})] + mem["lr"]["inputs"])]
+                    mflags = [f for mem in members for f in mem["lr"]["flags"]] + ci["flags"]
+                    origin = ci["labor_origin"]
+                else:
+                    members = [e for e in ci["equip"] if e["etype"] == c["equipment_type_code"]]
+                    per_shift = sum((e["cost"] for e in members), D(0))
+                    hours_per_shift = sum((e["qty"] * (e["hrs"] if e["er"]["basis"] != "day" else ci["shift"]) for e in members), D(0))
+                    ins = [x for e in members for x in ([_inp("crew_members", e["member"]["crew_member_id"], "quantity x hours", f"{e['qty']}x{e['hrs']}", "HR", "observed",
+                                                                equipment_type=e["etype"], rate=str(e["er"]["rate"]), rate_basis=e["er"]["basis"])] + e["er"]["inputs"])]
+                    mflags = [f for e in members for f in e["er"]["flags"]] + ci["flags"]
+                    origin = "assumed" if any(e["er"]["origin"] == "assumed" for e in members) or ci["crew"]["origin"] == "assumed" else "observed"
+                unit_cost = per_shift / daily
+                hours_scale = D(1)
+                for f in adj:
+                    unit_cost *= _d(f["factor_value"])
+                    if f["factor_type"] == "productivity_condition":
+                        hours_scale *= _d(f["factor_value"])
+                adj_note = "".join(f" x {f['factor_value']} [{f['factor_id']}]" for f in adj)
+                hours_per_unit = hours_per_shift / daily * hours_scale
+                ch = ci["shift"] / daily
+                assumed_factors = [f["factor_id"] for f in adj if f["origin"] == "assumed"]
+                summary = "assumed" if (origin == "assumed" or dorigin == "assumed" or assumed_factors) else "observed"
+                mflags = mflags + [f"ASSUMED_FACTOR:{fid}" for fid in assumed_factors]
+                if summary == "assumed":
+                    any_assumed = True
+                totals[kind] += q10(unit_cost)
+                if kind == "labor":
+                    label = (f"person-hours/unit = sum(member qty x hours) {hours_per_shift} / {q10(daily)}"
+                             f"{' x ' + str(hours_scale) if hours_scale != 1 else ''} = {q10(hours_per_unit)}; crew-hours/unit = {q10(ch)}")
+                    qk = "person_hours"
+                else:
+                    label = (f"equipment-hours/unit = sum(member qty x hours) {hours_per_shift} / {q10(daily)}"
                          f"{' x ' + str(hours_scale) if hours_scale != 1 else ''} = {q10(hours_per_unit)}; crew-hours/unit = {q10(ch)}")
-                qk = "person_hours"
-            else:
-                label = f"equipment-hours/unit = sum(member qty x hours) {hours_per_shift} / {q10(daily)} = {q10(hours_per_unit)}; crew-hours/unit = {q10(ch)}"
-                qk = "equipment_hours"
-            formula = (f"crew {kind} cost/shift ${q10(per_shift)} / daily output {q10(daily)} {wi['output_unit_id']} = ${q10(unit_cost)}/{wi['output_unit_id']}{adj_note}; {label}")
-            lines.append({"line_no": len(lines) + 1, "line_kind": kind, "component_ref": c["component_id"], "description": c["description"],
-                          "quantity": q10(hours_per_unit), "quantity_unit_id": "HR", "quantity_kind": qk, "unit_cost": q10(unit_cost),
-                          "extended_cost": q10(unit_cost), "formula": formula,
-                          "inputs": ins + dinputs + [self._factor_input(f) for f in adj], "origin_summary": summary,
-                          "warnings": sorted(set(dflags + mflags))})
+                    qk = "equipment_hours"
+                formula = (f"crew {kind} cost/shift ${q10(per_shift)} / daily output {q10(daily)} {wi['output_unit_id']} = ${q10(unit_cost)}/{wi['output_unit_id']}{adj_note}; {label}")
+                lines.append({"line_no": len(lines) + 1, "line_kind": kind, "component_ref": c["component_id"], "description": c["description"],
+                              "quantity": q10(hours_per_unit), "quantity_unit_id": "HR", "quantity_kind": qk, "unit_cost": q10(unit_cost),
+                              "extended_cost": q10(unit_cost), "formula": formula,
+                              "inputs": ins + dinputs + [self._factor_input(f) for f in adj], "origin_summary": summary,
+                              "warnings": sorted(set(dflags + mflags))})
+            except DATA_ERRORS as e:
+                add_missing(c, [_data_error(c['description'], e)])
         # a crew's equipment that no equipment component prices is under-costing: say so
         for cid, cached in crew_cache.items():
             if cached[0] != "ok":
                 continue
             costed = {c["equipment_type_code"] for c in comps if c["component_kind"] == "equipment" and c["crew_id"] == cid}
-            for e in cached[1]["equip"]:
-                if e["etype"] not in costed:
-                    warnings.append(f"CREW_EQUIPMENT_NOT_COSTED:{cid}:{e['etype']}")
+            in_crew = {e["etype"] for e in cached[1]["equip"]} | {sc.split(":", 1)[1] for sc, _ in cached[1]["issues"] if sc.startswith("equipment:")}
+            for et in sorted(in_crew - costed):
+                warnings.append(f"CREW_EQUIPMENT_NOT_COSTED:{cid}:{et}")
         return self._finish("unit_cost", work_item_id, version, p, wi["output_unit_id"], lines, missing, warnings, totals, any_assumed, bases)
 
     # ------------------------------------------------------------------------------------------------ assembly
+    @_in_ctx
     def assembly_cost(self, assembly_id: str, version: int, p: RunParams) -> RunResult:
         self._refresh()
+        self._check_params(p)
         applied: set = set()
         res = self._assembly_cost(assembly_id, version, p, applied)
         return self._require_conditions(res, p, applied)
@@ -1541,7 +1770,16 @@ class Engine:
             return self._finish("assembly", assembly_id, version, p, asm["output_unit_id"], lines, missing, warnings, totals, any_assumed, bases)
         scope_owner: dict[str, str] = {}
         tag_owner: dict[str, str] = {}
+        child_owner: dict[tuple, str] = {}
         for c in comps:
+            k = (c["work_item_id"], c["work_item_version"])
+            if k in child_owner:
+                missing.append(_missing_info(Missing("DUPLICATE_COMPONENT", f"work item {k[0]} v{k[1]} in assembly {assembly_id}",
+                                                     f"{c['assembly_component_id']} repeats {child_owner[k]}: it would be costed twice (use one line with the summed quantity)",
+                                                     "merge the lines", blocking=True), c["assembly_component_id"]))
+            child_owner.setdefault(k, c["assembly_component_id"])
+            if _d(c["qty_per_assembly_unit"]) <= 0:
+                missing.append(_missing_info(Missing("ASSEMBLY_QUANTITY_INVALID", c["assembly_component_id"], f"qty_per_assembly_unit {c['qty_per_assembly_unit']} must be > 0", blocking=True), c["assembly_component_id"]))
             wi = self._wis[(c["work_item_id"], c["work_item_version"])]
             for t in wi["included_scope"] or []:
                 if t in scope_owner and scope_owner[t] != wi["work_item_id"]:
@@ -1638,9 +1876,11 @@ class Engine:
         return RunResult(run=run, lines=lines)
 
     # ------------------------------------------------------------------------------------------ loaded labor rate
+    @_in_ctx
     def loaded_labor_rate(self, trade: str, p: RunParams) -> RunResult:
         """Derived labor_rates row (rate_type=loaded_employer_cost) with every component traceable."""
         self._refresh()
+        self._check_params(p)
         missing, lines, warnings = [], [], []
         totals = {"material": D(0), "labor": D(0), "equipment": D(0), "other_direct": D(0)}
         derived: dict[str, list[dict]] = {}
@@ -1709,6 +1949,7 @@ def _fraction_param(name: str, v: Any, hi: Decimal = D(1), hi_inclusive: bool = 
     return v
 
 
+@_in_ctx
 def apply_markup(base: RunResult, *, overhead_pct: Decimal, overhead_basis: str, contingency_pct: Decimal,
                  contingency_basis: str, profit_method: str, profit_value: Decimal, profit_basis: str,
                  run_at: Optional[str] = None, calc_version: str = CALC_VERSION) -> RunResult:

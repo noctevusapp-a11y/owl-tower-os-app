@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pipeline"))
 from costdb.ids import make_id, spec_key  # noqa: E402
 from costdb.schema_meta import parse_schema  # noqa: E402
+from costdb.scope import scope_covered  # noqa: E402
 from costdb.store import Database, format_value  # noqa: E402
 
 CSV_DIR = ROOT / "data" / "csv"
@@ -805,7 +806,7 @@ def main() -> int:
     for aid, name, cat, unit, spec, comps in ASSEMBLIES:
         kids = [wi_by_id[c[0]] for c in comps]
         included = list(dict.fromkeys(t for k in kids for t in k["included"]))
-        carried = [t for k in kids for t in k["excluded"] if t not in included]
+        carried = [t for k in kids for t in k["excluded"] if not scope_covered(t, included)]
         excluded = list(dict.fromkeys(carried + ASM_EXTRA_EXCL[aid]))
         spec = {**spec, "work_items": [{"work_item_id": c[0], "version": 1, "qty_per_assembly_unit": c[1]} for c in comps]}
         db.add("assemblies", {"assembly_id": aid, "version": 1, "name": name, "category_id": cat, "spec_attributes": spec,

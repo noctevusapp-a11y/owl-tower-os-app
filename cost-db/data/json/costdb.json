@@ -3,6 +3,7 @@
   "format": "owl-tower-costdb/1",
   "tables": {
    "review_events": 0,
+   "change_log": 0,
    "units": 15,
    "regions": 17,
    "categories": 39,
@@ -35,6 +36,7 @@
   "note": "decimals are strings to avoid float rounding; see docs/data_dictionary.md"
  },
  "review_events": [],
+ "change_log": [],
  "units": [
   {
    "unit_id": "EA",
@@ -4374,9 +4376,9 @@
  "price_observations": [],
  "calculation_runs": [
   {
-   "run_id": "RUN-39868946efb1",
+   "run_id": "RUN-8300371a5409",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-001",
    "target_version": 1,
@@ -4386,7 +4388,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -4398,6 +4400,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -4499,7 +4503,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -4510,9 +4514,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-42472e96d9e3",
+   "run_id": "RUN-9ac0a0cd3cc6",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-002",
    "target_version": 1,
@@ -4522,7 +4526,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -4534,6 +4538,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -4635,7 +4641,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -4646,9 +4652,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-4148fa9778a2",
+   "run_id": "RUN-ba584b14715a",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-003",
    "target_version": 1,
@@ -4658,7 +4664,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -4670,6 +4676,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -4779,7 +4787,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -4790,9 +4798,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-582c98a89e52",
+   "run_id": "RUN-5529c6078050",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-004",
    "target_version": 1,
@@ -4802,7 +4810,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -4814,6 +4822,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -4899,7 +4909,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -4910,9 +4920,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-8635dafdf2bf",
+   "run_id": "RUN-17db8eb31033",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-005",
    "target_version": 1,
@@ -4922,7 +4932,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -4934,6 +4944,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5035,7 +5047,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5046,9 +5058,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-695dc3100a67",
+   "run_id": "RUN-c7e81f20d99f",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-FRM-006",
    "target_version": 1,
@@ -5058,7 +5070,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5070,6 +5082,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5155,7 +5169,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5166,9 +5180,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-bc6328e3da6f",
+   "run_id": "RUN-5a49cb59bb68",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-001",
    "target_version": 1,
@@ -5178,7 +5192,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5190,6 +5204,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5275,7 +5291,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5286,9 +5302,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-98a3fd0b2fe3",
+   "run_id": "RUN-bd928fdb6b3b",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-002",
    "target_version": 1,
@@ -5298,7 +5314,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5310,6 +5326,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5395,7 +5413,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5406,9 +5424,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-3b4633976cb7",
+   "run_id": "RUN-e80453d70ec7",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-003",
    "target_version": 1,
@@ -5418,7 +5436,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5430,6 +5448,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5515,7 +5535,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5526,9 +5546,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-c43036b258c8",
+   "run_id": "RUN-84c9d3598998",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-004",
    "target_version": 1,
@@ -5538,7 +5558,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5550,6 +5570,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5635,7 +5657,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5646,9 +5668,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-d6a26a005d48",
+   "run_id": "RUN-dadca192950d",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-006",
    "target_version": 1,
@@ -5658,7 +5680,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5670,6 +5692,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5755,7 +5779,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5766,9 +5790,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-741ddfb83d43",
+   "run_id": "RUN-b69f97c28f01",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-DRY-005",
    "target_version": 1,
@@ -5778,7 +5802,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5790,6 +5814,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5883,7 +5909,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5894,9 +5920,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-9bdabce1e9bc",
+   "run_id": "RUN-3ba402564760",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-INS-001",
    "target_version": 1,
@@ -5906,7 +5932,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -5918,6 +5944,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -5987,7 +6015,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -5998,9 +6026,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-CON-001",
    "target_version": 1,
@@ -6010,7 +6038,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6022,6 +6050,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6155,7 +6185,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6166,9 +6196,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-CON-002",
    "target_version": 1,
@@ -6178,7 +6208,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6190,6 +6220,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6347,7 +6379,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6358,9 +6390,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-24dd5448213a",
+   "run_id": "RUN-b9943b06a91f",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-CON-003",
    "target_version": 1,
@@ -6370,7 +6402,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6382,6 +6414,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6483,7 +6517,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6494,9 +6528,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-fc2a12073967",
+   "run_id": "RUN-08194f9c7926",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-CON-004",
    "target_version": 1,
@@ -6506,7 +6540,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6518,6 +6552,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6587,7 +6623,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6598,9 +6634,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-bc2c9b038a16",
+   "run_id": "RUN-b68ebcc89822",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-CON-005",
    "target_version": 1,
@@ -6610,7 +6646,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6622,6 +6658,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6699,7 +6737,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6710,9 +6748,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-d22cdf153b99",
+   "run_id": "RUN-211ebd7999c4",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-PNT-001",
    "target_version": 1,
@@ -6722,7 +6760,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6734,6 +6772,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6811,7 +6851,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6822,9 +6862,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-e965d7849e3f",
+   "run_id": "RUN-f37c59ba54da",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-PNT-002",
    "target_version": 1,
@@ -6834,7 +6874,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6846,6 +6886,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -6923,7 +6965,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -6934,9 +6976,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-d07f620145b8",
+   "run_id": "RUN-168c9d95d758",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-PNT-003",
    "target_version": 1,
@@ -6946,7 +6988,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -6958,6 +7000,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7035,7 +7079,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7046,9 +7090,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-189806491695",
+   "run_id": "RUN-62ff2686332c",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-PNT-004",
    "target_version": 1,
@@ -7058,7 +7102,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7070,6 +7114,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7139,7 +7185,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7150,9 +7196,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-HVC-001",
    "target_version": 1,
@@ -7162,7 +7208,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7174,6 +7220,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7323,7 +7371,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7334,9 +7382,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-adfaab3c71d0",
+   "run_id": "RUN-13b07706aec1",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-HVC-002",
    "target_version": 1,
@@ -7346,7 +7394,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7358,6 +7406,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7459,7 +7509,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7470,9 +7520,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-3d6a39e60b4d",
+   "run_id": "RUN-8efbdd5e3b1b",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "unit_cost",
    "target_id": "WI-HVC-003",
    "target_version": 1,
@@ -7482,7 +7532,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7494,6 +7544,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7563,7 +7615,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7574,9 +7626,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-WALL-001",
    "target_version": 1,
@@ -7586,7 +7638,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7598,6 +7650,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -7923,7 +7977,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -7934,9 +7988,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-WALL-002",
    "target_version": 1,
@@ -7946,7 +8000,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -7958,6 +8012,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -8323,7 +8379,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -8334,9 +8390,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-WALL-003",
    "target_version": 1,
@@ -8346,7 +8402,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -8358,6 +8414,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -8683,7 +8741,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -8694,9 +8752,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-WALL-004",
    "target_version": 1,
@@ -8706,7 +8764,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -8718,6 +8776,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -9043,7 +9103,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -9054,9 +9114,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-6596629801aa",
+   "run_id": "RUN-0dad9b4dd9bf",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-WALL-005",
    "target_version": 1,
@@ -9066,7 +9126,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -9078,6 +9138,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -9243,7 +9305,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -9254,9 +9316,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-e0426d63804b",
+   "run_id": "RUN-ccd99d5406d8",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-CEIL-001",
    "target_version": 1,
@@ -9266,7 +9328,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -9278,6 +9340,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -9531,7 +9595,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -9542,9 +9606,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-cdc3da78a970",
+   "run_id": "RUN-84515c2bf144",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-SLAB-001",
    "target_version": 1,
@@ -9554,7 +9618,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -9566,6 +9630,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -9755,7 +9821,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -9766,9 +9832,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-aac5891ded34",
+   "run_id": "RUN-23a524a92c9b",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-SLAB-002",
    "target_version": 1,
@@ -9778,7 +9844,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -9790,6 +9856,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -10003,7 +10071,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -10014,9 +10082,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-fa87a065df88",
+   "run_id": "RUN-808e26092ebe",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-FTG-001",
    "target_version": 1,
@@ -10026,7 +10094,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -10038,6 +10106,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -10187,7 +10257,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -10198,9 +10268,9 @@
    "notes": null
   },
   {
-   "run_id": "RUN-1384e5a5cd82",
+   "run_id": "RUN-9713f0d77774",
    "run_at": "2026-10-24T00:00:00+00:00",
-   "calc_version": "costdb-calc/0.2.0+756f851a",
+   "calc_version": "costdb-calc/0.2.0+1e705764",
    "target_type": "assembly",
    "target_id": "ASM-HVAC-001",
    "target_version": 1,
@@ -10210,7 +10280,7 @@
     "allow_ancestor_region_prices": false,
     "allow_subregion_prices": false,
     "allow_synthetic": false,
-    "annual_paid_hours": null,
+    "annual_paid_hours": "2080",
     "as_of": "2026-10-24",
     "burden_base": "base_wage",
     "channels": [
@@ -10222,6 +10292,8 @@
     "classification": null,
     "conditions": [],
     "equipment_basis": "hourly",
+    "equipment_capacity": null,
+    "equipment_rate_basis": null,
     "include_optional": false,
     "known_at": null,
     "labor_basis": "stat_loaded",
@@ -10491,7 +10563,7 @@
     }
    ],
    "warnings": [],
-   "code_ref": "dbfb63f+uncommitted",
+   "code_ref": "066c70a+uncommitted",
    "price_basis": "none",
    "input_review_floor": "validated",
    "price_total": null,
@@ -10504,7 +10576,7 @@
  ],
  "calculation_run_lines": [
   {
-   "run_id": "RUN-39868946efb1",
+   "run_id": "RUN-8300371a5409",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-447321943cb9",
@@ -10520,7 +10592,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-39868946efb1",
+   "run_id": "RUN-8300371a5409",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-97ede1d1b637",
@@ -10536,7 +10608,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-39868946efb1",
+   "run_id": "RUN-8300371a5409",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-5c3b587d468f",
@@ -10552,7 +10624,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-39868946efb1",
+   "run_id": "RUN-8300371a5409",
    "line_no": 4,
    "line_kind": "labor",
    "component_ref": "WIC-9da59c936b6c",
@@ -10568,7 +10640,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-42472e96d9e3",
+   "run_id": "RUN-9ac0a0cd3cc6",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-8d15dab578da",
@@ -10584,7 +10656,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-42472e96d9e3",
+   "run_id": "RUN-9ac0a0cd3cc6",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-12f1decb85e2",
@@ -10600,7 +10672,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-42472e96d9e3",
+   "run_id": "RUN-9ac0a0cd3cc6",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-56e20fd3088a",
@@ -10616,7 +10688,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-42472e96d9e3",
+   "run_id": "RUN-9ac0a0cd3cc6",
    "line_no": 4,
    "line_kind": "labor",
    "component_ref": "WIC-64220f414c55",
@@ -10632,7 +10704,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4148fa9778a2",
+   "run_id": "RUN-ba584b14715a",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-7b5f93d97f2f",
@@ -10648,7 +10720,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4148fa9778a2",
+   "run_id": "RUN-ba584b14715a",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-ac45d2529e4b",
@@ -10664,7 +10736,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4148fa9778a2",
+   "run_id": "RUN-ba584b14715a",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-8de08126c056",
@@ -10680,7 +10752,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4148fa9778a2",
+   "run_id": "RUN-ba584b14715a",
    "line_no": 4,
    "line_kind": "labor",
    "component_ref": "WIC-447f24179cc3",
@@ -10696,7 +10768,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-582c98a89e52",
+   "run_id": "RUN-5529c6078050",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-e00381c1b6ba",
@@ -10712,7 +10784,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-582c98a89e52",
+   "run_id": "RUN-5529c6078050",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-8de071b24b3c",
@@ -10728,7 +10800,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-582c98a89e52",
+   "run_id": "RUN-5529c6078050",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-d91ca8e426fb",
@@ -10744,7 +10816,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-8635dafdf2bf",
+   "run_id": "RUN-17db8eb31033",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-ca8c4c258c41",
@@ -10760,7 +10832,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-8635dafdf2bf",
+   "run_id": "RUN-17db8eb31033",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-84be7350512a",
@@ -10776,7 +10848,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-8635dafdf2bf",
+   "run_id": "RUN-17db8eb31033",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-ee2164b27393",
@@ -10792,7 +10864,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-8635dafdf2bf",
+   "run_id": "RUN-17db8eb31033",
    "line_no": 4,
    "line_kind": "labor",
    "component_ref": "WIC-81196272c75e",
@@ -10808,7 +10880,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-695dc3100a67",
+   "run_id": "RUN-c7e81f20d99f",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-0a8a4341bfed",
@@ -10824,7 +10896,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-695dc3100a67",
+   "run_id": "RUN-c7e81f20d99f",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-7f02685f6084",
@@ -10840,7 +10912,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-695dc3100a67",
+   "run_id": "RUN-c7e81f20d99f",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-153e51703f24",
@@ -10856,7 +10928,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-bc6328e3da6f",
+   "run_id": "RUN-5a49cb59bb68",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-98f1ba455333",
@@ -10872,7 +10944,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-bc6328e3da6f",
+   "run_id": "RUN-5a49cb59bb68",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-6d108a76fd38",
@@ -10888,7 +10960,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-bc6328e3da6f",
+   "run_id": "RUN-5a49cb59bb68",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-36ec42dfd183",
@@ -10904,7 +10976,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-98a3fd0b2fe3",
+   "run_id": "RUN-bd928fdb6b3b",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-737bb1c14354",
@@ -10920,7 +10992,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-98a3fd0b2fe3",
+   "run_id": "RUN-bd928fdb6b3b",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-3974aa8a5fbe",
@@ -10936,7 +11008,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-98a3fd0b2fe3",
+   "run_id": "RUN-bd928fdb6b3b",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-83e64f4992d7",
@@ -10952,7 +11024,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-3b4633976cb7",
+   "run_id": "RUN-e80453d70ec7",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-63b73b9e1c20",
@@ -10968,7 +11040,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-3b4633976cb7",
+   "run_id": "RUN-e80453d70ec7",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-a92d396b7d74",
@@ -10984,7 +11056,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-3b4633976cb7",
+   "run_id": "RUN-e80453d70ec7",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-71c134c8496e",
@@ -11000,7 +11072,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-c43036b258c8",
+   "run_id": "RUN-84c9d3598998",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-fd27871bc976",
@@ -11016,7 +11088,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-c43036b258c8",
+   "run_id": "RUN-84c9d3598998",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-4e62619fef5e",
@@ -11032,7 +11104,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-c43036b258c8",
+   "run_id": "RUN-84c9d3598998",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-9519f3952718",
@@ -11048,7 +11120,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d6a26a005d48",
+   "run_id": "RUN-dadca192950d",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-0dd410cdf823",
@@ -11064,7 +11136,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d6a26a005d48",
+   "run_id": "RUN-dadca192950d",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-87897f9d13cb",
@@ -11080,7 +11152,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d6a26a005d48",
+   "run_id": "RUN-dadca192950d",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-ab64a9d1b835",
@@ -11096,7 +11168,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-741ddfb83d43",
+   "run_id": "RUN-b69f97c28f01",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-54477c289b42",
@@ -11112,7 +11184,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-741ddfb83d43",
+   "run_id": "RUN-b69f97c28f01",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-628f13403bc4",
@@ -11128,7 +11200,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-741ddfb83d43",
+   "run_id": "RUN-b69f97c28f01",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-dbccf806ee92",
@@ -11144,7 +11216,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-9bdabce1e9bc",
+   "run_id": "RUN-3ba402564760",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-9623f1f8ef6d",
@@ -11160,7 +11232,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-9bdabce1e9bc",
+   "run_id": "RUN-3ba402564760",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-b72d13c4fa7f",
@@ -11176,7 +11248,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-ea4c6765db6e",
@@ -11192,7 +11264,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-afd18fc23676",
@@ -11208,7 +11280,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-93f8d206fc5b",
@@ -11224,7 +11296,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 4,
    "line_kind": "material",
    "component_ref": "WIC-7a9b0a0b82bf",
@@ -11240,7 +11312,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 5,
    "line_kind": "labor",
    "component_ref": "WIC-ff0bc4252091",
@@ -11256,7 +11328,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4366c0aab4d0",
+   "run_id": "RUN-490b4d2e361c",
    "line_no": 6,
    "line_kind": "equipment",
    "component_ref": "WIC-2494182d82fa",
@@ -11272,7 +11344,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-6fe9008383c4",
@@ -11288,7 +11360,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-04455aee2942",
@@ -11304,7 +11376,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-cf9f8439d0fd",
@@ -11320,7 +11392,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 4,
    "line_kind": "material",
    "component_ref": "WIC-707b3b173f01",
@@ -11336,7 +11408,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 5,
    "line_kind": "material",
    "component_ref": "WIC-b9a398af3424",
@@ -11352,7 +11424,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 6,
    "line_kind": "labor",
    "component_ref": "WIC-7ca6424a98f3",
@@ -11368,7 +11440,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cf83910a81f6",
+   "run_id": "RUN-93a202a53481",
    "line_no": 7,
    "line_kind": "equipment",
    "component_ref": "WIC-39a371a33c13",
@@ -11384,7 +11456,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-24dd5448213a",
+   "run_id": "RUN-b9943b06a91f",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-8e2fd31d58b6",
@@ -11400,7 +11472,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-24dd5448213a",
+   "run_id": "RUN-b9943b06a91f",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-d30d2e698fd7",
@@ -11416,7 +11488,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-24dd5448213a",
+   "run_id": "RUN-b9943b06a91f",
    "line_no": 3,
    "line_kind": "labor",
    "component_ref": "WIC-743916c2bc42",
@@ -11432,7 +11504,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-24dd5448213a",
+   "run_id": "RUN-b9943b06a91f",
    "line_no": 4,
    "line_kind": "equipment",
    "component_ref": "WIC-f7f4e29e9910",
@@ -11448,7 +11520,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc2a12073967",
+   "run_id": "RUN-08194f9c7926",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-fd5f87647689",
@@ -11464,7 +11536,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc2a12073967",
+   "run_id": "RUN-08194f9c7926",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-ec6d5c23a0aa",
@@ -11480,7 +11552,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-bc2c9b038a16",
+   "run_id": "RUN-b68ebcc89822",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-3db6543ca8ec",
@@ -11496,7 +11568,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-bc2c9b038a16",
+   "run_id": "RUN-b68ebcc89822",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-13a6b935b7f1",
@@ -11512,7 +11584,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d22cdf153b99",
+   "run_id": "RUN-211ebd7999c4",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-93b0dcab7a22",
@@ -11528,7 +11600,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d22cdf153b99",
+   "run_id": "RUN-211ebd7999c4",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-6a113bf7195c",
@@ -11544,7 +11616,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e965d7849e3f",
+   "run_id": "RUN-f37c59ba54da",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-5fd72a1069d9",
@@ -11560,7 +11632,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e965d7849e3f",
+   "run_id": "RUN-f37c59ba54da",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-2e8b922ec95c",
@@ -11576,7 +11648,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d07f620145b8",
+   "run_id": "RUN-168c9d95d758",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-992ef090520d",
@@ -11592,7 +11664,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-d07f620145b8",
+   "run_id": "RUN-168c9d95d758",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-be389ebd9a75",
@@ -11608,7 +11680,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-189806491695",
+   "run_id": "RUN-62ff2686332c",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-f4b6c2a74764",
@@ -11624,7 +11696,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-189806491695",
+   "run_id": "RUN-62ff2686332c",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-7816fa4448a0",
@@ -11640,7 +11712,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-4e5d030b082e",
@@ -11656,7 +11728,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-d4ee56429063",
@@ -11672,7 +11744,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-459ebde78161",
@@ -11688,7 +11760,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 4,
    "line_kind": "material",
    "component_ref": "WIC-fe538947414c",
@@ -11704,7 +11776,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 5,
    "line_kind": "material",
    "component_ref": "WIC-1aabbcd1fc53",
@@ -11720,7 +11792,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 6,
    "line_kind": "labor",
    "component_ref": "WIC-e9e4f46ecef4",
@@ -11736,7 +11808,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-a16f8dc43e04",
+   "run_id": "RUN-ba321c5bba7d",
    "line_no": 7,
    "line_kind": "equipment",
    "component_ref": "WIC-7cbbf1444006",
@@ -11752,7 +11824,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-adfaab3c71d0",
+   "run_id": "RUN-13b07706aec1",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-1af10878a4fd",
@@ -11768,7 +11840,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-adfaab3c71d0",
+   "run_id": "RUN-13b07706aec1",
    "line_no": 2,
    "line_kind": "material",
    "component_ref": "WIC-58ae344440b0",
@@ -11784,7 +11856,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-adfaab3c71d0",
+   "run_id": "RUN-13b07706aec1",
    "line_no": 3,
    "line_kind": "material",
    "component_ref": "WIC-0e90814a2cbc",
@@ -11800,7 +11872,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-adfaab3c71d0",
+   "run_id": "RUN-13b07706aec1",
    "line_no": 4,
    "line_kind": "labor",
    "component_ref": "WIC-255745c735f9",
@@ -11816,7 +11888,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-3d6a39e60b4d",
+   "run_id": "RUN-8efbdd5e3b1b",
    "line_no": 1,
    "line_kind": "material",
    "component_ref": "WIC-a83c78c03062",
@@ -11832,7 +11904,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-3d6a39e60b4d",
+   "run_id": "RUN-8efbdd5e3b1b",
    "line_no": 2,
    "line_kind": "labor",
    "component_ref": "WIC-eb0d2aca06f0",
@@ -11848,7 +11920,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-675dc69f6a11",
@@ -11858,11 +11930,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-39868946efb1 is incomplete",
+   "formula": "child run RUN-8300371a5409 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-39868946efb1",
+     "id": "RUN-8300371a5409",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11873,7 +11945,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-4fd3aab12552",
@@ -11883,11 +11955,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-bc6328e3da6f is incomplete",
+   "formula": "child run RUN-5a49cb59bb68 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-bc6328e3da6f",
+     "id": "RUN-5a49cb59bb68",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11898,7 +11970,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-1af1e9d3d81b",
@@ -11908,11 +11980,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-741ddfb83d43 is incomplete",
+   "formula": "child run RUN-b69f97c28f01 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-741ddfb83d43",
+     "id": "RUN-b69f97c28f01",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11923,7 +11995,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "line_no": 4,
    "line_kind": "assembly_component",
    "component_ref": "ASC-c1bf0b1214a5",
@@ -11933,11 +12005,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d22cdf153b99 is incomplete",
+   "formula": "child run RUN-211ebd7999c4 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d22cdf153b99",
+     "id": "RUN-211ebd7999c4",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11948,7 +12020,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-51083dd545b5",
+   "run_id": "RUN-3cab20faa76a",
    "line_no": 5,
    "line_kind": "assembly_component",
    "component_ref": "ASC-f730038c7cbb",
@@ -11958,11 +12030,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-e965d7849e3f is incomplete",
+   "formula": "child run RUN-f37c59ba54da is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-e965d7849e3f",
+     "id": "RUN-f37c59ba54da",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11973,7 +12045,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-74a236ee131f",
@@ -11983,11 +12055,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-39868946efb1 is incomplete",
+   "formula": "child run RUN-8300371a5409 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-39868946efb1",
+     "id": "RUN-8300371a5409",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -11998,7 +12070,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-d469fe39692e",
@@ -12008,11 +12080,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-9bdabce1e9bc is incomplete",
+   "formula": "child run RUN-3ba402564760 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-9bdabce1e9bc",
+     "id": "RUN-3ba402564760",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12023,7 +12095,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-33a9e3cb1627",
@@ -12033,11 +12105,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-bc6328e3da6f is incomplete",
+   "formula": "child run RUN-5a49cb59bb68 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-bc6328e3da6f",
+     "id": "RUN-5a49cb59bb68",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12048,7 +12120,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 4,
    "line_kind": "assembly_component",
    "component_ref": "ASC-bc6b53d80002",
@@ -12058,11 +12130,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-741ddfb83d43 is incomplete",
+   "formula": "child run RUN-b69f97c28f01 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-741ddfb83d43",
+     "id": "RUN-b69f97c28f01",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12073,7 +12145,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 5,
    "line_kind": "assembly_component",
    "component_ref": "ASC-670f20c16987",
@@ -12083,11 +12155,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d22cdf153b99 is incomplete",
+   "formula": "child run RUN-211ebd7999c4 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d22cdf153b99",
+     "id": "RUN-211ebd7999c4",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12098,7 +12170,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-4858aaddc6b9",
+   "run_id": "RUN-f4ec117012aa",
    "line_no": 6,
    "line_kind": "assembly_component",
    "component_ref": "ASC-87f0f2a6ea77",
@@ -12108,11 +12180,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-e965d7849e3f is incomplete",
+   "formula": "child run RUN-f37c59ba54da is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-e965d7849e3f",
+     "id": "RUN-f37c59ba54da",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12123,7 +12195,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-e7302f8874a4",
@@ -12133,11 +12205,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-42472e96d9e3 is incomplete",
+   "formula": "child run RUN-9ac0a0cd3cc6 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-42472e96d9e3",
+     "id": "RUN-9ac0a0cd3cc6",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12148,7 +12220,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-c31b7d1589d4",
@@ -12158,11 +12230,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-98a3fd0b2fe3 is incomplete",
+   "formula": "child run RUN-bd928fdb6b3b is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-98a3fd0b2fe3",
+     "id": "RUN-bd928fdb6b3b",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12173,7 +12245,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-df4bc44df001",
@@ -12183,11 +12255,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-741ddfb83d43 is incomplete",
+   "formula": "child run RUN-b69f97c28f01 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-741ddfb83d43",
+     "id": "RUN-b69f97c28f01",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12198,7 +12270,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "line_no": 4,
    "line_kind": "assembly_component",
    "component_ref": "ASC-d96f838accc4",
@@ -12208,11 +12280,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d22cdf153b99 is incomplete",
+   "formula": "child run RUN-211ebd7999c4 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d22cdf153b99",
+     "id": "RUN-211ebd7999c4",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12223,7 +12295,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fc3bb631dcce",
+   "run_id": "RUN-202ab5b6480f",
    "line_no": 5,
    "line_kind": "assembly_component",
    "component_ref": "ASC-46d2cddef64a",
@@ -12233,11 +12305,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-e965d7849e3f is incomplete",
+   "formula": "child run RUN-f37c59ba54da is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-e965d7849e3f",
+     "id": "RUN-f37c59ba54da",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12248,7 +12320,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-5c93e62f1abd",
@@ -12258,11 +12330,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-8635dafdf2bf is incomplete",
+   "formula": "child run RUN-17db8eb31033 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-8635dafdf2bf",
+     "id": "RUN-17db8eb31033",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12273,7 +12345,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-d1fa66744506",
@@ -12283,11 +12355,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-3b4633976cb7 is incomplete",
+   "formula": "child run RUN-e80453d70ec7 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-3b4633976cb7",
+     "id": "RUN-e80453d70ec7",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12298,7 +12370,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-c261ffcdccc4",
@@ -12308,11 +12380,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-741ddfb83d43 is incomplete",
+   "formula": "child run RUN-b69f97c28f01 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-741ddfb83d43",
+     "id": "RUN-b69f97c28f01",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12323,7 +12395,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "line_no": 4,
    "line_kind": "assembly_component",
    "component_ref": "ASC-c9f919dd13a7",
@@ -12333,11 +12405,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d22cdf153b99 is incomplete",
+   "formula": "child run RUN-211ebd7999c4 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d22cdf153b99",
+     "id": "RUN-211ebd7999c4",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12348,7 +12420,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-2d796ec7c4ed",
+   "run_id": "RUN-ef3a6b2a3932",
    "line_no": 5,
    "line_kind": "assembly_component",
    "component_ref": "ASC-c9108799860a",
@@ -12358,11 +12430,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-e965d7849e3f is incomplete",
+   "formula": "child run RUN-f37c59ba54da is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-e965d7849e3f",
+     "id": "RUN-f37c59ba54da",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12373,7 +12445,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-6596629801aa",
+   "run_id": "RUN-0dad9b4dd9bf",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-b81c17cb01b8",
@@ -12383,11 +12455,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-42472e96d9e3 is incomplete",
+   "formula": "child run RUN-9ac0a0cd3cc6 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-42472e96d9e3",
+     "id": "RUN-9ac0a0cd3cc6",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12398,7 +12470,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-6596629801aa",
+   "run_id": "RUN-0dad9b4dd9bf",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-7d38896977d9",
@@ -12408,11 +12480,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-582c98a89e52 is incomplete",
+   "formula": "child run RUN-5529c6078050 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-582c98a89e52",
+     "id": "RUN-5529c6078050",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12423,7 +12495,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e0426d63804b",
+   "run_id": "RUN-ccd99d5406d8",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-347f57fa0259",
@@ -12433,11 +12505,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-c43036b258c8 is incomplete",
+   "formula": "child run RUN-84c9d3598998 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-c43036b258c8",
+     "id": "RUN-84c9d3598998",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12448,7 +12520,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e0426d63804b",
+   "run_id": "RUN-ccd99d5406d8",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-4c414b4787b3",
@@ -12458,11 +12530,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-741ddfb83d43 is incomplete",
+   "formula": "child run RUN-b69f97c28f01 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-741ddfb83d43",
+     "id": "RUN-b69f97c28f01",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12473,7 +12545,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e0426d63804b",
+   "run_id": "RUN-ccd99d5406d8",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-7e8fb7fdbd17",
@@ -12483,11 +12555,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d22cdf153b99 is incomplete",
+   "formula": "child run RUN-211ebd7999c4 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d22cdf153b99",
+     "id": "RUN-211ebd7999c4",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12498,7 +12570,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-e0426d63804b",
+   "run_id": "RUN-ccd99d5406d8",
    "line_no": 4,
    "line_kind": "assembly_component",
    "component_ref": "ASC-59bf40cc93a2",
@@ -12508,11 +12580,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-d07f620145b8 is incomplete",
+   "formula": "child run RUN-168c9d95d758 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-d07f620145b8",
+     "id": "RUN-168c9d95d758",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12523,7 +12595,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cdc3da78a970",
+   "run_id": "RUN-84515c2bf144",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-59cd459a9ab3",
@@ -12533,11 +12605,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-4366c0aab4d0 is incomplete",
+   "formula": "child run RUN-490b4d2e361c is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-4366c0aab4d0",
+     "id": "RUN-490b4d2e361c",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12548,7 +12620,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-cdc3da78a970",
+   "run_id": "RUN-84515c2bf144",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-a69b2a205365",
@@ -12558,11 +12630,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-bc2c9b038a16 is incomplete",
+   "formula": "child run RUN-b68ebcc89822 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-bc2c9b038a16",
+     "id": "RUN-b68ebcc89822",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12573,7 +12645,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-aac5891ded34",
+   "run_id": "RUN-23a524a92c9b",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-f9cd2b9fad33",
@@ -12583,11 +12655,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-cf83910a81f6 is incomplete",
+   "formula": "child run RUN-93a202a53481 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-cf83910a81f6",
+     "id": "RUN-93a202a53481",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12598,7 +12670,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-aac5891ded34",
+   "run_id": "RUN-23a524a92c9b",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-636aeb0d0fcc",
@@ -12608,11 +12680,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-bc2c9b038a16 is incomplete",
+   "formula": "child run RUN-b68ebcc89822 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-bc2c9b038a16",
+     "id": "RUN-b68ebcc89822",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12623,7 +12695,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fa87a065df88",
+   "run_id": "RUN-808e26092ebe",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-bf729163bbe3",
@@ -12633,11 +12705,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-24dd5448213a is incomplete",
+   "formula": "child run RUN-b9943b06a91f is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-24dd5448213a",
+     "id": "RUN-b9943b06a91f",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12648,7 +12720,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-fa87a065df88",
+   "run_id": "RUN-808e26092ebe",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-e87c77cc00a8",
@@ -12658,11 +12730,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-fc2a12073967 is incomplete",
+   "formula": "child run RUN-08194f9c7926 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-fc2a12073967",
+     "id": "RUN-08194f9c7926",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12673,7 +12745,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-1384e5a5cd82",
+   "run_id": "RUN-9713f0d77774",
    "line_no": 1,
    "line_kind": "assembly_component",
    "component_ref": "ASC-eeddf4bca41e",
@@ -12683,11 +12755,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-a16f8dc43e04 is incomplete",
+   "formula": "child run RUN-ba321c5bba7d is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-a16f8dc43e04",
+     "id": "RUN-ba321c5bba7d",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12698,7 +12770,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-1384e5a5cd82",
+   "run_id": "RUN-9713f0d77774",
    "line_no": 2,
    "line_kind": "assembly_component",
    "component_ref": "ASC-60427ac0521c",
@@ -12708,11 +12780,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-adfaab3c71d0 is incomplete",
+   "formula": "child run RUN-13b07706aec1 is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-adfaab3c71d0",
+     "id": "RUN-13b07706aec1",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -12723,7 +12795,7 @@
    "warnings": []
   },
   {
-   "run_id": "RUN-1384e5a5cd82",
+   "run_id": "RUN-9713f0d77774",
    "line_no": 3,
    "line_kind": "assembly_component",
    "component_ref": "ASC-16adf52f914f",
@@ -12733,11 +12805,11 @@
    "quantity_kind": "work_item_qty",
    "unit_cost": null,
    "extended_cost": null,
-   "formula": "child run RUN-3d6a39e60b4d is incomplete",
+   "formula": "child run RUN-8efbdd5e3b1b is incomplete",
    "inputs": [
     {
      "table": "calculation_runs",
-     "id": "RUN-3d6a39e60b4d",
+     "id": "RUN-8efbdd5e3b1b",
      "field": "direct_cost_total",
      "value": "",
      "unit": null,
@@ -18265,23 +18337,18 @@
     "temporary_bracing_materials",
     "small_tools_and_nailers",
     "bottom_plate_to_floor_fasteners",
-    "taping_and_finishing",
     "corner_bead",
     "openings_cutouts_beyond_waste",
     "blocking_and_backing",
     "acoustic_sealant",
     "corner_bead_and_trim",
     "texture_finishes",
-    "primer_and_paint",
     "sanding_abrasives",
-    "board_hanging",
     "masking_and_protection_materials",
     "surface_repair_and_patching",
     "rollers_brushes_and_small_tools",
     "scaffolding_above_10_ft",
     "color_matching_charges",
-    "finish_coats",
-    "primer",
     "corners_and_intersections",
     "openings_headers_and_door_frames",
     "base_trim",
@@ -18384,23 +18451,18 @@
     "staples_and_stapling_hardware",
     "vapor_barrier_sealing",
     "openings_and_penetrations_beyond_waste",
-    "taping_and_finishing",
     "corner_bead",
     "openings_cutouts_beyond_waste",
     "blocking_and_backing",
     "acoustic_sealant",
     "corner_bead_and_trim",
     "texture_finishes",
-    "primer_and_paint",
     "sanding_abrasives",
-    "board_hanging",
     "masking_and_protection_materials",
     "surface_repair_and_patching",
     "rollers_brushes_and_small_tools",
     "scaffolding_above_10_ft",
     "color_matching_charges",
-    "finish_coats",
-    "primer",
     "corners_and_intersections",
     "openings_headers_and_door_frames",
     "base_trim",
@@ -18493,23 +18555,18 @@
     "temporary_bracing_materials",
     "small_tools_and_nailers",
     "bottom_plate_to_floor_fasteners",
-    "taping_and_finishing",
     "corner_bead",
     "openings_cutouts_beyond_waste",
     "blocking_and_backing",
     "acoustic_sealant",
     "corner_bead_and_trim",
     "texture_finishes",
-    "primer_and_paint",
     "sanding_abrasives",
-    "board_hanging",
     "masking_and_protection_materials",
     "surface_repair_and_patching",
     "rollers_brushes_and_small_tools",
     "scaffolding_above_10_ft",
     "color_matching_charges",
-    "finish_coats",
-    "primer",
     "corners_and_intersections",
     "openings_headers_and_door_frames",
     "base_trim",
@@ -18596,24 +18653,18 @@
     "door_and_window_framing",
     "deflection_track_and_bracing",
     "blocking_backing",
-    "gypsum_board",
-    "taping_and_finishing",
     "corner_bead",
     "openings_cutouts_beyond_waste",
     "blocking_and_backing",
     "acoustic_sealant",
     "corner_bead_and_trim",
     "texture_finishes",
-    "primer_and_paint",
     "sanding_abrasives",
-    "board_hanging",
     "masking_and_protection_materials",
     "surface_repair_and_patching",
     "rollers_brushes_and_small_tools",
     "scaffolding_above_10_ft",
     "color_matching_charges",
-    "finish_coats",
-    "primer",
     "corners_and_intersections",
     "openings_headers_and_door_frames",
     "base_trim",
@@ -18679,14 +18730,12 @@
     "openings_headers_cripples",
     "blocking",
     "fireblocking",
-    "sheathing",
     "temporary_bracing_materials",
     "small_tools_and_nailers",
     "bottom_plate_to_floor_fasteners",
     "openings_cutouts_beyond_waste",
     "shear_wall_hardware",
     "weather_barrier",
-    "framing",
     "corners_and_intersections",
     "openings_headers_and_door_frames",
     "weather_barrier_and_flashing",
@@ -18760,23 +18809,18 @@
     "sales_tax_and_delivery",
     "permits_and_inspections",
     "overhead_and_profit",
-    "taping_and_finishing",
     "corner_bead",
     "openings_cutouts_beyond_waste",
     "blocking_and_backing",
     "acoustic_sealant",
     "corner_bead_and_trim",
     "texture_finishes",
-    "primer_and_paint",
     "sanding_abrasives",
-    "board_hanging",
     "masking_and_protection_materials",
     "surface_repair_and_patching",
     "rollers_brushes_and_small_tools",
     "scaffolding_above_10_ft",
     "color_matching_charges",
-    "finish_coats",
-    "primer",
     "ceiling_framing",
     "light_fixture_and_diffuser_cutouts",
     "access_panels"
@@ -18842,12 +18886,10 @@
     "subgrade_preparation_and_compaction",
     "edge_forms",
     "control_and_expansion_joints",
-    "curing",
     "concrete_pump",
     "testing_and_special_inspection",
     "sealers_and_hardeners",
     "excavation_and_haul",
-    "concrete_placing_and_finishing",
     "wet_curing_and_blankets",
     "protection_barricades"
    ],
@@ -18913,12 +18955,10 @@
     "subgrade_preparation_and_compaction",
     "edge_forms",
     "control_and_expansion_joints",
-    "curing",
     "concrete_pump",
     "testing_and_special_inspection",
     "sealers_and_hardeners",
     "excavation_and_haul",
-    "concrete_placing_and_finishing",
     "wet_curing_and_blankets",
     "protection_barricades"
    ],
@@ -18980,7 +19020,6 @@
     "excavation_and_haul",
     "forms",
     "bar_supports_and_ties",
-    "anchor_bolts",
     "keyways",
     "curing",
     "testing_and_special_inspection",
@@ -19058,14 +19097,10 @@
     "structural_supports_and_curbs",
     "refrigerant_charge_beyond_factory",
     "crane_or_rigging",
-    "indoor_unit_and_coil",
-    "thermostat_and_controls",
-    "ductwork",
     "gas_piping",
     "flue_venting",
     "condensate_drain_and_pump",
     "plenum_fabrication",
-    "outdoor_unit",
     "boots_registers_and_grilles",
     "hanger_strap_material",
     "sealant_mastic_material",

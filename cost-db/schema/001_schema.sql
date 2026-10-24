@@ -87,7 +87,8 @@ CREATE INDEX review_events_record_idx ON review_events (record_table, record_id)
 CREATE FUNCTION log_review_change() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE rid text; i int;
 BEGIN
-  IF NEW.review_status IS DISTINCT FROM OLD.review_status THEN
+  -- a change of status AND a change of the recorded reviewer (status unchanged) are both history
+  IF NEW.review_status IS DISTINCT FROM OLD.review_status OR (to_jsonb(NEW) ->> 'reviewed_by') IS DISTINCT FROM (to_jsonb(OLD) ->> 'reviewed_by') THEN
     rid := to_jsonb(NEW) ->> TG_ARGV[0];
     FOR i IN 1 .. TG_NARGS - 1 LOOP
       rid := rid || '|' || (to_jsonb(NEW) ->> TG_ARGV[i]);
@@ -95,6 +96,54 @@ BEGIN
     INSERT INTO review_events (record_table, record_id, old_status, new_status, changed_by, changed_at)
     VALUES (TG_TABLE_NAME, rid, OLD.review_status, NEW.review_status, to_jsonb(NEW) ->> 'reviewed_by',
             COALESCE((to_jsonb(NEW) ->> 'reviewed_at')::timestamptz, now()));
+  END IF;
+  RETURN NEW;
+END $$;
+
+-- Row-level change log for reference and approval data that stay editable (source register, region hierarchy, categories, trades,
+-- equipment types, assumption approvals): who/when and the complete old and new row. Append-only. (Protection against mistakes: the
+-- table owner/superuser can always disable triggers.)
+CREATE TABLE change_log (
+  event_id     bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  table_name   text NOT NULL,
+  record_id    text NOT NULL,
+  op           text NOT NULL CHECK (op IN ('UPDATE','DELETE')),
+  old_row      jsonb NOT NULL,
+  new_row      jsonb,
+  changed_at   timestamptz NOT NULL DEFAULT now(),
+  db_user      text NOT NULL DEFAULT session_user
+);
+CREATE INDEX change_log_record_idx ON change_log (table_name, record_id);
+
+CREATE FUNCTION log_row_change() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND to_jsonb(OLD) = to_jsonb(NEW) THEN RETURN NEW; END IF;
+  INSERT INTO change_log (table_name, record_id, op, old_row, new_row)
+  VALUES (TG_TABLE_NAME, to_jsonb(OLD) ->> TG_ARGV[0], TG_OP, to_jsonb(OLD), CASE WHEN TG_OP = 'UPDATE' THEN to_jsonb(NEW) END);
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END $$;
+
+-- A source may not be downgraded (no longer fetched) or turned into one whose terms bar data use while rows depend on it:
+-- otherwise "flip the source up, validate, flip it back" would leave validated rows resting on an unfetched source.
+CREATE FUNCTION guard_source_change() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE t text; n bigint; downgrade boolean; restricted boolean;
+BEGIN
+  downgrade := OLD.verification_method = 'fetched_primary' AND NEW.verification_method <> 'fetched_primary';
+  restricted := NEW.reuse_status IN ('prohibited','restricted_no_storage','licence_required')
+                AND OLD.reuse_status NOT IN ('prohibited','restricted_no_storage','licence_required');
+  IF downgrade OR restricted THEN
+    FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
+                             'productivity_observations','bid_benchmarks','crews','adjustment_factors','indices'] LOOP
+      EXECUTE format('SELECT count(*) FROM %I WHERE source_id = $1 AND (review_status = ''validated'' OR $2)', t) INTO n USING OLD.source_id, restricted;
+      IF n > 0 THEN
+        RAISE EXCEPTION 'source %: cannot be % while % row(s) of % depend on it - flag or supersede them first', OLD.source_id,
+          CASE WHEN downgrade THEN 'downgraded from fetched_primary' ELSE 'restricted' END, n, t;
+      END IF;
+    END LOOP;
+    SELECT count(*) INTO n FROM index_values v JOIN indices i USING (index_id) WHERE i.source_id = OLD.source_id AND (v.review_status = 'validated' OR restricted);
+    IF n > 0 THEN
+      RAISE EXCEPTION 'source %: cannot be changed while % index value(s) depend on it - flag or supersede them first', OLD.source_id, n;
+    END IF;
   END IF;
   RETURN NEW;
 END $$;
@@ -211,15 +260,25 @@ CREATE TABLE categories (
 );
 
 -- Canonical spec_key in SQL: must stay identical to costdb.ids.spec_key (tests compare both for every spec line).
-CREATE FUNCTION norm_attr(v jsonb) RETURNS text LANGUAGE sql IMMUTABLE AS $$
-  SELECT CASE jsonb_typeof(v)
-    WHEN 'number'  THEN trim_scale((v #>> '{}')::numeric)::text
-    WHEN 'boolean' THEN v #>> '{}'
-    WHEN 'string'  THEN CASE WHEN (v #>> '{}') ~ '^-?[0-9]+(\.[0-9]+)?$'
-                             THEN trim_scale((v #>> '{}')::numeric)::text
-                             ELSE lower(btrim(regexp_replace(v #>> '{}', '\s+', ' ', 'g'))) END
-    ELSE NULL END
-$$;
+CREATE FUNCTION norm_attr(v jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE AS $$
+DECLARE raw text; t text;
+BEGIN
+  CASE jsonb_typeof(v)
+    WHEN 'number'  THEN RETURN trim_scale((v #>> '{}')::numeric)::text;
+    WHEN 'boolean' THEN RETURN v #>> '{}';
+    WHEN 'string'  THEN
+      raw := v #>> '{}';
+      -- attribute text is plain ASCII (write 1/2 in, not a vulgar-fraction character): lower-casing and whitespace rules then agree
+      -- exactly with costdb.ids.norm_attr_value in Python. Only space, tab, LF, CR, FF, VT count as whitespace.
+      IF raw ~ '[^\x20-\x7E\x09-\x0D]' THEN
+        RAISE EXCEPTION 'attribute value % contains non-ASCII or control characters', quote_literal(raw);
+      END IF;
+      t := btrim(raw, E' \t\n\r\f' || chr(11));       -- (E'' strings have no \v escape)
+      IF t ~ '^-?[0-9]+(\.[0-9]+)?$' THEN RETURN trim_scale(t::numeric)::text; END IF;
+      RETURN translate(regexp_replace(t, '[ \t\n\r\f\v]+', ' ', 'g'), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');   -- locale-proof lower()
+    ELSE RETURN NULL;
+  END CASE;
+END $$;
 
 CREATE FUNCTION compute_spec_key(cat text, attrs jsonb) RETURNS text LANGUAGE plpgsql STABLE AS $$
 DECLARE req jsonb; nm text; parts text[] := '{}'; val text;
@@ -306,7 +365,8 @@ CREATE TABLE sources (
   notes            text,
   CONSTRAINT sources_synthetic_chk CHECK (verification_method <> 'synthetic_test_fixture' OR source_id LIKE 'TEST-%'),
   CONSTRAINT sources_validated_fetch_chk CHECK (review_status <> 'validated' OR verification_method IN ('fetched_primary','synthetic_test_fixture')),
-  CONSTRAINT sources_validated_terms_chk CHECK (review_status <> 'validated' OR reuse_status NOT IN ('prohibited','restricted_no_storage','licence_required'))
+  CONSTRAINT sources_validated_terms_chk CHECK (review_status <> 'validated' OR reuse_status NOT IN ('prohibited','restricted_no_storage','licence_required')),
+  CONSTRAINT sources_fetched_evidence_chk CHECK (verification_method <> 'fetched_primary' OR (evidence_url IS NOT NULL AND evidence_quote IS NOT NULL))
 );
 
 -- ---------------------------------------------------------------------
@@ -403,7 +463,7 @@ CREATE TABLE price_observations (
   region_id        id_t REFERENCES regions(region_id),
   observed_at      date NOT NULL,
   retrieved_at     timestamptz NOT NULL,
-  price_amount     numeric(14,4) NOT NULL CHECK (price_amount >= 0),
+  price_amount     numeric(14,4) NOT NULL CHECK (price_amount > 0),
   currency         currency_t NOT NULL DEFAULT 'USD',
   original_price_text text,
   price_channel    text NOT NULL CHECK (price_channel IN
@@ -435,6 +495,7 @@ CREATE TABLE price_observations (
   created_at       timestamptz NOT NULL DEFAULT now(),
   notes            text,
   CONSTRAINT po_dates_chk CHECK (retrieved_at >= (observed_at::timestamp AT TIME ZONE 'UTC') - interval '1 day'),
+  CONSTRAINT po_promo_chk CHECK (price_channel <> 'retail_promo' OR promo_flag),
   CONSTRAINT po_contractor_chk CHECK (NOT is_contractor_cost OR price_channel IN ('pro_account_quote','distributor_quote','supplier_quote')),
   CONSTRAINT po_location_chk CHECK (zip IS NOT NULL OR store_ref IS NOT NULL OR region_id IS NOT NULL)
 );
@@ -589,7 +650,10 @@ CREATE TABLE labor_rates (
   CONSTRAINT lr_stat_scope_chk CHECK (rate_type <> 'stat_wage' OR (use_context = 'statistical_reference' AND includes_fringe = false)),
   CONSTRAINT lr_period_chk CHECK (effective_to IS NULL OR effective_to >= effective_from),
   CONSTRAINT lr_ovh_profit_chk CHECK (NOT (includes_overhead OR includes_profit) OR rate_type = 'company_actual'),
-  CONSTRAINT lr_stat_burden_chk CHECK (rate_type <> 'stat_wage' OR (NOT includes_payroll_taxes AND NOT includes_workers_comp))
+  CONSTRAINT lr_stat_burden_chk CHECK (rate_type <> 'stat_wage' OR (NOT includes_payroll_taxes AND NOT includes_workers_comp)),
+  CONSTRAINT lr_total_chk CHECK (total_hr IS NULL OR NOT (includes_fringe AND includes_payroll_taxes AND includes_workers_comp)
+    OR base_wage_hr IS NULL OR fringe_hr IS NULL OR payroll_tax_hr IS NULL OR workers_comp_hr IS NULL
+    OR abs(total_hr - (base_wage_hr + fringe_hr + payroll_tax_hr + workers_comp_hr + COALESCE(other_employer_cost_hr, 0))) <= 0.0005)
 );
 CREATE INDEX lr_trade_region_idx ON labor_rates (trade_code, region_id, effective_from DESC);
 CREATE TRIGGER lr_append_only BEFORE UPDATE OR DELETE ON labor_rates
@@ -1133,7 +1197,7 @@ DECLARE t text;
 BEGIN
   -- append-only: observed history, calculation records, products, versioned definitions, factors, crews
   FOREACH t IN ARRAY ARRAY['products','calculation_runs','calculation_run_lines','work_item_components','assembly_components',
-                           'adjustment_factors','crews','crew_members'] LOOP
+                           'adjustment_factors','crews','crew_members','indices','change_log'] LOOP
     EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite()', t || '_append_only', t);
   END LOOP;
   -- versioned definitions: content frozen, only the derived status label may move
@@ -1143,19 +1207,19 @@ BEGIN
   -- TRUNCATE guard on everything protected
   FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','calculation_runs','calculation_run_lines','labor_rates',
                            'burden_rates','equipment_rates','crews','crew_members','work_items','work_item_components','productivity_observations',
-                           'assemblies','assembly_components','bid_benchmarks','index_values','adjustment_factors','assumptions','review_events'] LOOP
+                           'assemblies','assembly_components','bid_benchmarks','index_values','adjustment_factors','assumptions','review_events','change_log'] LOOP
     EXECUTE format('CREATE TRIGGER %I BEFORE TRUNCATE ON %I FOR EACH STATEMENT EXECUTE FUNCTION forbid_truncate()', t || '_no_truncate', t);
   END LOOP;
   -- review log (single-column and composite keys) and its own protection
   FOREACH t IN ARRAY ARRAY['sources','products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
                            'crews','productivity_observations','bid_benchmarks','indices','adjustment_factors','calculation_runs'] LOOP
-    EXECUTE format('CREATE TRIGGER %I AFTER UPDATE OF review_status ON %I FOR EACH ROW EXECUTE FUNCTION log_review_change(%L)',
+    EXECUTE format('CREATE TRIGGER %I AFTER UPDATE OF review_status, reviewed_by, reviewed_at ON %I FOR EACH ROW EXECUTE FUNCTION log_review_change(%L)',
                    t || '_review_log', t, (SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY (i.indkey)
                                            WHERE i.indrelid = t::regclass AND i.indisprimary ORDER BY a.attnum LIMIT 1));
   END LOOP;
-  CREATE TRIGGER work_items_review_log AFTER UPDATE OF review_status ON work_items FOR EACH ROW EXECUTE FUNCTION log_review_change('work_item_id','version');
-  CREATE TRIGGER assemblies_review_log AFTER UPDATE OF review_status ON assemblies FOR EACH ROW EXECUTE FUNCTION log_review_change('assembly_id','version');
-  CREATE TRIGGER index_values_review_log AFTER UPDATE OF review_status ON index_values FOR EACH ROW EXECUTE FUNCTION log_review_change('index_id','period_start','vintage_date');
+  CREATE TRIGGER work_items_review_log AFTER UPDATE OF review_status, reviewed_by, reviewed_at ON work_items FOR EACH ROW EXECUTE FUNCTION log_review_change('work_item_id','version');
+  CREATE TRIGGER assemblies_review_log AFTER UPDATE OF review_status, reviewed_by, reviewed_at ON assemblies FOR EACH ROW EXECUTE FUNCTION log_review_change('assembly_id','version');
+  CREATE TRIGGER index_values_review_log AFTER UPDATE OF review_status, reviewed_by, reviewed_at ON index_values FOR EACH ROW EXECUTE FUNCTION log_review_change('index_id','period_start','vintage_date');
   -- 'validated' needs a named reviewer and a timestamp
   FOREACH t IN ARRAY ARRAY['sources','products','product_consumption','price_observations','calculation_runs','labor_rates','burden_rates',
                            'equipment_rates','crews','work_items','productivity_observations','assemblies','bid_benchmarks','indices',
@@ -1164,22 +1228,31 @@ BEGIN
                    t, t || '_validated_reviewer_chk');
   END LOOP;
   CREATE TRIGGER index_values_source_gate BEFORE INSERT OR UPDATE ON index_values FOR EACH ROW EXECUTE FUNCTION check_index_value_source();
+  CREATE TRIGGER sources_guard BEFORE UPDATE ON sources FOR EACH ROW EXECUTE FUNCTION guard_source_change();
+  -- editable reference / approval data: every change is logged with the complete old and new row
+  CREATE TRIGGER sources_change_log AFTER UPDATE OR DELETE ON sources FOR EACH ROW EXECUTE FUNCTION log_row_change('source_id');
+  CREATE TRIGGER regions_change_log AFTER UPDATE OR DELETE ON regions FOR EACH ROW EXECUTE FUNCTION log_row_change('region_id');
+  CREATE TRIGGER categories_change_log AFTER UPDATE OR DELETE ON categories FOR EACH ROW EXECUTE FUNCTION log_row_change('category_id');
+  CREATE TRIGGER trades_change_log AFTER UPDATE OR DELETE ON trades FOR EACH ROW EXECUTE FUNCTION log_row_change('trade_code');
+  CREATE TRIGGER equipment_types_change_log AFTER UPDATE OR DELETE ON equipment_types FOR EACH ROW EXECUTE FUNCTION log_row_change('equipment_type_code');
+  CREATE TRIGGER assumptions_change_log AFTER UPDATE OR DELETE ON assumptions FOR EACH ROW EXECUTE FUNCTION log_row_change('assumption_id');
   -- source terms / fetch status gate
   FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
-                           'productivity_observations','bid_benchmarks','indices','adjustment_factors'] LOOP
+                           'productivity_observations','bid_benchmarks','indices','adjustment_factors','crews'] LOOP
     EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION check_source_usable()', t || '_source_gate', t);
   END LOOP;
 END $$;
 
 CREATE TRIGGER review_events_append_only BEFORE UPDATE OR DELETE ON review_events FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
 
--- Trigger/check functions read tables by bare name: pin their search_path so they work from any session (and cannot be hijacked by a shadow table).
+-- Trigger/check functions read tables by bare name: pin their search_path so they work from any session. pg_temp is listed LAST on
+-- purpose: PostgreSQL searches it first unless it is named, and a session could otherwise shadow sources/review_events with a temp table.
 DO $$
 DECLARE f record;
 BEGIN
   FOR f IN SELECT p.oid::regprocedure AS sig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
            WHERE n.nspname = 'costdb' AND p.prokind = 'f' AND p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'plpgsql') LOOP
-    EXECUTE format('ALTER FUNCTION %s SET search_path = costdb, pg_catalog', f.sig);
+    EXECUTE format('ALTER FUNCTION %s SET search_path = pg_catalog, costdb, pg_temp', f.sig);
   END LOOP;
 END $$;
 

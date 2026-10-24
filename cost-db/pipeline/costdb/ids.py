@@ -20,25 +20,33 @@ def make_id(prefix: str, *parts: object, length: int = 12) -> str:
 
 
 _NUM_RE = re.compile(r"^-?[0-9]+(\.[0-9]+)?$")
+_WS = " \t\n\r\f\v"
+_WS_RE = re.compile(r"[ \t\n\r\f\v]+")
+_BAD_RE = re.compile(r"[^\x20-\x7E\x09-\x0D]")
+_UPPER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 
 
 def norm_attr_value(v: object) -> str:
     """Normalise an attribute value for comparison. MUST stay identical to costdb.norm_attr() in schema/001_schema.sql.
 
-    Plain decimal numbers lose trailing zeros ('0.50' == '0.5'); everything else is trimmed, lower-cased and has its
-    whitespace collapsed. Only plain decimals are numbers: 'NaN', '1_0', '1e3' are ordinary strings, never numbers."""
+    Plain decimal numbers lose trailing zeros ('0.50' == '0.5'; padded ' 5.50 ' too). Everything else is trimmed, has its
+    whitespace collapsed (only space, tab, LF, CR, FF, VT count) and is lower-cased (ASCII letters only, so no locale can differ).
+    Only plain decimals are numbers: 'NaN', '1_0', '1e3' are ordinary strings. Attribute text must be plain ASCII (write 1/2 in,
+    not a vulgar-fraction character): anything else is refused rather than normalised differently in two places."""
     if isinstance(v, bool):
         return "true" if v else "false"
     s = str(v)
     if isinstance(v, (int, float, Decimal)) and not isinstance(v, bool):
         s = format(Decimal(str(v)), "f")
-    if _NUM_RE.match(s.strip()):
-        d = Decimal(s.strip())
+    elif _BAD_RE.search(s):
+        raise SpecError(f"attribute value {s!r} contains non-ASCII or control characters")
+    t = s.strip(_WS)
+    if _NUM_RE.match(t):
+        d = Decimal(t)
         if d == 0:
             return "0"
-        n = d.normalize()
-        return format(n, "f")
-    return re.sub(r"\s+", " ", s.strip()).lower()
+        return format(d.normalize(), "f")
+    return _WS_RE.sub(" ", t).translate(_UPPER)
 
 
 class SpecError(ValueError):

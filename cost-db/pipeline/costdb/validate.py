@@ -18,9 +18,10 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Iterable, Optional
 
-from .calc import Engine, RunParams, median
+from .calc import RANGES, Engine, RunParams, median
 from .enums import NO_DATA_USE
 from .ids import SpecError, spec_key
+from .scope import scope_covered
 from .store import Database
 from .units import Units, UnitError
 
@@ -30,12 +31,15 @@ GLOBAL_EXCLUDED_TOKENS = {"mobilization", "daily_cleanup_and_protection", "super
 OBSERVED_TABLES = ("price_observations", "labor_rates", "equipment_rates", "productivity_observations",
                    "burden_rates", "index_values", "product_consumption", "bid_benchmarks", "products")
 # Tables whose rows carry a source_id column directly; index_values inherit the source of their series (indices.source_id).
-SOURCE_TABLES = tuple(t for t in OBSERVED_TABLES if t != "index_values") + ("indices",)
+SOURCE_TABLES = tuple(t for t in OBSERVED_TABLES if t != "index_values") + ("indices", "crews", "adjustment_factors")
 # Fields a row must show before it may be promoted to 'validated' (per table).
-EVIDENCE_FIELDS = {"price_observations": ("evidence_excerpt",), "labor_rates": ("evidence_excerpt",), "equipment_rates": ("evidence_excerpt",),
-                   "burden_rates": ("evidence_excerpt",), "productivity_observations": ("evidence_excerpt", "source_page"),
+# Dataset/document-based tables also need the hash of the saved file; a hand-captured retail price needs its excerpt (and url/captured_by,
+# which the schema makes mandatory) because there is no file to hash.
+EVIDENCE_FIELDS = {"price_observations": ("evidence_excerpt",), "labor_rates": ("evidence_excerpt", "raw_file_sha256"),
+                   "equipment_rates": ("evidence_excerpt", "raw_file_sha256"), "burden_rates": ("evidence_excerpt",),
+                   "productivity_observations": ("evidence_excerpt", "source_page", "raw_file_sha256"),
                    "product_consumption": ("evidence_excerpt", "source_locator"), "products": ("evidence_excerpt", "source_locator"),
-                   "bid_benchmarks": ("evidence_excerpt", "source_locator"), "index_values": ("source_locator",)}
+                   "bid_benchmarks": ("evidence_excerpt", "source_locator"), "index_values": ("source_locator", "raw_file_sha256")}
 
 # Screening thresholds. They never change a calculation; they decide which warnings the validator raises. Each one states its basis;
 # pass Validator(policy={...}) to change them (the value actually used is written into the issue details).
@@ -80,6 +84,10 @@ def pk_of(table: str, row: dict) -> str:
             "index_values": ("index_id", "period_start", "vintage_date"), "calculation_run_lines": ("run_id", "line_no")}
     if table in keys:
         return "|".join(str(row[k]) for k in keys[table])
+    if table == "review_events":                         # the identity column is generated (not in the CSV): use the natural key
+        return "|".join(str(row[k]) for k in ("record_table", "record_id", "old_status", "new_status", "changed_at"))
+    if table == "change_log":
+        return "|".join(str(row[k]) for k in ("table_name", "record_id", "op", "changed_at"))
     meta_first = {"units": "unit_id", "regions": "region_id", "categories": "category_id", "trades": "trade_code",
                   "equipment_types": "equipment_type_code", "sources": "source_id", "products": "product_id",
                   "product_consumption": "consumption_id", "price_observations": "observation_id",
@@ -110,7 +118,7 @@ class Validator:
         self.issues.append(Issue(table, rid, code, sev, msg, details))
 
     def run(self) -> list[Issue]:
-        for fn in (self.check_foreign_keys, self.check_sources, self.check_products, self.check_observations,
+        for fn in (self.check_foreign_keys, self.check_ranges, self.check_sources, self.check_products, self.check_observations,
                    self.check_labor, self.check_equipment_and_crews, self.check_productivity, self.check_work_items,
                    self.check_assemblies, self.check_assumptions, self.check_calculation_runs):
             fn()
@@ -146,12 +154,40 @@ class Validator:
         for t in self.db.meta:
             seen = set()
             for r in self.db[t]:
-                k = pk_of(t, r) if t not in ("validation_issues",) else None
+                k = pk_of(t, r) if t not in ("validation_issues", "review_events", "change_log") else None
                 if k is None:
                     continue
                 if k in seen:
                     self.add(t, k, "ID_DUPLICATE", "error", "duplicate primary key")
                 seen.add(k)
+
+    # ----------------------------------------------------------------------- ranges
+    def check_ranges(self):
+        """The schema's CHECK ranges, applied to CSV-loaded rows too (the build path never touches PostgreSQL)."""
+        for table, rules in RANGES.items():
+            for r in self.db[table]:
+                for col, op, lim in rules:
+                    v = r.get(col)
+                    if v is None:
+                        continue
+                    try:
+                        d = Decimal(str(v))
+                        ok = d.is_finite() and {">": d > lim, ">=": d >= lim, "<=": d <= lim}[op]
+                    except Exception:
+                        ok = False
+                    if not ok:
+                        self.add(table, r, "RANGE_VIOLATION", "error", f"{col}={v!r} violates the schema range ({op} {lim})")
+        for c in self.db["work_item_components"]:
+            if c["waste_factor"] is not None and not (D(0) <= Decimal(str(c["waste_factor"])) < D(1)):
+                self.add("work_item_components", c, "RANGE_VIOLATION", "error", f"waste_factor={c['waste_factor']} is outside [0,1)")
+            if c["qty_per_unit"] is not None and Decimal(str(c["qty_per_unit"])) < 0:
+                self.add("work_item_components", c, "RANGE_VIOLATION", "error", f"qty_per_unit={c['qty_per_unit']} is negative")
+        for c in self.db["assembly_components"]:
+            if Decimal(str(c["qty_per_assembly_unit"])) <= 0:
+                self.add("assembly_components", c, "RANGE_VIOLATION", "error", f"qty_per_assembly_unit={c['qty_per_assembly_unit']} must be > 0")
+        for f in self.db["assumptions"]:
+            if f["value_numeric"] is not None and f["assumption_type"] == "waste" and not (D(0) <= Decimal(str(f["value_numeric"])) < D(1)):
+                self.add("assumptions", f, "RANGE_VIOLATION", "error", "waste assumption outside [0,1)")
 
     # ---------------------------------------------------------------------- sources
     def _source(self, row) -> Optional[dict]:
@@ -248,7 +284,9 @@ class Validator:
                 self.add("price_observations", o, "OBS_STALE", "warning", f"{(self.today - o['observed_at']).days} days old",
                          threshold_days=self.policy["price_stale_days"], basis=DEFAULT_POLICY["price_stale_days"][1])
             if o["price_amount"] == 0:
-                self.add("price_observations", o, "OBS_PRICE_ZERO", "warning", "zero price")
+                self.add("price_observations", o, "OBS_PRICE_ZERO", "error", "zero price: a missing number encoded as a value (use no observation)")
+            if o["price_channel"] == "retail_promo" and not o["promo_flag"]:
+                self.add("price_observations", o, "OBS_PROMO_FLAG", "error", "channel retail_promo must carry promo_flag=true")
             if o["is_contractor_cost"] and o["price_channel"] in ("retail_public", "retail_promo", "manufacturer_msrp"):
                 self.add("price_observations", o, "OBS_RETAIL_AS_CONTRACTOR", "error", "retail/MSRP price marked as contractor cost")
             if o.get("region_id") is None:
@@ -400,6 +438,13 @@ class Validator:
             if not any(c["component_kind"] == "labor" for c in cs):
                 self.add("work_items", w, "WI_NO_LABOR", "warning", "no labor component")
             tag_owner: dict[str, str] = {}
+            dup_owner: dict[tuple, str] = {}
+            for c in cs:
+                if c["component_kind"] in ("labor", "equipment") and not c["is_optional"]:
+                    k = (c["component_kind"], c["crew_id"], c["productivity_id"], c.get("equipment_type_code"))
+                    if k in dup_owner:
+                        self.add("work_item_components", c, "WI_DUP_COMPONENT", "error", f"repeats {dup_owner[k]} (same crew, norm and equipment): costed twice")
+                    dup_owner.setdefault(k, c["component_id"])
             mspecs = (w["spec_attributes"] or {}).get("material_specs")
             by_line = {m.get("line"): m for m in mspecs or []} if isinstance(mspecs, list) else {}
             used_lines = set()
@@ -472,7 +517,12 @@ class Validator:
             child_included: set[str] = set()
             child_excluded: set[str] = set()
             cs = comps.get((a["assembly_id"], a["version"]), [])
+            child_seen: dict[tuple, str] = {}
             for c in cs:
+                k = (c["work_item_id"], c["work_item_version"])
+                if k in child_seen:
+                    self.add("assembly_components", c, "ASM_DUP_CHILD", "error", f"repeats {child_seen[k]}: the same work item version is costed twice")
+                child_seen.setdefault(k, c["assembly_component_id"])
                 for t in c["cost_tags"] or []:
                     if t in tag_owner and tag_owner[t] != c["assembly_component_id"]:
                         self.add("assembly_components", c, "ASM_DUP_TAG", "error", f"cost tag '{t}' also on {tag_owner[t]}: double-counting suspicion")
@@ -500,13 +550,15 @@ class Validator:
             stray = sorted(inc - child_included)
             if stray:
                 self.add("assemblies", a, "ASM_INCLUDED_NOT_PRICED", "error", f"assembly claims to include {stray} but no child work item prices it")
-            surfaced = sorted((child_excluded - child_included) - exc)
+            # an exclusion of one child that a sibling prices (under the same token or a mapped synonym, costdb.scope) is not an assembly exclusion
+            surfaced = sorted(t for t in child_excluded if not scope_covered(t, inc) and t not in exc)
             if surfaced:
                 self.add("assemblies", a, "ASM_CHILD_EXCLUSION_NOT_SURFACED", "error",
                          f"exclusions of child work items are missing from the assembly's excluded_scope: {surfaced}")
-            clash = sorted(inc & exc)
+            clash = sorted(t for t in exc if scope_covered(t, inc))
             if clash:
-                self.add("assemblies", a, "ASM_SCOPE_CONTRADICTION", "error", f"scope token(s) both included and excluded: {clash}")
+                self.add("assemblies", a, "ASM_SCOPE_CONTRADICTION", "error",
+                         f"the assembly lists as excluded what its own children price (a reader would add it twice): {clash}")
             # the assembly's stated composition must be its components
             stated = (a["spec_attributes"] or {}).get("work_items")
             actual = sorted((c["work_item_id"], c["work_item_version"], D(str(c["qty_per_assembly_unit"]))) for c in cs)
@@ -541,12 +593,15 @@ class Validator:
         for ln in self.db["calculation_run_lines"]:
             lines[ln["run_id"]].append(ln)
         asu = self.db.index("assumptions", "assumption_id")
-        pk_sets: dict[str, set] = {}
+        pk_rows: dict[str, dict] = {}
+
+        def current(tbl: str, rid: str):
+            if tbl not in pk_rows:
+                pk_rows[tbl] = {pk_of(tbl, x): x for x in self.db[tbl]}
+            return pk_rows[tbl].get(rid)
 
         def exists(tbl: str, rid: str) -> bool:
-            if tbl not in pk_sets:
-                pk_sets[tbl] = {pk_of(tbl, x) for x in self.db[tbl]}
-            return rid in pk_sets[tbl]
+            return current(tbl, rid) is not None
         for r in self.db["calculation_runs"]:
             params = r.get("parameters") or {}
             if r["status"] == "complete" and r["missing_inputs"]:
@@ -567,6 +622,8 @@ class Validator:
             for ln in ls:
                 if not ln["formula"]:
                     self.add("calculation_run_lines", ln, "CALC_LINE_NO_FORMULA", "error", "line without formula")
+                if r["status"] == "complete" and r["target_type"] in ("unit_cost", "assembly") and not ln["inputs"]:
+                    self.add("calculation_run_lines", ln, "CALC_LINE_NO_INPUTS", "error", "a line of a complete run names no input record")
                 for inp in ln["inputs"] or []:
                     tbl, rid = inp.get("table"), inp.get("id")
                     if tbl in self.db.tables and tbl != "assumptions":
@@ -584,6 +641,17 @@ class Validator:
                             self.add("calculation_run_lines", ln, "CALC_ASSUMPTION_NOT_APPROVED", "error", f"complete run uses assumption {rid} with status {a['status']}")
                     if inp.get("review_status") in ("flagged", "rejected"):
                         self.add("calculation_run_lines", ln, "CALC_INPUT_FLAGGED", "error", f"uses {inp.get('review_status')} input {tbl}:{rid}")
+                    if tbl in self.db.tables and tbl not in ("assumptions", "calculation_runs", "crew_members") and r["status"] == "complete":
+                        try:
+                            now = current(tbl, rid)
+                        except KeyError:
+                            now = None
+                        if now is not None:
+                            src = self.sources.get(now.get("source_id")) if now.get("source_id") else None
+                            if now.get("review_status") in ("flagged", "rejected") or (src and src["reuse_status"] in NO_DATA_USE):
+                                self.add("calculation_run_lines", ln, "CALC_INPUT_NOW_UNUSABLE", "error",
+                                         f"complete run rests on {tbl}:{rid}, which has since become {now.get('review_status')}"
+                                         + (f" / source {src['source_id']} is {src['reuse_status']}" if src and src["reuse_status"] in NO_DATA_USE else "") + ": the run is stale")
             if r["status"] == "complete" and engine is not None and r["target_type"] in ("unit_cost", "assembly"):
                 p = RunParams.from_canonical(params, run_at=r["run_at"])
                 res = (engine.unit_cost if r["target_type"] == "unit_cost" else engine.assembly_cost)(r["target_id"], r["target_version"], p)
@@ -607,10 +675,12 @@ def promote_validated(db: Database, issues: list[Issue], reviewer: str, when: st
     """Strict promotion of OBSERVED records to review_status='validated'. Returns counts per table.
 
     A row is promoted only if (1) it has no error-level issue, (2) its source was really fetched (fetched_primary - a search
-    snippet can never be promoted) and its terms allow data use, (3) every evidence field required for its table is filled.
+    snippet can never be promoted), is not flagged/rejected and has read terms that allow data use, (3) every evidence field required for
+    its table is filled (dataset/document tables also the file hash), (4) a price's product is not flagged/rejected.
     index_values inherit the source of their series. Every promotion is logged in review_events."""
     sources = db.index("sources", "source_id")
     series = db.index("indices", "index_id")
+    products = db.index("products", "product_id")
     bad = {(i.record_table, i.record_id) for i in issues if i.severity == "error"}
     promoted: dict[str, int] = defaultdict(int)
     for t in OBSERVED_TABLES:
@@ -623,6 +693,10 @@ def promote_validated(db: Database, issues: list[Issue], reviewer: str, when: st
             sid = r.get("source_id") or (series.get(r.get("index_id"), {}) or {}).get("source_id")
             src = sources.get(sid)
             if not src or src["verification_method"] != "fetched_primary" or src["reuse_status"] in NO_DATA_USE:
+                continue
+            if src["review_status"] in ("flagged", "rejected") or src["reuse_status"] == "unknown_needs_check":
+                continue                       # a source that is rejected, or whose terms nobody has read, cannot back a validated value
+            if t == "price_observations" and products.get(r["product_id"], {}).get("review_status") in ("flagged", "rejected"):
                 continue
             if any(not r.get(f) for f in EVIDENCE_FIELDS.get(t, ())):
                 continue

@@ -238,6 +238,7 @@ class F006RegionRanking(unittest.TestCase):
 class F007LaborSelection(unittest.TestCase):
     def setUp(self):
         self.db = S.real_db()
+        S.trust_regions(self.db)
         S.add_source(self.db)
         S.add_all_burdens(self.db)
 
@@ -279,6 +280,7 @@ class F007LaborSelection(unittest.TestCase):
 class F008LoadedSourceRates(unittest.TestCase):
     def setUp(self):
         self.db = S.real_db()
+        S.trust_regions(self.db)
         S.add_source(self.db)
 
     def test_fully_loaded_rate_uses_its_own_components(self):
@@ -315,7 +317,8 @@ class F008LoadedSourceRates(unittest.TestCase):
         S.add_stat_wage(self.db, "TEST-W1", "TR-DRYW", 30, region="REG-US")
         S.add_all_burdens(self.db, with_ett=False)
         self.db.add("regions", {"region_id": "TEST-REG-AZ", "level": "state", "name": "TEST Arizona", "parent_region_id": "REG-US", "state_code": "AZ",
-                                "fips_code": None, "cbsa_code": None, "origin": "assumed", "assumption_basis": "synthetic", "review_status": "unreviewed", "notes": None})
+                                "fips_code": None, "cbsa_code": None, "origin": "observed", "assumption_basis": None, "review_status": "validated", "notes": None})
+        S.trust_regions(self.db)
         kw = dict(labor_basis="stat_loaded", annual_paid_hours=D(2080))
         e = Engine(self.db)
         self.assertEqual(e.loaded_labor_rate("TR-DRYW", S.params(region_id="TEST-REG-AZ", **kw)).status, "complete")      # no ETT in AZ
@@ -327,6 +330,7 @@ class F008LoadedSourceRates(unittest.TestCase):
 class F009BurdenSelection(unittest.TestCase):
     def setUp(self):
         self.db = S.real_db()
+        S.trust_regions(self.db)
         S.add_source(self.db)
         S.add_stat_wage(self.db, "TEST-W1", "TR-DRYW", 30)
         S.add_all_burdens(self.db)
@@ -516,6 +520,7 @@ class F014F015Assumptions(unittest.TestCase):
 
     def test_benefits_and_workers_comp_assumption_units(self):
         db = S.real_db()
+        S.trust_regions(db)
         S.add_source(db)
         S.add_stat_wage(db, "TEST-W1", "TR-DRYW", 30)
         S.add_all_burdens(db)
@@ -538,6 +543,7 @@ class F016Equipment(unittest.TestCase):
 
     def setUp(self):
         self.db = S.real_db()
+        S.trust_regions(self.db)
         S.add_source(self.db)
         S.add_labor_actual(self.db, "TEST-LRT-CEM", "TR-CEM", 45)
         S.add_labor_actual(self.db, "TEST-LRT-OPR", "TR-OPR", 55)
@@ -736,6 +742,7 @@ class F036F037F038F040F041(unittest.TestCase):
 
     def test_derived_loaded_rate_takes_region_and_period_from_the_governing_wage(self):
         db = S.real_db()
+        S.trust_regions(db)
         S.add_source(db)
         S.add_stat_wage(db, "TEST-W1", "TR-DRYW", 30, region="REG-US-CA", effective_from=date(2026, 5, 1))
         S.add_all_burdens(db)

@@ -10,6 +10,9 @@ Rules:
   * wages are HOURLY MEAN / MEDIAN excluding employer-paid benefits (rate_type=stat_wage, includes_fringe=false)
   * '*' (not available) and '#' (wage at or above the top-code) are NOT stored as numbers — a censored value is not a value
   * only occupations mapped through trades.soc_code and areas mapped through area_map are imported
+  * OEWS files contain rows per industry and ownership: when the layout columns I_GROUP / OWN_CODE / NAICS / O_GROUP are present only the
+    cross-industry, all-ownership, detailed-occupation rows are imported (anything else is skipped and counted); two rows that would
+    produce the same (area, occupation, statistic) key with different wages stop the import (no silent last-row-wins)
   * each row keeps file name, row number and a JSON excerpt of the source row as evidence
 """
 from __future__ import annotations
@@ -76,10 +79,17 @@ def parse_oews(rows: list[dict], trade_by_soc: dict[str, str], region_by_area: d
     if missing:
         raise OewsError(f"required column(s) missing: {sorted(missing)}; refusing to guess a layout")
     out, notes = [], []
+    seen: dict[str, tuple] = {}
     for i, r in enumerate(rows, start=2):
         trade = trade_by_soc.get(r["OCC_CODE"])
         region = region_by_area.get(r["AREA"])
         if trade is None or region is None:
+            continue
+        layout = [(c, r[c].lower()) for c in ("I_GROUP", "O_GROUP", "OWN_CODE", "NAICS") if c in r and r[c] != ""]
+        want = {"I_GROUP": {"cross-industry"}, "O_GROUP": {"detailed"}, "OWN_CODE": {"1235"}, "NAICS": {"000000"}}
+        off = [f"{c}={v}" for c, v in layout if v not in want[c]]
+        if off:
+            notes.append(f"row {i} {r['OCC_CODE']} {r.get('AREA_TITLE', '')}: skipped ({', '.join(off)}: not the cross-industry, all-ownership, detailed row)")
             continue
         for col in statistics:
             if col not in r:
@@ -88,9 +98,16 @@ def parse_oews(rows: list[dict], trade_by_soc: dict[str, str], region_by_area: d
             if w is None:
                 notes.append(f"row {i} {r['OCC_CODE']} {r['AREA_TITLE']} {col}: '{r[col]}' not stored (suppressed/censored)")
                 continue
-            excerpt = json.dumps({k: r[k] for k in ("AREA", "AREA_TITLE", "OCC_CODE", "OCC_TITLE", col) if k in r}, sort_keys=True)
+            excerpt = json.dumps({k: r[k] for k in ("AREA", "AREA_TITLE", "OCC_CODE", "OCC_TITLE", "I_GROUP", "O_GROUP", "OWN_CODE", "NAICS", col) if k in r}, sort_keys=True)
+            rid = make_id("LRT", "oews", source_id, region, trade, STATS[col], reference_period.isoformat())
+            if rid in seen:
+                if seen[rid][0] != w:
+                    raise OewsError(f"rows {seen[rid][1]} and {i} both give {r['OCC_CODE']} / {r['AREA']} / {STATS[col]} with different wages "
+                                    f"({seen[rid][0]} vs {w}): the file mixes industries or ownerships - filter it, the parser will not pick one")
+                continue
+            seen[rid] = (w, i)
             out.append({
-                "labor_rate_id": make_id("LRT", "oews", source_id, region, trade, STATS[col], reference_period.isoformat()),
+                "labor_rate_id": rid,
                 "rate_type": "stat_wage", "trade_code": trade,
                 "classification_raw": f"{r.get('OCC_TITLE', r['OCC_CODE'])} ({r['AREA_TITLE']})", "soc_code": r["OCC_CODE"],
                 "statistic": STATS[col], "region_id": region, "base_wage_hr": w, "fringe_hr": None, "fringe_breakdown": None,

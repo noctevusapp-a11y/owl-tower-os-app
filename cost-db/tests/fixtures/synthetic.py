@@ -45,7 +45,7 @@ def add_source(db: Database, sid: str = SRC, method: str = "synthetic_test_fixtu
         "edition": None, "access_format": None, "requires_registration": None, "requires_payment": None, "access_notes": None,
         "reuse_status": reuse, "reuse_terms": None, "reuse_terms_url": None, "limitations": "synthetic", "update_frequency": None,
         "quality_tier": "A", "reachability_from_build_env": "not_tested", "reachability_checked_at": None,
-        "verification_method": method, "evidence_quote": "synthetic", "evidence_url": None, "origin": "observed",
+        "verification_method": method, "evidence_quote": "synthetic", "evidence_url": "https://example.invalid/synthetic-fixture", "origin": "observed",
         "review_status": review, "reviewed_by": "tests", "reviewed_at": RUN_AT if review == "validated" else None, "registered_at": AS_OF, "notes": None})
 
 
@@ -132,6 +132,13 @@ def validate_definitions(db: Database) -> None:
             r.update({"review_status": "validated", "valid_from": date(2026, 1, 1), **_rev("validated")})
 
 
+def trust_regions(db: Database) -> None:
+    """Test fixture: treat the region hierarchy as checked against the official delineation (observed + validated). The real rows are
+    'assumed / unreviewed', which strict runs refuse to follow."""
+    for r in db["regions"]:
+        r.update({"origin": "observed", "review_status": "validated"})         # the regions table has no reviewer columns
+
+
 def priced_drywall_db() -> Database:
     """Real definitions + synthetic inputs sufficient to price WI-DRY-001 in strict mode.
 
@@ -143,6 +150,7 @@ def priced_drywall_db() -> Database:
     """
     db = real_db()
     validate_definitions(db)
+    trust_regions(db)
     add_source(db)
     add_product(db, "TEST-PRD-BOARDA", "gyp_half_reg_4x8", 32, "SF", "TESTBRAND-A", "TB-A-1")
     add_product(db, "TEST-PRD-SCREW", "ds_coarse_125", 500, "EA", "TESTBRAND-S", "TS-1")
@@ -262,7 +270,7 @@ def add_index(db: Database, index_id: str, values: dict, *, applies_to: str = "m
                        "origin": "observed", "review_status": review, **_rev(review), "notes": None})
     for per, val in values.items():
         db.add("index_values", {"index_id": index_id, "period_start": per, "vintage_date": vintage, "value": D(str(val)), "value_status": "final",
-                                "retrieved_at": f"{vintage.isoformat()}T00:00:00+00:00", "source_locator": "synthetic", "raw_file_sha256": None,
+                                "retrieved_at": f"{vintage.isoformat()}T00:00:00+00:00", "source_locator": "synthetic", "raw_file_sha256": "a" * 64,
                                 "origin": "observed", "review_status": review, **_rev(review), "notes": None})
 
 
@@ -285,6 +293,7 @@ def paint_db() -> Database:
        labor: 2 painters x $40 x 8 h / 2000 SF = 0.32 $/SF."""
     db = real_db()
     validate_definitions(db)
+    trust_regions(db)
     add_source(db)
     add_product(db, "TEST-PRD-PA", "prm_pva_5", 5, "GAL_US", "A", "A-1")
     add_product(db, "TEST-PRD-PB", "prm_pva_5", 5, "GAL_US", "B", "B-1")
