@@ -33,7 +33,7 @@ DIVISION_NAMES = {
     "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
-              "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH"}
+              "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "EQUIPMENT_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
@@ -184,8 +184,12 @@ def main() -> int:
                 st.pop()
             path = [d for _, d in st]
             st.append((indent, desc))
-        open_flags = [f for f in flags if f in OPEN_FLAGS or f.startswith("WEAK_READING")]
         has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
+        if not has_cost and ln["output"] is not None and not ln.get("percent"):
+            flags.append("COST_MISSING")                       # a crew-day was printed but no cost was read
+        if has_cost and ln["labor"] is not None and ln["output"] is None and ln["hours"] is None:
+            flags.append("OUTPUT_HOURS_MISSING")               # a labor cost implies a crew-day that no reading caught
+        open_flags = [f for f in flags if f in OPEN_FLAGS or f.startswith("WEAK_READING")]
         pct = ln.get("percent") or {}
         status = "percent_add" if pct else ("header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified"))
         cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None

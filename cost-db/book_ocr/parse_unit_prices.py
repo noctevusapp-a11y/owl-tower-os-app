@@ -211,19 +211,21 @@ def find_header(rows: list[list[dict]]) -> Optional[dict]:
 
 
 def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
-    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column. Re-fit the
-    column boundaries to those clusters (the header words alone are off by a few mm on skewed or cut pages)."""
+    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column, evenly spaced
+    (about 190 px at 360 dpi). The clusters right of the Unit column are the money columns in order (material, labor,
+    equipment, total, total incl. O&P); a double gap means an empty column. This is more reliable than the header words,
+    which OCR sometimes loses or shifts by a column."""
     bounds = dict(hdr["bounds"])
     centres = hdr["centres"]
-    keys = ["output", "hours", "material", "labor", "equipment", "total", "total_op"]
+    unit_x = centres["Unit"]
     xs = []
     for r in rows:
         if r[0]["_yc"] <= hdr["y"] + 10:
             continue
         for z in r:
-            if z["x0"] > bounds["output"][0] - 30 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
+            if z["x0"] > unit_x + 20 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
                 xs.append(z["x1"])
-    if len(xs) < 12:
+    if len(xs) < 10:
         return bounds
     xs.sort()
     clusters, cur = [], [xs[0]]
@@ -235,22 +237,35 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
             cur.append(x)
     clusters.append(cur)
     meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
-    names = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment", "total": "Total", "total_op": "Incl"}
-    assigned: dict[str, float] = {}
-    for m in meds:
-        k = min(keys, key=lambda kk: abs(centres[names[kk]] + 45 - m))
-        if abs(centres[names[k]] + 45 - m) <= 110 and (k not in assigned or abs(centres[names[k]] + 45 - m) < abs(centres[names[k]] + 45 - assigned[k])):
-            assigned[k] = m
-    if len(assigned) < 3:
+    if len(meds) < 2:
         return bounds
-    bounds["_anchors"] = dict(assigned)                       # right-edge anchors (used for numeric tokens in cell_tokens)
-    # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
-    # the Unit column sits between Hours and Material and keeps its header-based bounds
-    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):      # not output|hours: header bounds do better there
-        if a in assigned and b in assigned:
-            mid = (assigned[a] + assigned[b]) / 2
-            bounds[a] = (bounds[a][0], mid)
+    gaps = [b - a for a, b in zip(meds, meds[1:])]
+    small = [g for g in gaps if 120 <= g <= 260]
+    typ = sorted(small)[len(small) // 2] if small else 190
+    money = ["material", "labor", "equipment", "total", "total_op"]
+    # absolute reference: the Material header (reliably read) + the typical spacing gives the expected right edge of every column
+    mat_edge = centres["Material"] + 70
+    expected = {k: mat_edge + i * typ for i, k in enumerate(money)}
+    anchors: dict[str, float] = {}
+    for m in meds:
+        k = min(money, key=lambda kk: abs(expected[kk] - m))
+        if abs(expected[k] - m) <= 0.45 * typ and (k not in anchors or abs(expected[k] - m) < abs(expected[k] - anchors[k])):
+            anchors[k] = m
+    if len(anchors) < 2:
+        return bounds
+    # virtual anchors for columns with no numbers on this page, so that the bins stay evenly spaced
+    full = {}
+    for k in money:
+        full[k] = anchors.get(k, expected[k])
+    for a, b in zip(money, money[1:]):
+        if a in full and b in full:
+            mid = (full[a] + full[b]) / 2
+            bounds[a] = (bounds[a][0] if a == "material" else bounds[a][0], mid)
             bounds[b] = (mid, bounds[b][1])
+    bounds["material"] = ((unit_x + full["material"] - 60) / 2, bounds["material"][1])  # left edge of material: between Unit and its numbers
+    bounds["unit"] = (bounds["unit"][0], bounds["material"][0])
+    bounds["total_op"] = (bounds["total_op"][0], 10 ** 6)
+    bounds["_anchors"] = dict(anchors)                       # right-edge anchors (used for numeric tokens in cell_tokens)
     return bounds
 
 
@@ -675,7 +690,8 @@ def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
     row = list(row)
     for i, z in enumerate(row[:-1]):
         nxt = row[i + 1]
-        if re.fullmatch(r"[1-9]", z["t"]) and re.fullmatch(r"[A-Za-z]{3,5}", nxt["t"]) and bounds["crew"][0] - 60 <= z["x0"] < bounds["output"][0] + 40 \
+        if re.fullmatch(r"[1-9]", re.sub(r"[^0-9A-Za-z]", "", z["t"])) and re.fullmatch(r"[A-Za-z]{3,5}", re.sub(r"[^A-Za-z]", "", nxt["t"])) \
+                and bounds["crew"][0] - 60 <= z["x0"] < bounds["output"][0] + 40 \
                 and col_of((nxt["x0"] + nxt["x1"]) / 2, bounds) in ("crew", "output"):
             z["_crew_count"] = True                            # "1 Elec" read as two tokens: the count must not become the output
             nxt["_crew_count"] = True
@@ -909,7 +925,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         cands = {k: ([] if k in pct else numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w)) for k in NUM_COLS}
         crew_id = normalise_crew(crew_raw, known) or normalise_crew(crew_raw_i, known)
         crew_src = "printed" if crew_id else None
-        ditto = re.compile(r"^[\s|'\"‘’“”″lI1!]{0,3}$")           # the book's ditto mark (″) and what OCR makes of it
+        ditto = re.compile(r"^[\s|'\"‘’“”″lIi1!jt]{0,3}$")        # the book's ditto mark (″) and what OCR makes of it (il, ll, ", '')
         cell_has_text = (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) and not ditto.match(crew_raw or "")) \
             or (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or "")) and not ditto.match(crew_raw_i or ""))
         crew_unread = crew_id is None and cell_has_text
