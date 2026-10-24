@@ -75,6 +75,32 @@ def parse_value(col: Column, raw: str | None) -> Any:
     return raw
 
 
+def default_value(col: Column) -> Any:
+    """Python value of a column's literal SQL DEFAULT (None when there is none)."""
+    d = col.default_literal
+    if d is None:
+        return None
+    k = col.kind
+    if k == "bool":
+        return d == "true"
+    if k == "json":
+        return json.loads(d)
+    if k == "array":
+        return parse_pg_array(d)
+    if k == "decimal":
+        return Decimal(d)
+    if k == "int":
+        return int(d)
+    return d
+
+
+def apply_defaults(cols: list[Column], row: dict[str, Any]) -> None:
+    """Mimic INSERT semantics: a NOT NULL column with a literal DEFAULT that is missing/NULL gets its default."""
+    for c in cols:
+        if row.get(c.name) is None and c.not_null and c.default_literal is not None and not c.generated:
+            row[c.name] = default_value(c)
+
+
 def format_value(col: Column, v: Any) -> str:
     if v is None:
         return BUILD_TS if col.name == "created_at" else ""
@@ -118,6 +144,7 @@ class Database:
         if unknown:
             raise KeyError(f"{table}: unknown column(s) {sorted(unknown)}")
         full = {c.name: row.get(c.name) for c in self.meta[table]}
+        apply_defaults(self.meta[table], full)
         self.tables[table].append(full)
         return full
 
@@ -141,6 +168,7 @@ class Database:
                     row = {c.name: None for c in cols}
                     for h in header:
                         row[h] = parse_value(by_name[h], raw[h])
+                    apply_defaults(cols, row)
                     db.tables[table].append(row)
         return db
 

@@ -1,0 +1,422 @@
+[
+ {
+  "id": "F1-001",
+  "severity": "critical",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "876-896 (called from 701-702)",
+  "summary": "Manufacturer-coverage quantity (5 of the 25 pilot work items: joint compound, primer, wall paint, ceiling paint, curing compound) is wrong or non-deterministic. (a) _consumption_qty takes the lowest consumption_id among ALL products that share the spec_key (line 886) but the line is then priced with the MEDIAN price of all those products, so one product's spread rate is multiplied by another product's price; (b) coverage_unit_id is never converted to the work item's output unit (line 890 uses cov as if it were already per output unit); (c) coverage_qty = 0 or coats = 0 raises decimal.DivisionByZero (schema allows both, schema 228/233); (d) film_thickness / substrate_condition / application_method / conditions on the consumption row are never matched to anything on the component, so two rows for different film thickness are 'alternatives' picked by hash order; (e) products that are flagged/rejected are included in the product set (lines 879-882).",
+  "reproduction": "db = S.real_db(); S.add_source(db)\nS.add_product(db,'TEST-PRD-PA','prm_pva_5',5,'GAL_US','A','A-1'); S.add_obs(db,'TEST-OBS-PA','TEST-PRD-PA','100',5,'GAL_US')   # $20/gal\nS.add_product(db,'TEST-PRD-PB','prm_pva_5',5,'GAL_US','B','B-1'); S.add_obs(db,'TEST-OBS-PB','TEST-PRD-PB','200',5,'GAL_US')   # $40/gal\nS.add_labor_actual(db,'TEST-LRT-PNT','TR-PNT',40); S.set_crew(db,'CRW-PNT',8,[('labor','TR-PNT',2,False)])\nS.set_productivity(db,'WI-PNT-001',2,8,2000); S.set_waste(db,'WI-PNT-001',{'CAT-PNT-PRM':(0.0,'t')})\n# two product_consumption rows (application='new_drywall_primer', coats=1, coverage_unit SF): TEST-CON-A -> product A 400 SF/gal, TEST-CON-B -> product B 200 SF/gal\n# true cost per SF: A 0.05, B 0.20, median 0.125.  Engine extended_cost = 0.0750 ; after renaming the ids so that B's row sorts first = 0.1500.\n# same data with coverage_unit_id='SY' (400 SY/gal) on this SF work item: material qty 0.0025 (correct 0.0225).  coverage_qty=0 or coats=0: decimal.DivisionByZero.",
+  "suggested_fix": "Pair coverage with the same product that is priced: per product compute cost per output unit = (price per pack / pack content) x (product units per output unit) and take the median of THOSE; require exactly one usable consumption row per (product, application) or add film_thickness/conditions selectors on the component and fail when ambiguous; convert coverage_unit_id to wi.output_unit_id with Units.factor; add CHECK (coverage_qty > 0 AND coats > 0 AND per_qty > 0) on product_consumption; filter products through the same usability test as observations; add tests (none exist for this path)."
+ },
+ {
+  "id": "F1-002",
+  "severity": "critical",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "189-201 (_usable), 208-217 (_approved_assumption), 218-237 (_index_value), 246/250 (products), 545-558 (_crew_costs)",
+  "summary": "Strict-mode leak. methodology.md section 1 promises 'flagged and rejected records are never used by any calculation', but review_status is only honoured for the row that is passed through _usable() (observations, labor/burden/equipment rates, productivity, consumption). It is ignored for: sources (a rejected source's rows stay usable), crews, indices (data/csv/indices.csv already contains ECICONWAG with review_status=flagged by reviewer F2; a flagged series with validated values still adjusts prices), approved assumptions (assumptions.review_status), and products (only 'rejected' is excluded at line 250; pinned products at 246 are not checked at all, so unreviewed and flagged products are priced in strict/validated mode).",
+  "reproduction": "for s in db['sources']: s['review_status'] = 'rejected'          # source with all inputs\nprint(run(db).status, run(db).run['direct_cost_total'])          # complete 0.997875  (expected: incomplete)\n# crew review_status='rejected' -> complete ; product review_status='flagged' or 'unreviewed' -> complete 0.997875\n# index series review_status='flagged' (validated values) with time_index_id=... -> complete, TIME_INDEXED_PRICE\n# approved assumption with review_status='rejected' -> complete",
+  "suggested_fix": "One helper usable(row, params) applied to every referenced table (sources, products, crews, indices, assumptions, factors, work items); in strict mode require validated for products/crews/indices as well; a record whose source is flagged/rejected is unusable; add a test per table."
+ },
+ {
+  "id": "F1-003",
+  "severity": "critical",
+  "area": "schema",
+  "file": "schema/001_schema.sql",
+  "line": "311-345 (calculation_runs/lines, no trigger; line 342 ON DELETE CASCADE; cr_complete_chk 336)",
+  "summary": "Calculation records are not protected. calculation_runs and calculation_run_lines have no append-only trigger, lines cascade-delete with their run, and cr_complete_chk only requires a non-null total and an empty missing_inputs array: an incomplete run can be rewritten into a 'complete' run with an invented total and no lines, and formula/inputs/parameters/calc_version of an existing run can be edited. This violates rule 9 (calculation records link to inputs, formula and version; history never overwritten).",
+  "reproduction": "-- PostgreSQL, data/csv loaded\nupdate costdb.calculation_runs set status='complete', direct_cost_total=123.45, missing_inputs='[]' where run_id=(select run_id from costdb.calculation_runs limit 1);   -- UPDATE 1\nupdate costdb.calculation_run_lines set formula='x', inputs='[]'::jsonb, extended_cost=1 where line_no=1;                                                              -- UPDATE\ndelete from costdb.calculation_runs where run_id=(select run_id from costdb.calculation_runs limit 1);                                                                -- DELETE 1, 4 lines cascade",
+  "suggested_fix": "BEFORE UPDATE/DELETE/TRUNCATE triggers on both tables (only review_status/reviewed_*/notes updatable); replace ON DELETE CASCADE with RESTRICT; deferred constraint trigger: a 'complete' run must have >= 1 line and direct_cost_total equal to the sum of its component lines; NOT NULL calc_version and code_ref for non-test runs."
+ },
+ {
+  "id": "F1-004",
+  "severity": "major",
+  "area": "calc/validate",
+  "file": "pipeline/costdb/calc.py; pipeline/costdb/validate.py; pipeline/connectors/retail_capture_import.py",
+  "line": "calc.py:30,197; validate.py:133,146; retail_capture_import.py:156-165",
+  "summary": "Regression introduced by the F2 enum change: reuse_status 'licence_required' (now used by the three CSI sources) is blocked nowhere. NO_DATA_USE = ('prohibited','restricted_no_storage') so a licence_required source is a usable calculation input; validate.py raises SRC_PROHIBITED_IN_USE only for prohibited/restricted_no_storage and SRC_PROHIBITED_VALIDATED only for 'prohibited' (a validated restricted_no_storage or licence_required source is accepted); the importer accepts licence_required with no warning, and accepts 'prohibited' sources with capture_method=manual_browser (validate.py then flags every such row as an error and the engine ignores it, so the importer admits rows that the rest of the system rejects).",
+  "reproduction": "for s in db['sources']:\n    if s['source_id'] == S.SRC: s['reuse_status'] = 'licence_required'\nrun(db).status                                   # complete 0.997875 ; validate(db, production=False) -> no issue\n# source 'restricted_no_storage' + review_status='validated' -> no SRC_PROHIBITED_VALIDATED",
+  "suggested_fix": "Define the restricted-status sets once (e.g. costdb/enums.py) and import them in calc, validate, importer and tests; decide explicitly whether licence_required means 'no data use until licence recorded'; make the importer refuse prohibited/restricted_no_storage regardless of capture_method."
+ },
+ {
+  "id": "F1-005",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "345-360 (_region_factor), 650-678 (_adjust_factors)",
+  "summary": "Region, condition and quantity factor rows never pass through _usable(): the factor's source (prohibited, restricted_no_storage, synthetic fixture, flagged) is not checked. A factor from a prohibited source is applied in a strict run.",
+  "reproduction": "S.add_source(db, 'SRC-PROH', method='fetched_primary', review='validated', reuse='prohibited')\n# adjustment_factors row: region REG-CA-073 -> REG-CA-037, material, 2.00, source_id='SRC-PROH', review_status='validated'; the board observation is re-labelled REG-CA-073\nrun(db, use_region_factors=True)                 # complete; board unit price 0.80 (= 0.40 x 2.00), warnings REGION_FACTOR_APPLIED",
+  "suggested_fix": "Call the shared usability test on the factor row (and its source) in _region_factor and _adjust_factors; also pick the best factor deterministically (latest valid_from) instead of table order."
+ },
+ {
+  "id": "F1-006",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "263-270, 290-292",
+  "summary": "Region ranking is computed but not used for ranking. rank only decides accept/reject; with allow_ancestor_region_prices=True the newest observation wins regardless of specificity, so a newer state-level price silently overrides an exact-region price; an ancestor-region price carries no flag and the line input does not record region/zip/store (labor has RATE_FROM_ANCESTOR_REGION, materials have no equivalent). A sub-region observation counts as rank 0 for a parent target (documented, but not visible on the line). Latest-selection compares str(retrieved_at) (mixed offsets mis-order) and ties are broken by table order.",
+  "reproduction": "S.add_obs(db,'TEST-OBS-STATE','TEST-PRD-BOARDA','16.00',32,'SF',region='REG-US-CA',observed=date(2026,10,1))   # 0.50/SF, newer, ancestor of LA\nmat(run(db, allow_ancestor_region_prices=True))['unit_cost']      # 0.50 (local LA price is 0.40); warnings only ['RETAIL_PRICE_NOT_CONTRACTOR_COST']\nmat(run(db, region_id='REG-US'))['unit_cost']                     # 0.40: an LA price silently serves a national (REG-US) request",
+  "suggested_fix": "Sort candidates by (rank asc, observed_at desc, retrieved_at desc as parsed datetime, observation_id); add PRICE_FROM_ANCESTOR_REGION:<id> and PRICE_FROM_SUBREGION flags; store region_id, zip, store_ref, retrieved_at, sales_tax/delivery flags in the line input."
+ },
+ {
+  "id": "F1-007",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "402-415",
+  "summary": "labor_rate() chooses by (region rank, effective_from) only. labor_rates.apprentice, wage_basis (overtime_1_5x/2x), project_type (building/residential/heavy/highway), classification_raw and use_context are never consulted; 'prevailing_wage' and 'federal_wage_determination' are merged and the later effective_from wins whatever the regime. A DIR/SAM determination file will contain apprentice steps and overtime-group rows for every craft, so the journeyman straight-time rate is picked by luck.",
+  "reproduction": "# three stat_wage rows, TR-DRYW, same region and statistic: 30.00 (journeyman, straight_time, 2026-05-01), 12.00 (apprentice=True, 2026-06-01), 45.00 (wage_basis='overtime_1_5x', 2026-07-01)\nEngine(db).labor_rate('TR-DRYW', S.params(labor_basis='stat_loaded', annual_paid_hours=D(2080)))['components']['base_wage']   # 45",
+  "suggested_fix": "Filter on apprentice=False, wage_basis='straight_time' and a required project_type; add a classification selector parameter; raise Missing('LABOR_RATE_AMBIGUOUS') when more than one candidate remains at equal rank/effective_from; keep state and federal regimes separate."
+ },
+ {
+  "id": "F1-008",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "436-493 (and 33)",
+  "summary": "A fully loaded source rate is under-costed. When includes_payroll_taxes / includes_workers_comp is true the engine skips the burden but never adds the record's own payroll_tax_hr / workers_comp_hr / other_employer_cost_hr / total_hr: only base_wage_hr (+ fringe_hr) enters the total. other_employer_cost_hr and the burden types general_liability and other can never reach a cost and are not flagged. BURDEN_PAYROLL_TAX_TYPES hard-codes five types including state_ett for every region, so an Arizona/Nevada run can never complete unless a zero-rate 'observed' row is invented.",
+  "reproduction": "# prevailing_wage row (use_context public_works_only): base 50, fringe 20, payroll_tax_hr 6, workers_comp_hr 5, other_employer_cost_hr 3, total_hr 84, includes_fringe/payroll_taxes/workers_comp all true\nEngine(db).labor_rate('TR-DRYW', S.params(labor_basis='prevailing_loaded', project_type='public_works'))['total_hr']    # 70, not 84\n# adding burden rows general_liability 2% and other $1.50/h to a complete stat_loaded rate leaves total_hr unchanged (42.33298...) and unflagged",
+  "suggested_fix": "When includes_x is true use that record's x_hr (or total_hr) and fail if it is absent; cost 'other' and 'general_liability' rows or emit an explicit OMITTED_BURDEN flag; make applicable burden types region-dependent data instead of a constant."
+ },
+ {
+  "id": "F1-009",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "363-376",
+  "summary": "Burden selection ignores effective_from when several rows are in period (effective_to is optional) and ignores class_code. Ties go to table order, so a superseded open-ended rate can win; a trade-specific NATIONAL row beats a generic local row; workers' comp rows for different class codes are indistinguishable.",
+  "reproduction": "# 2025 Medicare 1.00% row (effective_to NULL) listed BEFORE the 2026 1.45% row, base wage $30\nEngine(db).labor_rate('TR-DRYW', S.params(labor_basis='stat_loaded', annual_paid_hours=D(2080)))['components']['fica_medicare']   # 0.3000 (1.00%), correct 0.4350",
+  "suggested_fix": "Score = (region rank, trade specificity, -effective_from) and raise on remaining ties; add class_code to the selection parameters for workers_comp."
+ },
+ {
+  "id": "F1-010",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "650-668 (esp. 665)",
+  "summary": "A requested job condition is silently dropped when a factor exists but is unusable. The code raises CONDITION_FACTOR_MISSING only if NO factor with that condition_desc exists (elif not anyhit); if one exists but is unreviewed, expired, assumed (in strict mode) or defined for another cost kind, hits is empty and the condition is ignored. methodology.md section 8 says a requested condition 'is a missing input, never silently ignored'.",
+  "reproduction": "# factor(productivity_condition, labor, 1.20, 'occupied_building') with review_status='unreviewed' | valid_to=2020-01-01 | origin='assumed' (strict)\nrun(db, conditions=('occupied_building',)).run['labor_cost']      # 0.550000 in all three cases (status complete; 0.66 expected or an incomplete run)",
+  "suggested_fix": "If any factor with the tag exists for this kind but none is usable, raise Missing('CONDITION_FACTOR_UNUSABLE') naming the reason; model 'not applicable to this kind' explicitly instead of by absence."
+ },
+ {
+  "id": "F1-011",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "261, 669-678, 916",
+  "summary": "Quantity handling. (a) A price with qty_tier_min (e.g. a pallet/contractor-volume price) is accepted when RunParams.quantity is omitted (line 261 only filters when quantity is given); (b) quantity factors ignore valid_from/valid_to (conditions at 659-660 check them) and region, and the first matching range wins; (c) assembly_cost passes the assembly quantity to every child work item, so tier/quantity factors are chosen on the wrong quantity.",
+  "reproduction": "S.add_obs(db,'TEST-OBS-TIER','TEST-PRD-BOARDA','1.00',32,'SF',observed=date(2026,10,10)); (that observation: qty_tier_min=100000)\nmat(run(db))['unit_cost']                                          # 0.03125 ($1.00 / 32 SF) although the price needs a 100,000-unit order\n# quantity factor 0.90 with valid_to=2020-01-01 and RunParams(quantity=500): material_cost 0.403088 (applied)",
+  "suggested_fix": "Exclude tier prices unless quantity is given and >= qty_tier_min (or flag QTY_TIER_PRICE_UNVERIFIED); apply the same validity tests to quantity factors; compute child quantity = assembly quantity x qty_per_assembly_unit."
+ },
+ {
+  "id": "F1-012",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "321, 341-342",
+  "summary": "price_policy is not validated: any string other than 'median_of_latest_per_product' silently takes prices[0], i.e. the first product in table order (not the latest); the MEDIAN_OF_n_PRODUCTS flag is still emitted.",
+  "reproduction": "# two products, B observed later at 0.50/SF, A at 0.40/SF\n[mat(run(db, price_policy=p))['unit_cost'] for p in ('median_of_latest_per_product','latest','bogus')]   # [0.45, 0.40, 0.40]",
+  "suggested_fix": "Enumerate allowed policies, reject others in RunParams.__post_init__, implement a real 'latest' (max observed_at, retrieved_at) and flag correctly."
+ },
+ {
+  "id": "F1-013",
+  "severity": "major",
+  "area": "calc/build",
+  "file": "pipeline/costdb/calc.py; pipeline/scripts/build.py",
+  "line": "calc.py:811, 860, 943, 971-972 (fingerprint/run_id); build.py:57-59",
+  "summary": "run_id is a hash of target, parameters, calc version and only [component_id, resulting cost] of the RESOLVED lines. methodology.md says it covers 'the exact input values': it does not. The same cost from a different observation gives the same run_id (calculation_runs PK collision; build.py silently keeps the first and drops the second); two incomplete runs with different missing_inputs share an id as long as no line resolved (e.g. before/after one price was captured).",
+  "reproduction": "# db2 = clone of db where TEST-OBS-BOARDA is replaced by another store's observation of the same price\nrun(db).run['run_id'] == Engine(db2).unit_cost(WI,1,S.params()).run['run_id']        # True, inputs differ (TEST-OBS-BOARDA vs TEST-OBS-OTHER)\n# real data, no prices vs one board price captured: both runs 'incomplete', both RUN-87e6ae280f37, missing lists differ",
+  "suggested_fix": "Include in the fingerprint every input id + value (use the line inputs) and the sorted missing_inputs codes/refs; keep calc_version bound to code (git sha) so a fixed bug changes ids."
+ },
+ {
+  "id": "F1-014",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "616-618 vs 824",
+  "summary": "with_assumptions mode crashes on an approved productivity assumption: _daily_output returns a 4-tuple on the assumption path (lines 616-618) but unit_cost unpacks 5 values (line 824) -> ValueError. The path is untested (only the waste assumption is).",
+  "reproduction": "# productivity observation unreviewed + approved assumption 'productivity:<labor component id>' = 1600 SF\nrun(db, mode='with_assumptions')      # ValueError: not enough values to unpack (expected 5, got 4)",
+  "suggested_fix": "Return (daily, inputs, flags, 'assumed', None); add tests for every assumption type (productivity, price, labor_rate, equipment_rate, crew, quantity, waste, benefits, workers' comp)."
+ },
+ {
+  "id": "F1-015",
+  "severity": "major",
+  "area": "calc/schema",
+  "file": "pipeline/costdb/calc.py; schema/001_schema.sql",
+  "line": "calc.py:460, 485, 208-217; schema 805-824",
+  "summary": "Assumption handling. value_text-only approved assumption (allowed by as_value_chk) crashes with decimal.InvalidOperation (D('None')); the benefits assumption treats ANY unit_id as $/h (line 460) while the workers'-comp assumption always multiplies by wages and ignores unit (line 485); no sign/range checks (waste -0.5 -> quantity 0.5; waste 5 -> 6.0x; a zero productivity assumption would divide by zero, by reading - the path currently crashes earlier, F1-014); several approved rows for one ref -> first wins silently; assumptions.review_status ignored; approved_by may equal proposed_by.",
+  "reproduction": "# approved waste assumption applies_to_ref='waste:<component_id>': value_text='ten percent', value_numeric NULL -> run(db, mode='with_assumptions') raises decimal.InvalidOperation\n# value_numeric=-0.5 -> complete, material qty 0.5 ; value_numeric=5 -> complete, qty 6.0 ; two approved rows (0.1, 0.9) -> first wins",
+  "suggested_fix": "Validate assumption type/unit/range on read (units conversion like prices), require value_numeric for numeric uses, uniqueness of approved assumption per ref, approved_by <> proposed_by, expiry required, review_status honoured."
+ },
+ {
+  "id": "F1-016",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "496-542, 563-600 (583, 592-596)",
+  "summary": "Equipment omissions. (a) fuel_cost_hr is never added: rate with fuel_included=False and fuel_cost_hr present is costed without fuel and without a flag (FUEL_NOT_PRICED only when fuel_cost_hr is NULL, line 521); (b) min_rental_period and delivery_pickup_cost are never priced (static flag only); (c) an 'equipment' component whose crew has no equipment member prices to 0 with origin 'observed' and no warning; (d) operator double count is detected only via the self-declared crew_members.is_operator flag (a TR-OPR labor member with is_operator=false plus an operator-included rate passes silently); OPERATOR_NOT_PRICED is only a flag; (e) (by reading) rental_day charges one day rate per crew-shift regardless of shifts needed.",
+  "reproduction": "# rental 25/h, fuel_included=False, fuel_cost_hr=9, delivery 75, min rental '4 hours', crew 1x PTROWEL:  equipment unit_cost 0.1000 (= 25*8/2000); fuel 9*8/2000 = 0.036 absent; warnings ['EQUIPMENT_DELIVERY_AND_MOBILIZATION_EXCLUDED']\n# WI-CON-001 with a crew that has labor members only: equipment line unit_cost 0, origin 'observed', warnings []\n# crew [TR-CEM x2, TR-OPR x1 (is_operator False), PTROWEL] + rate operator_included=True: no OPERATOR_DOUBLE_COUNT",
+  "suggested_fix": "Add fuel_cost_hr when fuel_included is false (or fail when unknown); price or fail on min rental/delivery when flagged; raise CREW_NO_EQUIPMENT for an equipment component without equipment members; detect operator labor by trade_code (TR-OPR) as well; treat OPERATOR_NOT_PRICED/FUEL_NOT_PRICED as incomplete, not as a flag."
+ },
+ {
+  "id": "F1-017",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "218-237, 275-289",
+  "summary": "Time-index logic. indices.applies_to is never compared with the cost kind (a LABOR index adjusts a MATERIAL price: 0.40 -> 0.60); an index is applied only when the price is older than max_price_age_days, so a 287-day-old price with time_index_id supplied is left unadjusted and unflagged; frequency 'other' is treated as annual; the index value for the as_of month is normally unpublished (PPI/ECI lag), so INDEX_VALUE_MISSING with no fallback to the latest published period; flagged index series are used (F1-002).",
+  "reproduction": "# index applies_to='labor' (values 100 -> 150), time_index_id given, board price observed 2025-06-01\nmat(run(db, time_index_id='TEST-IDX-LAB'))['unit_cost']           # 0.60, 'TIME_INDEXED_PRICE'\n# price observed 2026-01-10 (287 days) + time_index_id: unit_cost 0.40, no TIME_INDEXED_PRICE",
+  "suggested_fix": "Require idx.applies_to in (kind,'all'); when time_index_id is supplied adjust every price whose month differs from the as_of month (store the base month used); define a documented fallback to the latest published index period with a flag."
+ },
+ {
+  "id": "F1-018",
+  "severity": "major",
+  "area": "calc/build",
+  "file": "pipeline/costdb/calc.py",
+  "line": "32, 330-336, 965-970; RunParams.min_review (62)",
+  "summary": "Rule 3/8 'never presented as contractor cost' is met only by a warning string. DEFAULT_CHANNELS includes retail_public, a run built from retail prices has status 'complete', mode 'strict' and a plain direct_cost_total; the same is true for a national wage used in an LA run (RATE_FROM_ANCESTOR_REGION), STALE_RATE, SALES_TAX_UNKNOWN_OR_INCLUDED, OPERATOR_NOT_PRICED. mode='strict' with min_review='unreviewed' produces a run indistinguishable (mode/status/warnings) from a validated-only run; only the parameters JSON differs.",
+  "reproduction": "r = run(db); (r.status, r.run['mode'], r.run['direct_cost_total'], r.run['warnings'])      # ('complete','strict',0.997875,['RETAIL_PRICE_NOT_CONTRACTOR_COST'])\nrun(db, min_review='unreviewed')                                                           # (after un-validating an observation) same shape: strict/complete, warnings only retail",
+  "suggested_fix": "Add structured run columns (price_basis retail|quote|mixed, min_review, region_fallback, input_review_floor) and a status such as 'complete_proxy_basis'; make retail an explicit opt-in channel (allow_retail_proxy=True)."
+ },
+ {
+  "id": "F1-019",
+  "severity": "major",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "1052-1110 (1070-1081, 1091-1092, 1100, 1106)",
+  "summary": "Markup run: the PRICE (incl. overhead, contingency, profit) is stored in calculation_runs.direct_cost_total and mode is 'with_assumptions', so any consumer of 'direct_cost_total' reads a price as a direct cost; component columns are NULL. No range checks: profit_value -2 -> price -1.15, margin -0.5 accepted, overhead_pct=10 (meaning 10%) -> price 72.4; the fingerprint (line 1091) omits the basis texts, so runs differing only in stated basis share a run_id; only the first line carries inputs.",
+  "reproduction": "m = apply_markup(run(db), overhead_pct=D('0.10'), overhead_basis='b', contingency_pct=D('0.05'), contingency_basis='b', profit_method='markup', profit_value=D('0.10'), profit_basis='b')\nm.run['direct_cost_total']        # 1.267800  (direct is 0.997875)\napply_markup(run(db), overhead_pct=D('10'), ..., profit_method='markup', profit_value=D('0.10'), ...).run['direct_cost_total']   # 72.445725",
+  "suggested_fix": "Store price in a dedicated column (price_total) and leave direct_cost_total as the base run's direct cost; validate 0 <= pct < 1 (or require explicit ranges), margin < 1; include the basis strings and base-run line ids in the fingerprint."
+ },
+ {
+  "id": "F1-020",
+  "severity": "major",
+  "area": "schema/validate",
+  "file": "schema/001_schema.sql; pipeline/costdb/validate.py",
+  "line": "all review_status columns; validate.py:129-153, 422-443",
+  "summary": "Rule 10 is enforced only in Python. The database accepts review_status='validated' with no reviewer, no reviewed_at and on a source whose verification_method is search_snippet_only (observations, labor rates, sources themselves); the append-only trigger lets review_status be flipped freely and keeps no review history (each flip overwrites the previous decision). promote_validated mutates in-memory rows and build.py rewrites the CSV, so the status history exists only in git.",
+  "reproduction": "update costdb.price_observations set review_status='validated' where observation_id='OBS-X1';      -- UPDATE 1 (source is search_snippet_only, reviewed_by NULL)\nupdate costdb.sources set review_status='validated' where source_id='SRC-XSNIP';                   -- UPDATE 1 with verification_method='search_snippet_only'",
+  "suggested_fix": "CHECK (review_status <> 'validated' OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)); constraint trigger requiring source.verification_method='fetched_primary' for validated observed rows; add a review_events (append-only) table."
+ },
+ {
+  "id": "F1-021",
+  "severity": "major",
+  "area": "schema",
+  "file": "schema/001_schema.sql",
+  "line": "191-222 (products), 537-600 (work_items/components), 648-690 (assemblies/components), 516 (crew_members), 770-824 (factors/assumptions)",
+  "summary": "Identity and 'versioned' definition tables are editable in place. products has no protection, so spec_key / content_qty / spec_attributes can be rewritten and every existing price observation silently re-maps to another spec line (v_price_history joins the live product); work_items, work_item_components, assemblies, assembly_components, crews, crew_members, adjustment_factors, assumptions can be changed without a new version (work-item quantity 0.09375 -> 99 accepted), which defeats 'links to versioned unit costs' and run reproducibility.",
+  "reproduction": "update costdb.products set spec_key='k2', content_qty=1000, content_unit_id='EA', spec_attributes='{\"thickness_in\":0.625}' where product_id='PRD-X1';   -- UPDATE 1; v_price_history now reports 'k2' for old observations\nupdate costdb.work_item_components set qty_per_unit=99 where work_item_id='WI-FRM-001' and line_no=1;                                              -- UPDATE 1",
+  "suggested_fix": "Apply forbid_history_rewrite (review fields/notes only) to products and to every versioned definition table; new content = new version row; add FK/trigger preventing a calc run from referencing an edited version."
+ },
+ {
+  "id": "F1-022",
+  "severity": "major",
+  "area": "schema",
+  "file": "schema/001_schema.sql",
+  "line": "191-222, 262-300",
+  "summary": "The material-equivalence and pack rules are not database constraints: a product with spec_key unrelated to its attributes ('garbage-key', spec_attributes {}), a product in a non-leaf category (CAT-DRY), and a price observation whose pack content differs from the product's pack (5 LB vs 32 SF) are all accepted; only validate.py (run after load) can notice.",
+  "reproduction": "insert into costdb.products (...,category_id,spec_attributes,spec_key,content_qty,content_unit_id,...) values (...,'CAT-DRY-BRD','{}','garbage-key',32,'SF',...);   -- INSERT 0 1\ninsert into costdb.price_observations (...,pack_content_qty,pack_content_unit_id,...) values (...,5,'LB',...);                                              -- INSERT 0 1 (product pack is 32 SF)",
+  "suggested_fix": "Constraint trigger: product.category must have required_product_attributes, every required attribute present, spec_key recomputed in SQL (or generated column); observation pack (qty, unit) must equal products.content_qty/unit (or reference a pack-size table)."
+ },
+ {
+  "id": "F1-023",
+  "severity": "major",
+  "area": "validate",
+  "file": "pipeline/costdb/validate.py",
+  "line": "312-381 (check_work_items, check_assemblies)",
+  "summary": "The validator cannot see contradictions between a definition and what it prices (rules 3 and 7): a work item whose spec says '1/2 in regular board' but whose component points at the 5/8 in Type X spec_key produces 0 issues; an assembly whose spec says 5/8 Type X while its children hang 1/2 in regular produces 0 issues; cost_tags on assembly_components are never examined (the double-count control exists only for included_scope tokens and, as a warning, inside one work item).",
+  "reproduction": "# WI-DRY-001 material component re-pointed to MATS['gyp_58_x_4x8']['spec_key'] -> validate(db) == []\n# ASM-WALL-001 spec_attributes['board'] = '5/8 in Type X ...' while children are WI-DRY-001 -> validate(db) == []; cost_tags=['fasteners'] on several assembly components -> []",
+  "suggested_fix": "Derive a machine-checkable spec map per work item (attribute -> spec_key attribute) and compare; require assembly spec attributes to be derived from the children (or compare); turn WI_DUP_TAG into an error and extend it to assembly components."
+ },
+ {
+  "id": "F1-024",
+  "severity": "major",
+  "area": "data",
+  "file": "data/csv/assemblies.csv; pipeline/costdb/validate.py",
+  "line": "assemblies.csv all 10 rows (included_scope/excluded_scope); validate.py:358-380",
+  "summary": "Rule 7 requires inclusions/exclusions on every assembly. included_scope is the empty array for all 10 assemblies; excluded_scope is the same four wall tokens (base_trim, corners_and_intersections, openings_headers_and_door_frames, electrical_and_mechanical_rough_in) on every assembly, including slabs, the footing and the HVAC system where they are meaningless, while the real exclusions sit only on the child work items (e.g. 11 or more child-level exclusions per assembly are not surfaced: subgrade preparation, forms, curing, gas piping, flue venting, power wiring, condensate, refrigerant charge ...). ASM-HVAC-001 is named 'Residential 3-ton split-system install' but excludes gas piping, flue, condensate, power wiring and charge; nothing on the assembly says so.",
+  "reproduction": "python3 - <<'EOF'   # (summary of data/csv/assemblies.csv)\n# all 10 rows: included_scope == [] ; ASM-SLAB-001/002, ASM-FTG-001, ASM-HVAC-001 excluded_scope contains base_trim, corners_and_intersections, ...\nEOF",
+  "suggested_fix": "Generate assembly included_scope as the union of child included tokens and excluded_scope as child exclusions not covered by another child (plus assembly-level exclusions); add a validator rule ASM_NO_INCLUSIONS and ASM_EXCLUSION_NOT_APPLICABLE."
+ },
+ {
+  "id": "F1-025",
+  "severity": "minor",
+  "area": "validate",
+  "file": "pipeline/costdb/validate.py",
+  "line": "140, 397, 427-437, 383-411",
+  "summary": "Validator/promotion defects: check_sources iterates labor_rates twice (OBSERVED_TABLES already contains it) so every issue on a labor row is duplicated; promote_validated can never promote index_values (no source_id column, line 433) and promotes products without any evidence_excerpt/source_locator (evidence test at 437 skips products, product_consumption, bid_benchmarks, index_values); check_calculation_runs skips 'assumptions' inputs (397) so an unknown assumption id is not detected, and recomputation runs only when an engine object is passed.",
+  "reproduction": "validate(): SRC_PROHIBITED_IN_USE appears twice for one labor_rates row.  promote_validated(): product with source_locator=None and evidence_excerpt=None -> review_status 'validated'; index_values stay 'unreviewed'.",
+  "suggested_fix": "De-duplicate the table list; give index_values a derived source via indices.source_id; require evidence fields for every promoted table; check assumption inputs and approval status."
+ },
+ {
+  "id": "F1-026",
+  "severity": "minor",
+  "area": "data",
+  "file": "data/csv/work_item_components.csv; data/csv/work_items.csv",
+  "line": "WI-DRY-001/002/003 L2; WI-DRY-004 L2; WI-INS-001 L1; WI-FRM-001/002; WI-FRM-003",
+  "summary": "Questionable quantity derivations (see arithmetic table): (1) drywall screws use 96/16 = 6 fasteners per 8 ft line but 48/16 + 1 = 4 lines, i.e. a fence-post +1 is applied to lines and not to fasteners per line: counting a screw at both ends gives 0.875/SF (walls, stored 0.75) and 1.125/SF (ceilings @12 in, stored 1.0); (2) R-13 batt: 1.0 SF of batt per SF of wall, but a 15 in batt in 16 in pitch consumes 15/16 = 0.9375 SF (the cavity is 14.5/16 = 0.906); (3) 'wall_height_ft: 8' with 92-5/8 in precut studs and three 1.5 in plates is a 97.125 in (8.09 ft) wall, so studs/SF (0.09375) is about 1.2% high for an 8 ft wall; (4) the scope says 'erect' but no bottom-plate-to-floor fasteners are quantified or excluded; (5) the 16d nail is hard-wired to a vinyl-coated 3-1/4 x 0.148 sinker while WI-FRM-004 explicitly says 'common'; (6) ASM-WALL-004 pairs a 10 ft steel-stud wall with WI-DRY-003, whose spec is 4x8 sheets: a 10 ft wall needs 4x10/4x12 board or horizontal hanging with butt joints and cut waste; neither the work item nor the assembly says which, and the (missing) waste factor would have to carry it; (7) WI-CON-003 describes 'two continuous bars on supports' while bar_supports_and_ties are excluded.",
+  "reproduction": "arithmetic with Fractions in this report (section 'Arithmetic re-derivation')",
+  "suggested_fix": "Decide and document the fence-post convention; derive batt quantity from batt width / stud pitch; add stud-length/plate stack to the spec check; add the missing fasteners or exclude them explicitly."
+ },
+ {
+  "id": "F1-027",
+  "severity": "minor",
+  "area": "data",
+  "file": "data/csv/work_items.csv; data/csv/assembly_components.csv",
+  "line": "WI-PNT-004, WI-HVC-001..003 excluded_scope; ASM-HVAC-001 line 3",
+  "summary": "Hygiene in definitions: duplicate tokens inside excluded_scope (permits_and_inspections twice on WI-HVC-001/002/003, surface_repair_and_patching twice on WI-PNT-004); copy-pasted irrelevant exclusions on HVC-003 (refrigerant_charge_beyond_factory, crane_or_rigging...). The '50 LF' of duct in ASM-HVAC-001 is a chosen spec parameter but is stored with qty_origin='derived' because assembly_components.qty_origin cannot be 'assumed'.",
+  "reproduction": "python: [t for t in set(w['excluded_scope']) if w['excluded_scope'].count(t) > 1] for WI-HVC-001 -> ['permits_and_inspections']",
+  "suggested_fix": "Deduplicate; allow origin 'assumed'/'specified' on assembly_components or record the 50 LF in assemblies.spec_attributes with a basis."
+ },
+ {
+  "id": "F1-028",
+  "severity": "minor",
+  "area": "data",
+  "file": "data/csv/capture_targets.csv; data/csv/categories.csv",
+  "line": "TGT-2df95f5456, TGT-20edaf015f, TGT-5cd3255c4f, TGT-77f0fb2078, TGT-0e6e446bba; CAT-FRM-CON, CAT-PNT-*",
+  "summary": "Spec/equivalence completeness and targets. (a) spec_key attributes appear that the work item's own spec_attributes do not state (WI-CON-001: slump 4 in, cement type II, no air, no admixtures; WI-HVC-001: SEER2 14.3, voltage 208/230, phase 1, split_outdoor, cooling_only), so the measurable spec is incomplete relative to what is priced; (b) required attributes are insufficient to stop non-equivalence: CAT-FRM-CON (joist hangers: no load rating/model/ICC-ES), CAT-PNT-* (no solids by volume/product tier, which drive coverage and price), CAT-FRM-FAS (no standard/coating class); (c) all five manufacturer-coverage targets (including curing compound, primer, paint) recommend SRC-USG-JOINT-COMPOUND-FAQ and SRC-DUNNEDWARDS-PDS-LIBRARY, and all 25 productivity targets recommend the same four old/highway sources although finding A2 says no free current building-trade norms were confirmed; (d) capture_targets has no origin/review_status/source columns; 86 of 129 material targets are required by no work item (priority 2).",
+  "reproduction": "grep the capture_targets rows named above; compare WI-HVC-001 spec_attributes with its component spec_keys.",
+  "suggested_fix": "Add the spec attributes to the work item (or drop them from the key); extend required attributes; fix recommended sources per target; add origin/review_status to capture_targets."
+ },
+ {
+  "id": "F1-029",
+  "severity": "minor",
+  "area": "data/docs",
+  "file": "data/csv/work_items.csv; pipeline/costdb/dictionary.py; docs/methodology.md",
+  "line": "spec attributes capacity_tons, cooling_capacity_tons, container_gal; calc.py:856",
+  "summary": "Rule 2 caveats: methodology.md says TON and GAL 'are never used bare', but spec attribute names/values use bare tons and gallons (capacity_tons, cooling_capacity_tons=3, container_gal=5/4.5) with no qualifier (refrigeration ton, US gallon) in the attribute; calculation_run_lines uses quantity_unit_id 'HR' for person-hours (labor), crew-hours (equipment) and nothing else distinguishes them except line_kind and formula text; numeric(24,10) rounding means stored quantities (e.g. 1/81 CY = 0.0123456790) are not the exact rationals the formulas state.",
+  "reproduction": "see categories.csv CAT-HVC-EQP required_product_attributes ['cooling_capacity_tons', ...]",
+  "suggested_fix": "Rename to cooling_capacity_ton_refrig / container_gal_us (or store a qualifier attribute); add quantity_basis ('person_hour','crew_hour','equipment_hour') to calculation_run_lines; store qty as numerator/denominator or document tolerance."
+ },
+ {
+  "id": "F1-030",
+  "severity": "minor",
+  "area": "sources",
+  "file": "docs/source_findings.md; data/csv/regions.csv; data/csv/sources.csv; docs/methodology.md",
+  "line": "source_findings.md:25, 240, 11; regions.csv:15; sources.csv rows SRC-BLS-API-V2 / SRC-BLS-PUBLIC-DATA-API / SRC-BLS-PPI-CONSTRUCTION-INPUTS / SRC-BLS-OEWS-LA-MAY2025-NR; methodology.md section 10",
+  "summary": "Internal inconsistencies in the source register and findings: (1) source_findings.md:25 says the example ECEC id 'CMU2010000000000D ... is not 17 characters' but it has exactly 17 characters (same text in agent_A1_labor_indices.json); (2) regions.csv:15 states MD 31084 is 'the geography BLS OEWS uses for LA' and SRC-BLS-OEWS-LA-MAY2025-NR says it is 'used for LA County trade wages', while finding A1 (source_findings.md:15) and the limitations of SRC-BLS-OEWS-MAY2025 say the division table was not located/confirmed; the labor capture targets are nevertheless addressed to REG-MD-31084; (3) the same BLS API FAQ page is registered twice with different reuse_status and tier (SRC-BLS-API-V2 permitted_with_attribution/B vs SRC-BLS-PUBLIC-DATA-API unknown_needs_check/A), SRC-BLS-PPI-CONSTRUCTION-INPUTS depends on 'see SRC-BLS-PUBLIC-DATA-API' (copyright page NOT seen), and source_findings.md:240 (A3 gap) says the BLS copyright page was not seen while line 11 (A1) and most BLS rows say it was; (4) indices.csv leaves base_period and seasonal_adjustment NULL (the facts are only in notes) although rule 8 asks for series metadata; (5) methodology.md section 10 still says CSI terms are recorded as 'prohibited' (register now: licence_required).",
+  "reproduction": "grep -n CMU2010000000000D docs/source_findings.md ; python3 -c \"print(len('CMU2010000000000D'))\" -> 17",
+  "suggested_fix": "Correct the finding; mark the geography note as an assumption; merge or cross-reference the duplicate BLS API entries; fill base_period/seasonal_adjustment; update methodology section 10."
+ },
+ {
+  "id": "F1-031",
+  "severity": "minor",
+  "area": "connectors",
+  "file": "pipeline/connectors/retail_capture_import.py; pipeline/connectors/bls_api.py",
+  "line": "retail_capture_import.py:134-141, 158-165, 205-209; bls_api.py:66",
+  "summary": "Importer: the observation id excludes price and retrieved_at, so a same-day recapture at a different price (or a correction of a wrong entry) is dropped as a 'duplicate' and the correct value cannot be recorded in an append-only table; the price-in-evidence test is a substring test ('2.50' passes for '$12.50'); naive retrieved_at timestamps are accepted (interpreted in the server time zone by PostgreSQL); prohibited-source rows are accepted with a warning (see F1-004). bls_api.py hard-codes a personal e-mail address in the User-Agent; index_values PK allows only one vintage per day.",
+  "reproduction": "import_capture([row(price 12.80), row(price 11.80, later same day)])  -> second row: skipped_duplicates=['OBS-56f8695fdf'], only 12.80 stored\nprice_amount '2.50' with evidence_excerpt 'Now only $12.50 per sheet' -> accepted",
+  "suggested_fix": "Add price (and retrieved_at hour) to the id or add a 'supersedes_observation_id'; tokenise the price match; require tz-aware timestamps; make the contact address configuration."
+ },
+ {
+  "id": "F1-032",
+  "severity": "minor",
+  "area": "schema",
+  "file": "schema/001_schema.sql",
+  "line": "45-62 (forbid_history_rewrite), 64-84 (units), 361-445",
+  "summary": "Protection gaps: TRUNCATE bypasses every append-only trigger (including 'TRUNCATE labor_rates CASCADE' wiping crew_members); notes is mutable on protected tables although the trigger message says only review fields; units is unprotected (to_base_num editable: SY->SF factor became 3 in v_unit_conversions), qualifier is free text (TON_FOO/'banana' accepted), base_unit_id may point to a different dimension; labor_rates has no check that total_hr equals its components or that includes_* flags agree with which component columns are filled, stat_wage may carry includes_payroll_taxes, burden_rates accepts effective_to < effective_from and wage_cap_annual on a per_hour basis; product_consumption allows coverage_qty/coats = 0; adjustment_factors allows a region factor from a region to itself and a time_index factor whose index.applies_to differs; validation_issues allows 'waived' on an error with free-text note only; assumptions allow self-approval.",
+  "reproduction": "see pgtests.py results in this review (each statement returned ALLOWED).",
+  "suggested_fix": "BEFORE TRUNCATE triggers; remove notes from mutable list on observation tables or add notes_history; add the missing CHECKs/triggers; restrict qualifiers to an enum and verify dimension equality."
+ },
+ {
+  "id": "F1-033",
+  "severity": "minor",
+  "area": "schema",
+  "file": "schema/001_schema.sql",
+  "line": "299 (po_dates_chk), 887-892 (v_price_latest_validated)",
+  "summary": "po_dates_chk uses retrieved_at::date, which depends on the session TimeZone: the same row (observed_at 2026-10-24, retrieved_at 2026-10-24T05:00:00Z) is accepted under UTC and rejected under America/Los_Angeles; validate.py and the importer use yet other date semantics. v_price_latest_validated uses DISTINCT ON (product_id, region_id): rows with NULL region (zip/store only) from different cities collapse into one 'latest', MSRP/quote/retail channels and units are not separated.",
+  "reproduction": "SET timezone='America/Los_Angeles'; insert observation (observed_at '2026-10-24', retrieved_at '2026-10-24T05:00:00Z') -> violates po_dates_chk; with timezone 'UTC' accepted.",
+  "suggested_fix": "Compare retrieved_at with (observed_at + 1 day) at timestamptz level or store an explicit retrieval date; add channel/unit/region-NOT-NULL conditions to the view or drop it."
+ },
+ {
+  "id": "F1-034",
+  "severity": "minor",
+  "area": "ids",
+  "file": "pipeline/costdb/ids.py; pipeline/connectors/retail_capture_import.py",
+  "line": "ids.py:14-19, 22-34; importer 184-186, 207-209",
+  "summary": "norm_attr_value quirks: Decimal accepts underscores so '5_8' normalises to '58' (different specs share a key); 'NaN'/'nan' raise TypeError instead of SpecError; fractions and decimals never merge ('15/32' vs 0.46875) so a correctly captured SKU can miss its target (false negative). make_id keeps 40 bits of SHA-1: on collision the importer treats a different observation as a duplicate (skipped) or merges two products with equal spec/pack.",
+  "reproduction": "norm_attr_value('5_8') == '58'; norm_attr_value('NaN') -> TypeError: bad operand type for abs(): 'str'",
+  "suggested_fix": "Reject non-numeric forms explicitly (regex), normalise fractions, use >= 16 hex chars or detect collisions against the natural key."
+ },
+ {
+  "id": "F1-035",
+  "severity": "minor",
+  "area": "calc/build",
+  "file": "pipeline/costdb/__init__.py; pipeline/scripts/build.py",
+  "line": "__init__.py:3-4; build.py:46",
+  "summary": "calc_version is the static string 'costdb-calc/0.1.0' and every stored run has code_ref NULL (Engine(db, code_ref=None)), so a run does not identify the code that produced it; bugs fixed in calc.py do not change run ids.",
+  "reproduction": "data/csv/calculation_runs.csv: calc_version 'costdb-calc/0.1.0', code_ref empty on all 35 runs.",
+  "suggested_fix": "Set code_ref to the git sha (or hash of calc.py) at build; include it in the fingerprint."
+ },
+ {
+  "id": "F1-036",
+  "severity": "minor",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "566, 574-577, 842-843",
+  "summary": "Person-hours per unit on the labor line is crew_size x shift / daily output and ignores crew_members.hours_per_shift, while the cost uses member hours: a laborer working 10 h on an 8 h shift costs 0.5875/SF but is reported as 0.015 person-h/SF (true 0.01625).",
+  "reproduction": "crew [TR-DRYW x2 8 h, TR-LAB x1 hours_per_shift=10], norm 1600 SF/shift: labor_cost 0.5875, labor line quantity 0.0150000000",
+  "suggested_fix": "Sum qty x hours over labor members for person-hours; keep crew-hours separate."
+ },
+ {
+  "id": "F1-037",
+  "severity": "minor",
+  "area": "calc/schema",
+  "file": "pipeline/costdb/calc.py; schema/001_schema.sql",
+  "line": "calc.py:436-441; schema 361-412",
+  "summary": "Rule 4 separation of overhead/profit: company_actual rates return total_hr regardless of the includes_* flags and the schema has no includes_overhead / includes_profit flag, so a billing-type company rate can be loaded and then marked up again by apply_markup. The derived loaded_employer_cost row (calc.py:1020-1034) takes region_id = run region even when the inputs came from an ancestor region, sets effective_from = as_of instead of the inputs' period, and for an assumed total stores base_wage_hr = 0 with includes_* all true.",
+  "reproduction": "see calc.py:1020-1034",
+  "suggested_fix": "Add includes_overhead/includes_profit (must be false for use as a cost) and copy region/period from the governing input."
+ },
+ {
+  "id": "F1-038",
+  "severity": "minor",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "399-401, 61-64",
+  "summary": "Parameter validation: labor_basis='bogus' raises KeyError; mode='Strict' is accepted, stored and would violate the DB CHECK only at load time; price_policy unchecked (F1-012); RunParams is not validated at all.",
+  "reproduction": "run(db, labor_basis='bogus') -> KeyError: 'bogus' ; run(db, mode='Strict').run['mode'] -> 'Strict'",
+  "suggested_fix": "Validate enumerations in __post_init__."
+ },
+ {
+  "id": "F1-039",
+  "severity": "minor",
+  "area": "calc/validate",
+  "file": "pipeline/costdb/calc.py; pipeline/costdb/validate.py; pipeline/costdb/units.py",
+  "line": "calc.py:65,74; validate.py:199,224,239,306; units.py:9",
+  "summary": "Universal defaults without a stated basis (rule 6): max_price_age_days=365, max_rate_age_days=800, outlier 3x/(1/3) of median, 1% productivity reconciliation tolerance, STALE thresholds (365/800 days) are constants in code; the 365-day default EXCLUDES prices (unless a time index is supplied). units.py sets the global Decimal context precision (getcontext().prec = 40) at import time, a side effect on every other Decimal user in the process.",
+  "reproduction": "grep the constants.",
+  "suggested_fix": "Move thresholds to a documented policy table with basis text; use a local decimal context."
+ },
+ {
+  "id": "F1-040",
+  "severity": "minor",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "259 (observations), 366-368, 403-406, 499-502",
+  "summary": "As-of reproducibility: observations, labor, burden and equipment rows are selected by observed_at/effective period only; retrieved_at is not compared with as_of, so a re-run 'as of' 2026-09-10 uses a row retrieved on 2026-10-23 (only index values honour vintage_date). Together with F1-013 the same parameters can give different results after back-filling data.",
+  "reproduction": "run(db, as_of=date(2026,9,10)) with the board observation retrieved_at 2026-10-23 -> complete",
+  "suggested_fix": "Add an optional knowledge_date parameter (default = as_of) and filter on retrieved_at/created_at."
+ },
+ {
+  "id": "F1-041",
+  "severity": "minor",
+  "area": "calc",
+  "file": "pipeline/costdb/calc.py",
+  "line": "772-874 (unit_cost) / work_items.status, valid_from, is_optional",
+  "summary": "work_items.status ('retired'), valid_from, supersedes_version and work_item_components.is_optional are never consulted: a retired work item version or one whose valid_from is in the future is costed as 'complete'; components flagged is_optional are always included.",
+  "reproduction": "WI-DRY-001 status='retired', valid_from=2030-01-01 -> run complete 0.997875; all material components is_optional=True -> material_cost still 0.447875",
+  "suggested_fix": "Refuse retired/not-yet-valid versions (or flag); price optional components only when selected."
+ },
+ {
+  "id": "F1-042",
+  "severity": "minor",
+  "area": "tests",
+  "file": "tests/*.py",
+  "line": "see section 'Weak or missing tests'",
+  "summary": "Test-suite weaknesses: 7 PostgreSQL tests are skipped unless PGHOST/PGPORT is set; the first PG run in this review failed (test_python_generated_runs_and_json_columns_round_trip asserted 3 lines with inputs but the real data contributes 39 calc lines; fixed in the 02:39 test update) which shows coupling to the committed data; several data gates are vacuous on the current empty tables (validated-means-fetched, no-invented-numbers); test_quantities_match_independent_arithmetic re-uses the generator's own fence-post convention and covers about 20 of the 48 fixed-mode quantities; none of the defects F1-001 to F1-019 is caught by an existing test.",
+  "reproduction": "python3 -B tests/run_tests.py (114 tests, 7 skipped without PG; OK with PG after the fix)",
+  "suggested_fix": "Add the tests listed in 'Weak or missing tests'; make PG tests run in CI; add property tests for selection logic."
+ }
+]

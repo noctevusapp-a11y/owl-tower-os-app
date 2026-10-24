@@ -11,7 +11,7 @@ def _norm_part(p: object) -> str:
     return re.sub(r"\s+", " ", str(p).strip().lower())
 
 
-def make_id(prefix: str, *parts: object, length: int = 10) -> str:
+def make_id(prefix: str, *parts: object, length: int = 12) -> str:
     """Deterministic id: PREFIX-<first `length` hex of sha1 over normalised parts>.
 
     The same natural key always yields the same id, so re-importing never duplicates records."""
@@ -19,19 +19,26 @@ def make_id(prefix: str, *parts: object, length: int = 10) -> str:
     return f"{prefix}-{digest[:length]}"
 
 
+_NUM_RE = re.compile(r"^-?[0-9]+(\.[0-9]+)?$")
+
+
 def norm_attr_value(v: object) -> str:
-    """Normalise an attribute value for comparison: numbers lose trailing zeros ('0.50' == '0.5')."""
+    """Normalise an attribute value for comparison. MUST stay identical to costdb.norm_attr() in schema/001_schema.sql.
+
+    Plain decimal numbers lose trailing zeros ('0.50' == '0.5'); everything else is trimmed, lower-cased and has its
+    whitespace collapsed. Only plain decimals are numbers: 'NaN', '1_0', '1e3' are ordinary strings, never numbers."""
     if isinstance(v, bool):
         return "true" if v else "false"
-    s = str(v).strip().lower()
-    s = re.sub(r"\s+", " ", s)
-    try:
-        d = Decimal(s)
+    s = str(v)
+    if isinstance(v, (int, float, Decimal)) and not isinstance(v, bool):
+        s = format(Decimal(str(v)), "f")
+    if _NUM_RE.match(s.strip()):
+        d = Decimal(s.strip())
+        if d == 0:
+            return "0"
         n = d.normalize()
-        # avoid scientific notation
-        return format(n, "f") if n == n.to_integral() or abs(n.as_tuple().exponent) < 12 else str(n)
-    except (InvalidOperation, ValueError):
-        return s
+        return format(n, "f")
+    return re.sub(r"\s+", " ", s.strip()).lower()
 
 
 class SpecError(ValueError):

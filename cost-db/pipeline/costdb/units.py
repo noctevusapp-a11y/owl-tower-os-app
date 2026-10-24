@@ -1,11 +1,11 @@
 """Exact unit conversion using the rational factors stored in the units table."""
 from __future__ import annotations
 
-from decimal import Decimal, getcontext
+from decimal import Context, Decimal
 from fractions import Fraction
 from typing import Iterable, Mapping
 
-getcontext().prec = 40
+_CTX = Context(prec=40)       # local context: importing this module never changes global Decimal behaviour
 
 
 class UnitError(ValueError):
@@ -43,7 +43,7 @@ class Units:
 
     def convert(self, qty: Decimal, from_unit: str, to_unit: str) -> Decimal:
         m = self.factor(from_unit, to_unit)
-        return Decimal(qty) * Decimal(m.numerator) / Decimal(m.denominator)
+        return _CTX.divide(_CTX.multiply(Decimal(qty), Decimal(m.numerator)), Decimal(m.denominator))
 
     def compatible(self, a: str, b: str) -> bool:
         try:

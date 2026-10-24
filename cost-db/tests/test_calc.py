@@ -9,7 +9,7 @@ from costdb.units import UnitError, Units
 from tests.fixtures import synthetic as S
 
 WI = S.WI
-EXPECTED_DRY001 = D("0.997875")
+EXPECTED_DRY001 = D("0.999188")      # 0.4400 board + 0.0091875 screws + 0.55 labor = 0.9991875 (6-decimal rounding)
 
 
 def comp(db, wi, needle):
@@ -72,12 +72,12 @@ class UnitCostTest(unittest.TestCase):
         r = self.eng.unit_cost(WI, 1, S.params())
         self.assertEqual(r.status, "complete", r.run["missing_inputs"])
         self.assertEqual(r.run["direct_cost_total"], EXPECTED_DRY001)
-        self.assertEqual(r.run["material_cost"], D("0.447875"))
+        self.assertEqual(r.run["material_cost"], D("0.449188"))
         self.assertEqual(r.run["labor_cost"], D("0.550000"))
         self.assertEqual(r.run["equipment_cost"], D("0.000000"))
         by_kind = {ln["line_kind"]: ln for ln in r.lines}
-        self.assertIn("person-hours/unit = 3×8/1600", by_kind["labor"]["formula"])
-        self.assertEqual(sum(ln["extended_cost"] for ln in r.lines), D("0.9978750000"))
+        self.assertIn("person-hours/unit = sum(member qty x hours) 24 / 1600", by_kind["labor"]["formula"])
+        self.assertEqual(sum(ln["extended_cost"] for ln in r.lines), D("0.9991875000"))
 
     def test_every_line_has_formula_and_traceable_inputs(self):
         r = self.eng.unit_cost(WI, 1, S.params())
@@ -157,8 +157,8 @@ class UnitCostTest(unittest.TestCase):
         c["waste_factor"] = None; c["waste_origin"] = None; c["waste_basis"] = None
         self.db.add("assumptions", {"assumption_id": "TEST-ASU-W1", "assumption_type": "waste", "applies_to_ref": f"waste:{c['component_id']}",
                                     "value_numeric": D("0.10"), "value_text": None, "unit_id": None, "rationale": "synthetic",
-                                    "proposed_by": "tests", "proposed_at": None, "approved_by": "tests", "approved_at": "2026-10-24T00:00:00+00:00",
-                                    "status": "approved", "expires_on": None, "origin": "assumed", "review_status": "unreviewed", "notes": None})
+                                    "proposed_by": "tests", "proposed_at": None, "approved_by": "second reviewer", "approved_at": "2026-10-24T00:00:00+00:00",
+                                    "status": "approved", "expires_on": date(2027, 1, 1), "origin": "assumed", "review_status": "unreviewed", "notes": None})
         r3 = Engine(self.db).unit_cost(WI, 1, S.params(mode="with_assumptions"))
         self.assertEqual(r3.status, "complete")
         self.assertTrue(r3.run["has_assumptions"])
@@ -208,12 +208,12 @@ class UnitCostTest(unittest.TestCase):
     def test_stale_price_needs_index_and_formula_is_exact(self):
         o = next(x for x in self.db["price_observations"] if x["observation_id"] == "TEST-OBS-BOARDA")
         o["observed_at"] = date(2025, 6, 1); o["retrieved_at"] = "2025-06-02T00:00:00+00:00"
-        self.assertEqual(Engine(self.db).unit_cost(WI, 1, S.params()).status, "incomplete")
+        self.assertEqual(Engine(self.db).unit_cost(WI, 1, S.params(max_price_age_days=365)).status, "incomplete")
         self.db.add("indices", {"index_id": "TEST-IDX-1", "publisher": "TEST", "series_code": "T1", "name": "synthetic", "base_period": None,
                                 "frequency": "monthly", "seasonal_adjustment": None, "geography": None, "applies_to": "material",
                                 "source_id": S.SRC, "origin": "observed", "review_status": "validated", "reviewed_by": None,
                                 "reviewed_at": None, "notes": None})
-        for per, val in ((date(2025, 6, 1), "200"), (date(2026, 10, 1), "210")):
+        for per, val in ((date(2025, 6, 1), "200"), (date(2026, 9, 1), "205"), (date(2026, 10, 1), "210")):   # Sep 2026: the screw price month
             self.db.add("index_values", {"index_id": "TEST-IDX-1", "period_start": per, "vintage_date": date(2026, 10, 20), "value": D(val),
                                          "value_status": "final", "retrieved_at": "2026-10-20T00:00:00+00:00", "source_locator": "synthetic",
                                          "raw_file_sha256": None, "origin": "observed", "review_status": "validated", "reviewed_by": None,
@@ -263,7 +263,7 @@ class UnitCostTest(unittest.TestCase):
         r2 = Engine(self.db).unit_cost(WI, 1, S.params(conditions=("occupied_building",)))
         self.assertEqual(r2.status, "complete")
         self.assertEqual(r2.run["labor_cost"], D("0.660000"))      # 0.55 x 1.20
-        self.assertEqual(r2.run["material_cost"], D("0.447875"))   # materials untouched
+        self.assertEqual(r2.run["material_cost"], D("0.449188"))   # materials untouched
 
     def test_shift_and_crew_mismatch_are_blocking(self):
         for p in self.db["productivity_observations"]:
@@ -371,7 +371,7 @@ class LaborRateTest(unittest.TestCase):
             "review_status": "validated", "reviewed_by": None, "reviewed_at": None, "created_at": None, "notes": None})
         self.all_burdens()
         res = Engine(self.db).loaded_labor_rate("TR-DRYW", S.params(labor_basis="prevailing_loaded", project_type="public_works",
-                                                                     annual_paid_hours=D("2080")))
+                                                                     wage_class="building", annual_paid_hours=D("2080")))
         self.assertEqual(res.status, "complete", res.run["missing_inputs"])
         descs = {ln["description"] for ln in res.lines}
         self.assertNotIn("employer_benefits", descs)                 # fringe already inside the determination
@@ -419,32 +419,7 @@ class CrewEquipmentTest(unittest.TestCase):
 
 class AssemblyTest(unittest.TestCase):
     def build(self):
-        db = S.priced_drywall_db()
-        # one synthetic material-only work item priced $2.00 each, waste 0
-        db.add("work_items", {"work_item_id": "TEST-WI-9", "version": 1, "name": "TEST widget install", "category_id": "CAT-FRM",
-                              "spec_attributes": {"widget": "synthetic"}, "output_unit_id": "EA", "description": "synthetic",
-                              "included_scope": ["widget_material"], "excluded_scope": [], "conditions": None, "status": "defined",
-                              "valid_from": S.AS_OF, "supersedes_version": None, "definition_basis": "synthetic", "origin": "assumed",
-                              "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None, "created_at": None, "notes": None})
-        m = S.pilot.MATS["hurricane_tie"]
-        S.add_product(db, "TEST-PRD-WIDGET", "hurricane_tie", 1, "EA", "TESTBRAND-W", "TW-1")
-        S.add_obs(db, "TEST-OBS-WIDGET", "TEST-PRD-WIDGET", "2.00", 1, "EA")
-        db.add("work_item_components", {"component_id": "TEST-WIC-9", "work_item_id": "TEST-WI-9", "work_item_version": 1, "line_no": 1,
-                                        "component_kind": "material", "description": "widget", "product_spec_key": m["spec_key"], "product_id": None,
-                                        "qty_mode": "fixed", "qty_per_unit": D("1"), "qty_unit_id": "EA", "qty_formula": "1 per EA",
-                                        "qty_origin": "derived", "waste_factor": D("0"), "waste_origin": "observed", "waste_basis": "TEST",
-                                        "crew_id": None, "productivity_id": None, "consumption_application": None, "coats_applied": None,
-                                        "cost_tags": ["widget"], "is_optional": False, "notes": None})
-        db.add("assemblies", {"assembly_id": "TEST-ASM-1", "version": 1, "name": "TEST assembly", "category_id": "CAT-FRM",
-                              "spec_attributes": {"synthetic": True}, "output_unit_id": "SF", "description": "synthetic",
-                              "included_scope": [], "excluded_scope": [], "conditions": None, "status": "defined", "valid_from": S.AS_OF,
-                              "supersedes_version": None, "definition_basis": "synthetic", "origin": "assumed", "review_status": "unreviewed",
-                              "reviewed_by": None, "reviewed_at": None, "created_at": None, "notes": None})
-        for i, (wid, qty, unit) in enumerate((("WI-DRY-001", "2", "SF"), ("TEST-WI-9", "3", "EA")), 1):
-            db.add("assembly_components", {"assembly_component_id": f"TEST-ASC-{i}", "assembly_id": "TEST-ASM-1", "assembly_version": 1,
-                                           "line_no": i, "work_item_id": wid, "work_item_version": 1, "qty_per_assembly_unit": D(qty),
-                                           "qty_unit_id": unit, "qty_formula": "synthetic", "qty_origin": "derived", "cost_tags": [], "notes": None})
-        return db
+        return S.assembly_db()
 
     def test_assembly_total_is_sum_of_versioned_unit_costs(self):
         db = self.build()
@@ -463,7 +438,7 @@ class AssemblyTest(unittest.TestCase):
                 w["included_scope"] = ["board_material"]          # WI-DRY-001 already includes it
         r = Engine(db).assembly_cost("TEST-ASM-1", 1, S.params())
         self.assertEqual(r.status, "failed")
-        self.assertTrue(any("SCOPE_OVERLAP" in w for w in r.run["warnings"]))
+        self.assertIn("SCOPE_OVERLAP", {m["code"] for m in r.run["missing_inputs"]})
 
     def test_incomplete_child_makes_assembly_incomplete_without_total(self):
         db = self.build()
@@ -496,8 +471,9 @@ class MarkupTest(unittest.TestCase):
         a = apply_markup(r, profit_method="markup", profit_value=D("0.10"), **kw)
         b = apply_markup(r, profit_method="margin", profit_value=D("0.10"), **kw)
         # overhead 10.00 ; contingency (100+10) x 5% = 5.50 ; cost 115.50
-        self.assertEqual(a.run["direct_cost_total"], D("127.050000"))                       # 115.5 x 1.10
-        self.assertEqual(b.run["direct_cost_total"], (D("115.5") / D("0.9")).quantize(D("0.000001")))   # 115.5 / 0.90
+        self.assertEqual(a.run["price_total"], D("127.050000"))                             # 115.5 x 1.10
+        self.assertEqual(b.run["price_total"], (D("115.5") / D("0.9")).quantize(D("0.000001")))         # 115.5 / 0.90
+        self.assertEqual(a.run["direct_cost_total"], D("100.000000"))                       # the direct cost stays a direct cost
         kinds = [ln["line_kind"] for ln in a.lines]
         self.assertEqual(kinds, ["subtotal", "overhead", "contingency", "subtotal", "profit", "subtotal"])
         self.assertAlmostEqual(float(markup_to_margin(D("0.25"))), 0.20, places=12)

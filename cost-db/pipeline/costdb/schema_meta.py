@@ -11,6 +11,9 @@ SCHEMA_SQL = ROOT / "schema" / "001_schema.sql"
 _SKIP = ("CONSTRAINT", "PRIMARY", "UNIQUE", "FOREIGN", "CHECK")
 
 
+_DEFAULT_RE = re.compile(r"DEFAULT\s+(?:(true|false)|'((?:[^']|'')*)'(?:::\w+)?|(-?\d+(?:\.\d+)?))(?=[\s,)]|$)")
+
+
 @dataclass(frozen=True)
 class Column:
     table: str
@@ -18,6 +21,8 @@ class Column:
     sql_type: str
     generated: bool
     references: tuple[str, str] | None = None
+    not_null: bool = False
+    default_literal: str | None = None      # literal DEFAULTs only; function defaults (now(), current_date) are handled by the writers
 
     @property
     def kind(self) -> str:
@@ -59,7 +64,12 @@ def parse_schema(path: Path = SCHEMA_SQL) -> dict[str, list[Column]]:
             if sql_type.startswith("numeric") and "(" in sql_type and ")" not in sql_type:
                 sql_type = "numeric"
             ref = re.search(r"REFERENCES (\w+)\((\w+)\)", line)
-            cols.append(Column(tname, name, sql_type, bool(generated), (ref.group(1), ref.group(2)) if ref else None))
+            dm = _DEFAULT_RE.search(line)
+            default = None
+            if dm:
+                default = dm.group(1) if dm.group(1) else (dm.group(2).replace("''", "'") if dm.group(2) is not None else dm.group(3))
+            cols.append(Column(tname, name, sql_type, bool(generated), (ref.group(1), ref.group(2)) if ref else None,
+                               "NOT NULL" in line or "PRIMARY KEY" in line, default))
         tables[tname] = cols
     return tables
 

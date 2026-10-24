@@ -114,11 +114,11 @@ for key, btype, core, th, length, fire, mr, desc in [
                                    "edge_type": "tapered", "fire_rated_x": fire, "moisture_or_mold_resistant": mr}, "each sheet")
 
 mat("jnt_ap_std_45", "CAT-DRY-JNT", "All-purpose pre-mixed joint compound, 4.5 gal, standard weight",
-    {"compound_type": "all_purpose", "setting_or_drying": "drying", "container_gal": 4.5, "weight_class": "standard"}, "pail")
+    {"compound_type": "all_purpose", "setting_or_drying": "drying", "container_gal_us": 4.5, "weight_class": "standard"}, "pail")
 mat("jnt_ap_lite_45", "CAT-DRY-JNT", "All-purpose pre-mixed joint compound, 4.5 gal, lightweight",
-    {"compound_type": "all_purpose", "setting_or_drying": "drying", "container_gal": 4.5, "weight_class": "lightweight"}, "pail")
+    {"compound_type": "all_purpose", "setting_or_drying": "drying", "container_gal_us": 4.5, "weight_class": "lightweight"}, "pail")
 mat("jnt_top_lite_45", "CAT-DRY-JNT", "Topping compound, 4.5 gal, lightweight",
-    {"compound_type": "topping", "setting_or_drying": "drying", "container_gal": 4.5, "weight_class": "lightweight"}, "pail")
+    {"compound_type": "topping", "setting_or_drying": "drying", "container_gal_us": 4.5, "weight_class": "lightweight"}, "pail")
 mat("tape_paper_500", "CAT-DRY-TAP", "Paper joint tape 2-1/16 in x 500 ft",
     {"product_type": "joint_tape", "width_in": 2.0625, "length_ft": 500, "material": "paper"}, "roll")
 mat("tape_mesh_300", "CAT-DRY-TAP", "Fiberglass mesh joint tape 1-7/8 in x 300 ft",
@@ -193,7 +193,7 @@ for key, ctype, resin, sheen, exposure, gal, voc, desc in [
         ("pnt_ext_elast_5", "elastomeric", "acrylic", "flat", "exterior", 5, "<=50", "Exterior elastomeric coating, flat, 5 gal"),
         ("pnt_ext_semi_1", "trim_paint", "acrylic_latex", "semi_gloss", "exterior", 1, "<=50", "Exterior acrylic trim paint, semi-gloss, 1 gal")]:
     mat(key, "CAT-PNT-PNT", desc, {"coating_type": ctype, "resin_base": resin, "sheen": sheen, "exposure": exposure,
-                                   "container_gal": gal, "voc_g_per_l": voc}, "pail/can")
+                                   "container_gal_us": gal, "voc_g_per_l": voc}, "pail/can")
 for key, ctype, resin, exposure, gal, voc, desc in [
         ("prm_pva_5", "primer", "pva", "interior", 5, "<=50", "PVA drywall primer, 5 gal"),
         ("prm_pva_1", "primer", "pva", "interior", 1, "<=50", "PVA drywall primer, 1 gal"),
@@ -201,7 +201,7 @@ for key, ctype, resin, exposure, gal, voc, desc in [
         ("prm_ext_5", "primer", "acrylic", "exterior", 5, "<=100", "Exterior acrylic primer, 5 gal"),
         ("prm_stain_1", "stain_blocking_primer", "water_based", "interior", 1, "<=100", "Stain-blocking primer, water-based, 1 gal")]:
     mat(key, "CAT-PNT-PRM", desc, {"coating_type": ctype, "resin_base": resin, "sheen": "flat", "exposure": exposure,
-                                   "container_gal": gal, "voc_g_per_l": voc}, "pail/can")
+                                   "container_gal_us": gal, "voc_g_per_l": voc}, "pail/can")
 for key, stype, size, material, grade, desc in [
         ("sup_caulk", "caulk", "10.1 fl oz cartridge", "acrylic_latex_siliconized", "paintable", "Paintable siliconized acrylic latex caulk, 10.1 fl oz"),
         ("sup_tape", "painters_tape", "1.88 in x 60 yd", "paper_masking", "multi_surface", "Painter's masking tape 1.88 in x 60 yd"),
@@ -222,7 +222,7 @@ for key, etype, tons, seer, heat, volts, phase, ref, conf, desc in [
         ("eqp_coil_30", "evaporator_coil", 3.0, NA, NA, NA, NA, "R-454B", "cased_a_coil", "Cased evaporator coil 3 ton, R-454B"),
         ("eqp_ah_30", "air_handler", 3.0, NA, "electric_heat_5kw", "208/230", 1, "R-454B", "multiposition", "Air handler 3 ton with 5 kW electric heat"),
         ("eqp_rtu_50", "packaged_rooftop_unit", 5.0, 14.0, "gas_heat_120kbtuh", "208/230", 3, "R-454B", "single_package", "Packaged rooftop unit 5 ton, gas heat (quote)")]:
-    mat(key, "CAT-HVC-EQP", desc, {"equipment_type": etype, "cooling_capacity_tons": tons, "efficiency_seer2": seer,
+    mat(key, "CAT-HVC-EQP", desc, {"equipment_type": etype, "cooling_capacity_ton_refrig": tons, "efficiency_seer2": seer,
                                    "heating_type_or_rating": heat, "voltage_v": volts, "phase": phase, "refrigerant": ref,
                                    "configuration": conf}, "each")
 for key, dtype, size, r, mat_, length, desc in [
@@ -280,7 +280,7 @@ def crew(cid, name, category, intended):
 def wi(wid, name, cat, unit, spec, desc, included, excluded, crew_id, comps, conditions=NORMAL, labor_desc=None,
        equipment=None):
     WORK_ITEMS.append({"id": wid, "name": name, "cat": cat, "unit": unit, "spec": spec, "desc": desc, "included": included,
-                       "excluded": COMMON_EXCL + excluded, "crew": crew_id, "comps": comps, "conditions": conditions,
+                       "excluded": list(dict.fromkeys(COMMON_EXCL + excluded)), "crew": crew_id, "comps": comps, "conditions": conditions,
                        "labor_desc": labor_desc or name, "equipment": equipment or []})
 
 
@@ -307,25 +307,31 @@ crew("CRW-PNT", "Painting crew", "CAT-PNT", "painters")
 crew("CRW-HVAC-SPLIT", "HVAC split-system installation crew", "CAT-HVC", "HVAC mechanics, helper")
 crew("CRW-HVAC-DUCT", "HVAC duct installation crew", "CAT-HVC", "sheet-metal/HVAC installers, helper")
 
-wall_h = F(8)  # ft
-for wid, nm, stud_key, plate_key, stud_nom in [("WI-FRM-001", "Frame wood stud wall 2x4 @16 in o.c., 8 ft high", "stud_2x4_92", "lbr_2x4_96", "2x4"),
-                                               ("WI-FRM-002", "Frame wood stud wall 2x6 @16 in o.c., 8 ft high", "stud_2x6_92", "lbr_2x6_96", "2x6")]:
+# precut stud 92-5/8 in + bottom plate + two top plates (1.5 in each) = 97-1/8 in overall wall height (the "8 ft wall")
+STUD_IN = F(92625, 1000)
+WALL_IN = STUD_IN + 3 * F(3, 2)
+WALL_FT = WALL_IN / 12
+for wid, stud_key, plate_key, stud_nom in [("WI-FRM-001", "stud_2x4_92", "lbr_2x4_96", "2x4"),
+                                          ("WI-FRM-002", "stud_2x6_92", "lbr_2x6_96", "2x6")]:
     studs_per_lf = F(12, 16)
-    wi(wid, nm, "CAT-FRM", "SF",
-       {"stud_nominal": stud_nom, "species_group": "DF-L", "stud_spacing_in": 16, "wall_height_ft": 8, "stud_length_in": 92.625,
-        "bottom_plates": 1, "top_plates": 2, "unit_basis": "SF of wall face area (length x height)",
+    studs_sf = studs_per_lf / WALL_FT
+    plates_sf = F(3) / WALL_FT
+    nails_sf = studs_sf * 4 + studs_per_lf / WALL_FT
+    wi(wid, f"Frame wood stud wall {stud_nom} @16 in o.c., 92-5/8 in precut studs (97-1/8 in overall, 8 ft nominal)", "CAT-FRM", "SF",
+       {"stud_nominal": stud_nom, "species_group": "DF-L", "stud_spacing_in": 16, "stud_length_in": 92.625,
+        "wall_height_in": 97.125, "bottom_plates": 1, "top_plates": 2, "unit_basis": "SF of wall face area (length x overall height)",
         "nailing": "2 x 16d each stud end; top-plate lamination 1 x 16d @16 in"},
        "Layout, cut, assemble and erect a single-story wood stud partition with one bottom plate and doubled top plate.",
        ["wall_layout", "stud_and_plate_materials", "stud_and_plate_nailing", "erect_plumb_and_line_labor"],
        ["corners_and_channels", "openings_headers_cripples", "blocking", "fireblocking", "sheathing",
-        "temporary_bracing_materials", "small_tools_and_nailers"],
+        "temporary_bracing_materials", "small_tools_and_nailers", "bottom_plate_to_floor_fasteners"],
        "CRW-FRM-WOOD",
-       [M(stud_key, f"{stud_nom} precut studs", studs_per_lf / wall_h, "EA",
-          "(12 in/ft ÷ 16 in o.c.) studs per LF of wall ÷ 8 ft wall height = 0.09375 studs per SF of wall", ["stud"]),
-        M(plate_key, f"{stud_nom} plate stock (1 bottom + 2 top)", F(3) / wall_h, "LF",
-          "3 plates × 1 LF per LF of wall ÷ 8 ft wall height = 0.375 LF per SF of wall", ["plate"]),
-        M("nail_16d", "16d nails, stud ends and top-plate lamination", studs_per_lf / wall_h * 4 + studs_per_lf / wall_h, "EA",
-          "studs/SF × 4 end nails + 1 lamination nail per 16 in of top plate (0.75 per LF ÷ 8 ft) = 0.46875 per SF", ["fastener"]),
+       [M(stud_key, f"{stud_nom} precut studs", studs_sf, "EA",
+          f"(12 in/ft ÷ 16 in o.c.) = 0.75 studs per LF of wall ÷ {float(WALL_FT):.6f} ft overall height (92.625 in stud + 3 × 1.5 in plates = 97.125 in) = {float(studs_sf):.6f} studs per SF", ["stud"]),
+        M(plate_key, f"{stud_nom} plate stock (1 bottom + 2 top)", plates_sf, "LF",
+          f"3 plates × 1 LF per LF of wall ÷ {float(WALL_FT):.6f} ft overall height = {float(plates_sf):.6f} LF per SF of wall", ["plate"]),
+        M("nail_16d", "16d nails, stud ends and top-plate lamination", nails_sf, "EA",
+          f"studs/SF × 4 end nails + 1 lamination nail per 16 in of top plate (0.75 per LF ÷ {float(WALL_FT):.6f} ft) = {float(nails_sf):.6f} per SF", ["fastener"]),
         ])
 
 wi("WI-FRM-003", "Frame wood floor joists 2x10 @16 in o.c., 12 ft span, face-mount hangers", "CAT-FRM", "SF",
@@ -356,7 +362,7 @@ wi("WI-FRM-004", "Install plywood wall sheathing 15/32 in, 8d nails @6 in edge /
 
 wi("WI-FRM-005", "Frame steel-stud partition 3-5/8 in 18 mil @16 in o.c., 10 ft high", "CAT-FRM", "SF",
    {"stud": "3-5/8 in x 1-5/8 in, 18 mil (25 ga), 33 ksi, nonstructural", "track": "3-5/8 in x 1-1/4 in, 18 mil",
-    "stud_spacing_in": 16, "wall_height_ft": 10, "screws": "2 x #8 pan-head per stud end", "unit_basis": "SF of wall face area"},
+    "stud_spacing_in": 16, "wall_height_in": 120, "screws": "2 x #8 pan-head per stud end", "unit_basis": "SF of wall face area"},
    "Install top and bottom track and friction-fit/screwed studs for a nonstructural steel-stud partition.",
    ["wall_layout", "stud_and_track_materials", "stud_to_track_screws", "install_labor"],
    ["door_and_window_framing", "deflection_track_and_bracing", "blocking_backing", "gypsum_board"],
@@ -378,35 +384,46 @@ wi("WI-FRM-006", "Install 2x4 flat blocking between studs @16 in o.c.", "CAT-FRM
 # ---- DRYWALL ---------------------------------------------------------------------------------
 
 
-def screws_per_sf(frame_sp: int, fast_sp: int) -> F:
-    """screws per SF for 4x8 board: (48/frame_sp + 1) lines × (96/fast_sp) per line ÷ 32 SF."""
-    return (F(48, frame_sp) + 1) * F(96, fast_sp) / 32
+def screws_per_sf(frame_sp: int, fast_sp: int, sheet_w: int = 48, sheet_l: int = 96, orient: str = "vertical"):
+    """Screws per SF of board, counting a screw at BOTH ends of every fastener line and a line on both edges of the sheet.
+
+    vertical  : long side parallel to the framing -> (W/frame + 1) lines across the width, (L/fast + 1) screws per line
+    horizontal: long side across the framing      -> (L/frame + 1) lines across the length, (W/fast + 1) screws per line
+    Spacings are scope parameters; the engineer must confirm them against the governing standard for the project."""
+    import math
+    if orient == "vertical":
+        lines, per = math.floor(F(sheet_w, frame_sp)) + 1, math.floor(F(sheet_l, fast_sp)) + 1
+    else:
+        lines, per = math.floor(F(sheet_l, frame_sp)) + 1, math.floor(F(sheet_w, fast_sp)) + 1
+    return F(lines * per, sheet_w * sheet_l) * 144, lines, per
 
 
-def hang(wid, nm, board, screw, frame_sp, fast_sp, framing, location, crew_id="CRW-DRY-HANG", board_desc="", screw_desc=""):
-    s = screws_per_sf(frame_sp, fast_sp)
+def hang(wid, nm, board, screw, frame_sp, fast_sp, framing, location, sheet_l=96, orient="vertical", crew_id="CRW-DRY-HANG",
+         board_desc="", screw_desc=""):
+    s_sf, lines, per = screws_per_sf(frame_sp, fast_sp, 48, sheet_l, orient)
+    sheet_sf = 48 * sheet_l // 144
     wi(wid, nm, "CAT-DRY", "SF",
        {"board": board_desc, "layers": 1, "framing": framing, "framing_spacing_in": frame_sp, "fastener_spacing_in": fast_sp,
-        "location": location, "sheet_size": "4x8 ft", "unit_basis": "SF of board face installed"},
+        "location": location, "sheet_size": f"4x{sheet_l // 12} ft", "hanging": orient, "unit_basis": "SF of board face installed"},
        "Cut, hang and screw-attach one layer of gypsum board; no taping or finishing.",
        ["board_material", "board_screws", "cut_hang_and_fasten_labor"],
        ["taping_and_finishing", "corner_bead", "openings_cutouts_beyond_waste", "blocking_and_backing", "acoustic_sealant"],
        crew_id,
-       [M(board, board_desc, F(1), "SF", "1 SF of board per SF installed (board content = 32 SF per 4x8 sheet)", ["board"]),
-        M(screw, screw_desc, s, "EA",
-          f"per sheet: (48/{frame_sp} + 1) lines × (96/{fast_sp}) screws per line = {float((F(48, frame_sp) + 1) * F(96, fast_sp))} ÷ 32 SF = {float(s)} per SF",
-          ["fastener"])])
+       [M(board, board_desc, F(1), "SF", f"1 SF of board per SF installed (board content = {sheet_sf} SF per 4x{sheet_l // 12} sheet)", ["board"]),
+        M(screw, screw_desc, s_sf, "EA",
+          f"per sheet, {orient} hanging: {lines} fastener lines × {per} screws per line (screw at both ends: spacing {fast_sp} in, framing {frame_sp} in) "
+          f"= {lines * per} ÷ {sheet_sf} SF = {float(s_sf):.6f} per SF", ["fastener"])])
 
 
 hang("WI-DRY-001", "Hang 1/2 in regular gypsum board on wood studs @16 in, walls", "gyp_half_reg_4x8", "ds_coarse_125", 16, 16,
      "wood studs", "walls", board_desc="Gypsum board 1/2 in regular 4x8", screw_desc="Coarse-thread drywall screws #6 x 1-1/4 in")
 hang("WI-DRY-002", "Hang 5/8 in Type X gypsum board on wood studs @16 in, walls", "gyp_58_x_4x8", "ds_coarse_1625", 16, 16,
      "wood studs", "walls", board_desc="Gypsum board 5/8 in Type X 4x8", screw_desc="Coarse-thread drywall screws #6 x 1-5/8 in")
-hang("WI-DRY-003", "Hang 5/8 in Type X gypsum board on 25-ga steel studs @16 in, walls", "gyp_58_x_4x8", "ds_fine_125", 16, 16,
-     "steel studs 18 mil", "walls", crew_id="CRW-DRY-HANG", board_desc="Gypsum board 5/8 in Type X 4x8",
-     screw_desc="Fine-thread drywall screws #6 x 1-1/4 in")
-hang("WI-DRY-004", "Hang 1/2 in regular gypsum board on wood ceiling framing @16 in", "gyp_half_reg_4x8", "ds_coarse_125", 16, 12,
-     "wood joists/furring", "ceilings", board_desc="Gypsum board 1/2 in regular 4x8",
+hang("WI-DRY-003", "Hang 5/8 in Type X 4x12 gypsum board horizontally on 25-ga steel studs @16 in, 10 ft walls", "gyp_58_x_4x12", "ds_fine_125", 16, 16,
+     "steel studs 18 mil", "walls up to 10 ft (3 courses; cut-off waste belongs in the waste factor)", sheet_l=144, orient="horizontal",
+     board_desc="Gypsum board 5/8 in Type X 4x12", screw_desc="Fine-thread drywall screws #6 x 1-1/4 in")
+hang("WI-DRY-004", "Hang 1/2 in regular 4x8 gypsum board perpendicular to wood ceiling framing @16 in", "gyp_half_reg_4x8", "ds_coarse_125", 16, 12,
+     "wood joists/furring", "ceilings (sheets across the framing)", orient="horizontal", board_desc="Gypsum board 1/2 in regular 4x8",
      screw_desc="Coarse-thread drywall screws #6 x 1-1/4 in")
 hang("WI-DRY-006", "Hang 1/2 in moisture-resistant gypsum board on wood studs @16 in, walls", "gyp_half_mr_4x8", "ds_coarse_125", 16, 16,
      "wood studs", "walls (wet areas, not tile backer)", board_desc="Moisture/mold-resistant gypsum board 1/2 in 4x8",
@@ -420,19 +437,20 @@ wi("WI-DRY-005", "Tape and finish gypsum board to Level 4 (tape + 3 coats compou
    ["corner_bead_and_trim", "texture_finishes", "primer_and_paint", "sanding_abrasives", "board_hanging"],
    "CRW-DRY-FINISH",
    [M("tape_paper_500", "Paper joint tape", F(12, 32), "LF",
-      "4x8 sheet: half the 24 ft perimeter is a joint with another sheet = 12 LF ÷ 32 SF = 0.375 LF per SF (upper bound: every edge taped)", ["tape"]),
+      "4x8 sheet: half the 24 ft perimeter is a joint with another sheet = 12 LF ÷ 32 SF = 0.375 LF per SF (upper bound: every edge taped; 4x12 sheets need 0.333 LF per SF)", ["tape"]),
     M("jnt_ap_std_45", "All-purpose joint compound (manufacturer coverage, 3 coats)", None, "GAL_US",
       "coats_applied / (coverage SF per container × coats in rate) × container size — from product_consumption", ["compound"],
       mode="from_product_consumption", app="level_4_finish_tape_and_3_coats", coats=3)])
 
 wi("WI-INS-001", "Install R-13 kraft-faced fiberglass batt in 2x4 wall cavities @16 in", "CAT-INS", "SF",
-   {"batt": "R-13, 3-1/2 in, 15 in wide, kraft-faced", "cavity": "2x4 @16 in o.c.", "unit_basis": "SF of wall area"},
+   {"batt": "R-13, 3-1/2 in, 15 in wide, kraft-faced", "batt_width_in": 15, "cavity": "2x4 @16 in o.c.",
+    "pack_coverage_basis": "batt area as stated on the package", "unit_basis": "SF of wall area"},
    "Fit and staple kraft-faced batts into 2x4 wall cavities.",
    ["batt_material", "fit_and_staple_labor"],
    ["staples_and_stapling_hardware", "vapor_barrier_sealing", "fireblocking", "openings_and_penetrations_beyond_waste"],
    "CRW-INS",
-   [M("bat_fg_r13_kf", "Fiberglass batt R-13 kraft-faced", F(1), "SF",
-      "1 SF of batt coverage per SF of wall (coverage per package comes from the product listing)", ["batt"])])
+   [M("bat_fg_r13_kf", "Fiberglass batt R-13 kraft-faced", F(15, 16), "SF",
+      "a 15 in batt fills each 16 in stud pitch: 15/16 = 0.9375 SF of batt per SF of wall (pack content = batt area; cut-off and compression waste in the waste factor)", ["batt"])])
 
 # ---- CONCRETE ----------------------------------------------------------------------------------
 cy_per_sf_4 = F(4, 12) / 27
@@ -471,7 +489,7 @@ wi("WI-CON-002", "Place and finish 6 in reinforced slab-on-grade, 4000 psi, #4 @
 wi("WI-CON-003", "Place continuous strip footing 18 in x 12 in, 4000 psi, 2 #4 continuous, earth-formed", "CAT-CON", "LF",
    {"width_in": 18, "depth_in": 12, "concrete": "4000 psi, 3/4 in agg, supplier quote basis", "reinforcement": "2 x #4 continuous, Gr60",
     "forming": "earth-formed (neat excavation)", "unit_basis": "LF of footing"},
-   "Place and consolidate concrete in an excavated footing trench with two continuous bars on supports.",
+   "Place and consolidate concrete in an excavated footing trench around two continuous bars (bar supports and ties are excluded).",
    ["concrete_material", "rebar_material", "placing_and_vibrating_labor", "rebar_placement_labor"],
    ["excavation_and_haul", "forms", "bar_supports_and_ties", "anchor_bolts", "keyways", "curing", "testing_and_special_inspection"],
    "CRW-CON-FOOT",
@@ -531,14 +549,15 @@ wi("WI-PNT-004", "Caulk trim and joints with paintable acrylic latex, 1/4 in x 1
       "bead volume 0.25 in × 0.25 in × 12 in = 0.75 in³ per LF ÷ 231 in³ per US gal = 0.003247 gal per LF", ["caulk"])])
 
 # ---- HVAC ---------------------------------------------------------------------------------------
-EXCL_HVAC = ["power_wiring_and_electrical_connections", "permits_and_inspections", "startup_testing_and_balancing_report",
-             "refrigerant_charge_beyond_factory", "demolition_of_existing_equipment", "crane_or_rigging", "structural_supports_and_curbs"]
+EXCL_HVAC = ["power_wiring_and_electrical_connections", "startup_testing_and_balancing_report",
+             "demolition_of_existing_equipment", "structural_supports_and_curbs"]
+EXCL_HVAC_EQUIP = EXCL_HVAC + ["refrigerant_charge_beyond_factory", "crane_or_rigging"]
 wi("WI-HVC-001", "Install 3-ton split-system AC condenser on pad with 25 ft line set, disconnect and whip", "CAT-HVC", "EA",
-   {"capacity_tons": 3.0, "type": "AC condenser, split outdoor", "refrigerant": "R-454B", "line_set": "3/8 x 7/8 in, 25 ft insulated",
+   {"capacity_ton_refrig": 3.0, "type": "AC condenser, split outdoor", "refrigerant": "R-454B", "line_set": "3/8 x 7/8 in, 25 ft insulated",
     "pad": "36x36x3 in composite", "disconnect": "60 A non-fused with 6 ft whip", "unit_basis": "EA complete outdoor installation"},
    "Set condenser on pad, run and braze line set, mount disconnect and whip, evacuate and release charge.",
    ["condenser_equipment", "pad_material", "line_set_material", "disconnect_and_whip_material", "set_connect_evacuate_labor"],
-   EXCL_HVAC + ["indoor_unit_and_coil", "thermostat_and_controls", "ductwork"],
+   EXCL_HVAC_EQUIP + ["indoor_unit_and_coil", "thermostat_and_controls", "ductwork"],
    "CRW-HVAC-SPLIT",
    [M("eqp_ac_30", "AC condenser 3 ton", F(1), "EA", "1 condenser per installation", ["condenser"]),
     M("acc_pad_36", "Condenser pad", F(1), "EA", "1 pad per installation", ["pad"]),
@@ -551,7 +570,7 @@ wi("WI-HVC-002", "Install 80,000 Btu/h gas furnace with 3-ton cased evaporator c
     "unit_basis": "EA complete indoor installation"},
    "Set furnace and coil, connect supply/return plenums at the equipment collars, mount and wire thermostat to the equipment terminals.",
    ["furnace_equipment", "coil_equipment", "thermostat_material", "set_connect_labor"],
-   EXCL_HVAC + ["gas_piping", "flue_venting", "condensate_drain_and_pump", "plenum_fabrication", "outdoor_unit", "ductwork"],
+   EXCL_HVAC_EQUIP + ["gas_piping", "flue_venting", "condensate_drain_and_pump", "plenum_fabrication", "outdoor_unit", "ductwork"],
    "CRW-HVAC-SPLIT",
    [M("eqp_furn_80", "Gas furnace 80 kBtu/h", F(1), "EA", "1 furnace per installation", ["furnace"]),
     M("eqp_coil_30", "Evaporator coil 3 ton", F(1), "EA", "1 coil per installation", ["coil"]),
@@ -568,35 +587,44 @@ wi("WI-HVC-003", "Install 8 in insulated flexible duct R-6, supported and connec
 assert len(WORK_ITEMS) == 25, len(WORK_ITEMS)
 
 # ====================================================================================== ASSEMBLIES
-EXCL_ASM = ["corners_and_intersections", "openings_headers_and_door_frames", "base_trim", "electrical_and_mechanical_rough_in",
-            "mobilization", "daily_cleanup_and_protection", "overhead_and_profit"]
+# Assembly-level exclusions that no child work item states (children's own exclusions are carried up automatically).
+ASM_EXTRA_EXCL = {
+    "ASM-WALL-001": ["corners_and_intersections", "openings_headers_and_door_frames", "base_trim", "electrical_and_mechanical_rough_in"],
+    "ASM-WALL-002": ["corners_and_intersections", "openings_headers_and_door_frames", "base_trim", "electrical_and_mechanical_rough_in"],
+    "ASM-WALL-003": ["corners_and_intersections", "openings_headers_and_door_frames", "base_trim", "electrical_and_mechanical_rough_in"],
+    "ASM-WALL-004": ["corners_and_intersections", "openings_headers_and_door_frames", "base_trim", "electrical_and_mechanical_rough_in"],
+    "ASM-WALL-005": ["corners_and_intersections", "openings_headers_and_door_frames", "weather_barrier_and_flashing", "cladding"],
+    "ASM-CEIL-001": ["ceiling_framing", "light_fixture_and_diffuser_cutouts", "access_panels"],
+    "ASM-SLAB-001": [], "ASM-SLAB-002": [], "ASM-FTG-001": [],
+    "ASM-HVAC-001": ["gas_service_to_equipment"],
+}
 ASSEMBLIES = [
     ("ASM-WALL-001", "Interior partition, 2x4 wood studs @16 in, 8 ft, 1/2 in regular gypsum each side, Level 4, primer + 2 eggshell coats each side",
      "CAT-FRM", "SF",
-     {"framing": "2x4 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "height_ft": 8, "board": "1/2 in regular, 1 layer each side",
+     {"framing": "2x4 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "wall_height_in": 97.125, "nominal_height": "8 ft", "board": "1/2 in regular, 1 layer each side",
       "finish": "Level 4 each side", "paint": "1 PVA primer + 2 eggshell coats each side", "insulation": "none", "unit_basis": "SF of wall (L x H)"},
      [("WI-FRM-001", 1, "1 SF of wall per SF of wall"), ("WI-DRY-001", 2, "2 faces × 1 SF of board per SF of wall"),
       ("WI-DRY-005", 2, "2 faces × 1 SF of finish per SF of wall"), ("WI-PNT-001", 2, "2 faces primed"), ("WI-PNT-002", 2, "2 faces painted")]),
     ("ASM-WALL-002", "Interior partition as WALL-001 plus R-13 kraft-faced batt in the cavity", "CAT-FRM", "SF",
-     {"framing": "2x4 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "height_ft": 8, "board": "1/2 in regular, 1 layer each side",
+     {"framing": "2x4 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "wall_height_in": 97.125, "nominal_height": "8 ft", "board": "1/2 in regular, 1 layer each side",
       "finish": "Level 4 each side", "paint": "1 PVA primer + 2 eggshell coats each side", "insulation": "R-13 kraft-faced batt", "unit_basis": "SF of wall (L x H)"},
      [("WI-FRM-001", 1, "1 SF per SF"), ("WI-INS-001", 1, "1 SF of cavity per SF of wall"), ("WI-DRY-001", 2, "2 faces"),
       ("WI-DRY-005", 2, "2 faces"), ("WI-PNT-001", 2, "2 faces"), ("WI-PNT-002", 2, "2 faces")]),
     ("ASM-WALL-003", "Interior partition, 2x6 wood studs @16 in, 8 ft, 5/8 in Type X each side, Level 4, primer + 2 eggshell coats each side",
      "CAT-FRM", "SF",
-     {"framing": "2x6 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "height_ft": 8, "board": "5/8 in Type X, 1 layer each side",
+     {"framing": "2x6 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "wall_height_in": 97.125, "nominal_height": "8 ft", "board": "5/8 in Type X, 1 layer each side",
       "finish": "Level 4 each side", "paint": "1 PVA primer + 2 eggshell coats each side", "insulation": "none", "unit_basis": "SF of wall (L x H)"},
      [("WI-FRM-002", 1, "1 SF per SF"), ("WI-DRY-002", 2, "2 faces"), ("WI-DRY-005", 2, "2 faces"), ("WI-PNT-001", 2, "2 faces"),
       ("WI-PNT-002", 2, "2 faces")]),
     ("ASM-WALL-004", "Steel-stud partition 3-5/8 in 18 mil @16 in, 10 ft, 5/8 in Type X each side, Level 4, primer + 2 eggshell coats each side",
      "CAT-FRM", "SF",
-     {"framing": "steel studs 3-5/8 in 18 mil @16 in o.c., top and bottom track", "height_ft": 10, "board": "5/8 in Type X, 1 layer each side, fine-thread screws",
+     {"framing": "steel studs 3-5/8 in 18 mil @16 in o.c., top and bottom track", "wall_height_in": 120, "board": "5/8 in Type X 4x12 hung horizontally, 1 layer each side, fine-thread screws",
       "finish": "Level 4 each side", "paint": "1 PVA primer + 2 eggshell coats each side", "insulation": "none", "unit_basis": "SF of wall (L x H)"},
      [("WI-FRM-005", 1, "1 SF per SF"), ("WI-DRY-003", 2, "2 faces"), ("WI-DRY-005", 2, "2 faces"), ("WI-PNT-001", 2, "2 faces"),
       ("WI-PNT-002", 2, "2 faces")]),
     ("ASM-WALL-005", "Exterior wall shell: 2x6 wood studs @16 in, 8 ft, with 15/32 in plywood sheathing on the outside face",
      "CAT-FRM", "SF",
-     {"framing": "2x6 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "height_ft": 8, "sheathing": "15/32 in plywood CD Exposure 1, 8d @6/12",
+     {"framing": "2x6 DF-L studs @16 in o.c., 1 bottom + 2 top plates", "wall_height_in": 97.125, "nominal_height": "8 ft", "sheathing": "15/32 in plywood CD Exposure 1, 8d @6/12",
       "weather_barrier": "excluded", "cladding": "excluded", "unit_basis": "SF of wall (L x H)"},
      [("WI-FRM-002", 1, "1 SF per SF"), ("WI-FRM-004", 1, "1 SF of sheathing per SF of wall")]),
     ("ASM-CEIL-001", "Gypsum ceiling: 1/2 in regular board on wood framing, Level 4, primer + 2 coats flat ceiling paint",
@@ -618,9 +646,9 @@ ASSEMBLIES = [
      [("WI-CON-003", 1, "1 LF per LF"), ("WI-CON-004", 1, "1 LF per LF")]),
     ("ASM-HVAC-001", "Residential 3-ton split-system install: outdoor AC condenser set + 80 kBtu/h furnace and coil + 50 LF 8 in flex duct",
      "CAT-HVC", "EA",
-     {"capacity_tons": 3.0, "outdoor": "AC condenser 3 ton with 25 ft line set, pad, disconnect, whip", "indoor": "80 kBtu/h gas furnace + 3 ton coil + programmable thermostat",
+     {"capacity_ton_refrig": 3.0, "outdoor": "AC condenser 3 ton refrigeration with 25 ft line set, pad, disconnect, whip", "indoor": "80 kBtu/h gas furnace + 3 ton coil + programmable thermostat",
       "duct": "50 LF of 8 in insulated flex", "unit_basis": "EA system"},
-     [("WI-HVC-001", 1, "1 outdoor set"), ("WI-HVC-002", 1, "1 indoor set"), ("WI-HVC-003", 50, "50 LF of duct (spec parameter)")]),
+     [("WI-HVC-001", 1, "1 outdoor set"), ("WI-HVC-002", 1, "1 indoor set"), ("WI-HVC-003", 50, "spec parameter duct_length_ft = 50 (stated in the assembly spec)")]),
 ]
 assert len(ASSEMBLIES) == 10
 
@@ -688,7 +716,8 @@ def main() -> int:
                                    "preferred_sale_unit": None, "pilot_priority": 1, "required_by": w["id"],
                                    "recommended_source_ids": ["SRC-NAVFAC-P405-1996", "SRC-JOINT-TM3-34-41-2021", "SRC-UTCTR-HYPRIS-0-4416", "SRC-DTIC-AD0666236"],
                                    "status": "open", "blocked_reason": None,
-                                   "notes": "Record document, edition, page, table, crew, shift and included/excluded operations; check page image."})
+                                   "notes": "Recommended sources are CANDIDATES only (old or highway-oriented; research found no free, current building-trade norms confirmed). "
+                                            "Record document, edition, page, table, crew, shift and included/excluded operations; check the page image."})
     for code, name in [("PPI", "BLS PPI series for lumber, gypsum, ready-mix, steel, paint — identifiers to verify"),
                        ("ECI", "BLS ECI construction wages/total compensation values")]:
         db.add("capture_targets", {"target_id": make_id("TGT", "index", code), "target_kind": "index", "category_id": None,
@@ -700,6 +729,8 @@ def main() -> int:
                                "spec_attributes": {}, "spec_key": None, "preferred_sale_unit": None, "pilot_priority": 1,
                                "required_by": "every material component", "recommended_source_ids": [], "status": "open",
                                "blocked_reason": None, "notes": "No universal percentage is assumed; each line needs its own basis."})
+    COVERAGE_SRC = {"jnt_ap_std_45": ["SRC-USG-JOINT-COMPOUND-FAQ"], "prm_pva_5": ["SRC-DUNNEDWARDS-PDS-LIBRARY"],
+                    "pnt_int_egg_5": ["SRC-DUNNEDWARDS-PDS-LIBRARY"], "pnt_ceil_flat_5": ["SRC-DUNNEDWARDS-PDS-LIBRARY"], "acc_cure_5gal": []}
     for key, app in [("jnt_ap_std_45", "level_4_finish_tape_and_3_coats"), ("prm_pva_5", "new_drywall_primer"),
                      ("pnt_int_egg_5", "interior_finish_over_primed_drywall"), ("pnt_ceil_flat_5", "interior_finish_over_primed_drywall"),
                      ("acc_cure_5gal", "spray_applied_curing_membrane")]:
@@ -707,7 +738,7 @@ def main() -> int:
                                    "description": f"Manufacturer coverage for {MATS[key]['desc']} — application '{app}' with film thickness, coats and conditions",
                                    "spec_attributes": {"application": app}, "spec_key": MATS[key]["spec_key"], "preferred_sale_unit": None,
                                    "pilot_priority": 1, "required_by": ", ".join(w["id"] for w in WORK_ITEMS if any(c["mat"] == key and c["mode"] == "from_product_consumption" for c in w["comps"])),
-                                   "recommended_source_ids": ["SRC-USG-JOINT-COMPOUND-FAQ", "SRC-DUNNEDWARDS-PDS-LIBRARY"], "status": "open",
+                                   "recommended_source_ids": COVERAGE_SRC[key], "status": "open",
                                    "blocked_reason": None, "notes": "Needs a SKU-bound product row first; then product_consumption."})
 
     # ---- crews (missing) and productivity (missing)
@@ -726,8 +757,11 @@ def main() -> int:
 
     # ---- work items and components
     for w in WORK_ITEMS:
+        # structured, machine-checkable map: component line -> the exact specification of the material it prices
+        msp = [{"line": i, "spec_key": MATS[c["mat"]]["spec_key"], "attributes": MATS[c["mat"]]["attrs"]}
+               for i, c in enumerate(w["comps"], 1) if c["mat"]]
         db.add("work_items", {"work_item_id": w["id"], "version": 1, "name": w["name"], "category_id": w["cat"],
-                              "spec_attributes": w["spec"], "output_unit_id": w["unit"], "description": w["desc"],
+                              "spec_attributes": {**w["spec"], "material_specs": msp}, "output_unit_id": w["unit"], "description": w["desc"],
                               "included_scope": w["included"], "excluded_scope": w["excluded"], "conditions": w["conditions"],
                               "status": "defined", "valid_from": VALID_FROM, "supersedes_version": None, "definition_basis": BASIS,
                               "origin": "assumed", "review_status": "unreviewed", "notes": None})
@@ -760,15 +794,22 @@ def main() -> int:
             db.add("work_item_components", {
                 "component_id": make_id("WIC", w["id"], line), "work_item_id": w["id"], "work_item_version": 1, "line_no": line,
                 "component_kind": "equipment", "description": f"Equipment: {ename} ({etype})", "product_spec_key": None, "product_id": None,
+                "equipment_type_code": etype,
                 "qty_mode": "from_productivity", "qty_per_unit": None, "qty_unit_id": "HR", "qty_formula": None, "qty_origin": "missing",
                 "waste_factor": None, "waste_origin": None, "waste_basis": None, "crew_id": w["crew"], "productivity_id": pid,
                 "consumption_application": None, "coats_applied": None, "cost_tags": ["equipment_" + etype.lower()], "is_optional": False,
                 "notes": "equipment cost/unit = crew equipment cost per shift ÷ daily output; operator accounted in labor OR rate, never both"})
 
     # ---- assemblies
+    wi_by_id = {w["id"]: w for w in WORK_ITEMS}
     for aid, name, cat, unit, spec, comps in ASSEMBLIES:
+        kids = [wi_by_id[c[0]] for c in comps]
+        included = list(dict.fromkeys(t for k in kids for t in k["included"]))
+        carried = [t for k in kids for t in k["excluded"] if t not in included]
+        excluded = list(dict.fromkeys(carried + ASM_EXTRA_EXCL[aid]))
+        spec = {**spec, "work_items": [{"work_item_id": c[0], "version": 1, "qty_per_assembly_unit": c[1]} for c in comps]}
         db.add("assemblies", {"assembly_id": aid, "version": 1, "name": name, "category_id": cat, "spec_attributes": spec,
-                              "output_unit_id": unit, "description": name, "included_scope": [], "excluded_scope": EXCL_ASM,
+                              "output_unit_id": unit, "description": name, "included_scope": included, "excluded_scope": excluded,
                               "conditions": NORMAL, "status": "defined", "valid_from": VALID_FROM, "supersedes_version": None,
                               "definition_basis": BASIS, "origin": "assumed", "review_status": "unreviewed", "notes": None})
         for i, (wid, qty, why) in enumerate(comps, 1):

@@ -254,3 +254,10 @@ Every statement below was produced by a research agent from **web-search result 
 - Fee figures for MasterFormat licensing ($500 application, $1,100 minimum annual) come from anecdotal forum posts.
 - Retailer listing prices appeared in search results and were intentionally NOT recorded (no date/store/ZIP/SKU configuration).
 - Some URLs contain spaces exactly as returned by search (Quikrete data sheet, Sourcewell PDFs, hooverfence copy); they may need percent-encoding when used.
+
+## Reviewer corrections to the findings above
+
+- REVIEWER F1 (F1-030): the A1 finding that the example ECEC id 'CMU2010000000000D' is 'not 17 characters' is WRONG - it has exactly 17 characters. The raw agent text is preserved unchanged in data/raw_agent_returns/agent_A1_labor_indices.json.
+- REVIEWER F1 (F1-030): finding A1 says the OEWS metropolitan-division table was not located, while regions.csv / SRC-BLS-OEWS-LA-MAY2025-NR said it is 'used for LA County'. Resolution: the geography is an ASSUMPTION (see corrections on SRC-BLS-OEWS-LA-MAY2025-NR).
+- REVIEWER F1 (F1-030): finding A3 (gap) says the BLS copyright page was not seen, while A1 and most BLS register rows say it was. Resolution: BLS public-domain status is search-summary level (see SRC-BLS-PPI-CONSTRUCTION-INPUTS).
+- REVIEWER F2: series 'WPS133301' in agent A1's data points was NOT FOUND; 'PCU3273232732' in agent A3's source title is a probable typo; 'ECICONWAG' is a FRED alias, not a BLS-native id (see register corrections).

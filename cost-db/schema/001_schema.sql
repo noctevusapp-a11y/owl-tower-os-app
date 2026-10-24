@@ -49,11 +49,70 @@ DECLARE
   -- their recomputed value (they cannot change independently of the protected columns anyway)
   mutable text[] := ARRAY['review_status','reviewed_by','reviewed_at','notes','price_per_content_unit','person_hours_per_unit_derived'];
 BEGIN
+  mutable := mutable || TG_ARGV;     -- a trigger may name extra mutable columns (e.g. 'status' on versioned definitions)
   IF TG_OP = 'DELETE' THEN
     RAISE EXCEPTION '% is append-only: DELETE is forbidden (supersede or flag the record instead)', TG_TABLE_NAME;
   END IF;
   IF (to_jsonb(OLD) - mutable) IS DISTINCT FROM (to_jsonb(NEW) - mutable) THEN
-    RAISE EXCEPTION '% is append-only: only review_status/reviewed_by/reviewed_at/notes may be updated; insert a new observation instead', TG_TABLE_NAME;
+    RAISE EXCEPTION '% is append-only: only review_status/reviewed_by/reviewed_at/notes (and explicitly listed status columns) may be updated; insert a new row or version instead', TG_TABLE_NAME;
+  END IF;
+  RETURN NEW;
+END $$;
+
+-- TRUNCATE would bypass the row triggers: refuse it on every protected table (drop the schema to reset a scratch database).
+CREATE FUNCTION forbid_truncate() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION '% is protected: TRUNCATE is forbidden', TG_TABLE_NAME;
+END $$;
+
+-- Reference tables that must never change after load (unit definitions).
+CREATE FUNCTION forbid_any_change() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION '% is immutable reference data: % is forbidden', TG_TABLE_NAME, TG_OP;
+END $$;
+
+-- Every change of review_status is logged (who/when/old/new); the log itself is append-only.
+CREATE TABLE review_events (
+  event_id     bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  record_table text NOT NULL,
+  record_id    text NOT NULL,
+  old_status   text NOT NULL,
+  new_status   text NOT NULL,
+  changed_by   text,
+  changed_at   timestamptz NOT NULL DEFAULT now(),
+  db_user      text NOT NULL DEFAULT session_user
+);
+CREATE INDEX review_events_record_idx ON review_events (record_table, record_id);
+
+CREATE FUNCTION log_review_change() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE rid text; i int;
+BEGIN
+  IF NEW.review_status IS DISTINCT FROM OLD.review_status THEN
+    rid := to_jsonb(NEW) ->> TG_ARGV[0];
+    FOR i IN 1 .. TG_NARGS - 1 LOOP
+      rid := rid || '|' || (to_jsonb(NEW) ->> TG_ARGV[i]);
+    END LOOP;
+    INSERT INTO review_events (record_table, record_id, old_status, new_status, changed_by, changed_at)
+    VALUES (TG_TABLE_NAME, rid, OLD.review_status, NEW.review_status, to_jsonb(NEW) ->> 'reviewed_by',
+            COALESCE((to_jsonb(NEW) ->> 'reviewed_at')::timestamptz, now()));
+  END IF;
+  RETURN NEW;
+END $$;
+
+-- A record may only be 'validated' when its source was really fetched, and observed data may never come from a source whose
+-- terms bar using/storing the values. (Synthetic test fixtures are exempt and are rejected from production data elsewhere.)
+CREATE FUNCTION check_source_usable() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE sid text; rs text; vm text; j jsonb := to_jsonb(NEW);
+BEGIN
+  sid := j ->> 'source_id';
+  IF sid IS NULL THEN RETURN NEW; END IF;
+  SELECT reuse_status, verification_method INTO rs, vm FROM sources WHERE source_id = sid;
+  IF rs IS NULL THEN RETURN NEW; END IF;     -- the foreign key reports unknown sources
+  IF (j ->> 'origin') = 'observed' AND rs IN ('prohibited','restricted_no_storage','licence_required') THEN
+    RAISE EXCEPTION '%: source % has reuse_status % - observed values must not be stored from it', TG_TABLE_NAME, sid, rs;
+  END IF;
+  IF (j ->> 'review_status') = 'validated' AND vm NOT IN ('fetched_primary','synthetic_test_fixture') THEN
+    RAISE EXCEPTION '%: cannot be validated - source % was never fetched (verification_method=%)', TG_TABLE_NAME, sid, vm;
   END IF;
   RETURN NEW;
 END $$;
@@ -77,11 +136,30 @@ CREATE TABLE units (
     (is_fixed_conversion AND to_base_num > 0 AND to_base_den > 0)
     OR (NOT is_fixed_conversion AND to_base_num IS NULL AND to_base_den IS NULL)),
   CONSTRAINT units_qualifier_chk CHECK (
-    (base_code IN ('TON','GAL') AND qualifier IS NOT NULL) OR (base_code NOT IN ('TON','GAL')))
+    (base_code IN ('TON','GAL') AND qualifier IN ('short','long','metric','refrigeration','us_liquid','imperial'))
+    OR (base_code NOT IN ('TON','GAL') AND qualifier IS NULL)),
+  CONSTRAINT units_qualifier_match_chk CHECK (
+    (base_code <> 'TON' OR qualifier IN ('short','long','metric','refrigeration'))
+    AND (base_code <> 'GAL' OR qualifier IN ('us_liquid','imperial')))
 );
 
 -- every unit must convert to a unit of the same dimension, and base units must exist
 ALTER TABLE units ADD CONSTRAINT units_base_fk FOREIGN KEY (base_unit_id) REFERENCES units(unit_id) DEFERRABLE INITIALLY DEFERRED;
+
+-- a unit's base unit must be of the same dimension and must be its own base (checked at commit)
+CREATE FUNCTION check_unit_base() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE d text; b text;
+BEGIN
+  SELECT dimension, base_unit_id INTO d, b FROM units WHERE unit_id = NEW.base_unit_id;
+  IF d IS DISTINCT FROM NEW.dimension OR b IS DISTINCT FROM NEW.base_unit_id THEN
+    RAISE EXCEPTION 'unit %: base unit % must have dimension % and be its own base', NEW.unit_id, NEW.base_unit_id, NEW.dimension;
+  END IF;
+  RETURN NULL;
+END $$;
+CREATE CONSTRAINT TRIGGER units_base_dimension AFTER INSERT ON units DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION check_unit_base();
+CREATE TRIGGER units_immutable BEFORE UPDATE OR DELETE ON units FOR EACH ROW EXECUTE FUNCTION forbid_any_change();
+CREATE TRIGGER units_no_truncate BEFORE TRUNCATE ON units FOR EACH STATEMENT EXECUTE FUNCTION forbid_truncate();
 
 -- ---------------------------------------------------------------------
 -- Reference: regions
@@ -115,6 +193,34 @@ CREATE TABLE categories (
   notes              text,
   CONSTRAINT categories_attr_array_chk CHECK (jsonb_typeof(required_product_attributes) = 'array')
 );
+
+-- Canonical spec_key in SQL: must stay identical to costdb.ids.spec_key (tests compare both for every spec line).
+CREATE FUNCTION norm_attr(v jsonb) RETURNS text LANGUAGE sql IMMUTABLE AS $$
+  SELECT CASE jsonb_typeof(v)
+    WHEN 'number'  THEN trim_scale((v #>> '{}')::numeric)::text
+    WHEN 'boolean' THEN v #>> '{}'
+    WHEN 'string'  THEN CASE WHEN (v #>> '{}') ~ '^-?[0-9]+(\.[0-9]+)?$'
+                             THEN trim_scale((v #>> '{}')::numeric)::text
+                             ELSE lower(btrim(regexp_replace(v #>> '{}', '\s+', ' ', 'g'))) END
+    ELSE NULL END
+$$;
+
+CREATE FUNCTION compute_spec_key(cat text, attrs jsonb) RETURNS text LANGUAGE plpgsql STABLE AS $$
+DECLARE req jsonb; nm text; parts text[] := '{}'; val text;
+BEGIN
+  SELECT required_product_attributes INTO req FROM categories WHERE category_id = cat;
+  IF req IS NULL OR jsonb_array_length(req) = 0 THEN
+    RAISE EXCEPTION 'category % is not a leaf category (it defines no required product attributes)', cat;
+  END IF;
+  FOR nm IN SELECT jsonb_array_elements_text(req) AS n ORDER BY n COLLATE "C" LOOP
+    val := CASE WHEN attrs -> nm IS NULL THEN NULL ELSE norm_attr(attrs -> nm) END;
+    IF val IS NULL OR val = '' OR val IN ('unspecified','unknown','n/a','tbd') THEN
+      RAISE EXCEPTION 'category %: required attribute % is missing - equivalence is never guessed', cat, nm;
+    END IF;
+    parts := parts || (nm || '=' || val);
+  END LOOP;
+  RETURN cat || '|' || array_to_string(parts, '|');
+END $$;
 
 -- ---------------------------------------------------------------------
 -- Reference: trades and equipment types (OWN codes; SOC mapping is for BLS joins only)
@@ -182,7 +288,9 @@ CREATE TABLE sources (
   reviewed_at      timestamptz,
   registered_at    date NOT NULL DEFAULT current_date,
   notes            text,
-  CONSTRAINT sources_synthetic_chk CHECK (verification_method <> 'synthetic_test_fixture' OR source_id LIKE 'TEST-%')
+  CONSTRAINT sources_synthetic_chk CHECK (verification_method <> 'synthetic_test_fixture' OR source_id LIKE 'TEST-%'),
+  CONSTRAINT sources_validated_fetch_chk CHECK (review_status <> 'validated' OR verification_method IN ('fetched_primary','synthetic_test_fixture')),
+  CONSTRAINT sources_validated_terms_chk CHECK (review_status <> 'validated' OR reuse_status NOT IN ('prohibited','restricted_no_storage','licence_required'))
 );
 
 -- ---------------------------------------------------------------------
@@ -218,6 +326,18 @@ CREATE UNIQUE INDEX products_mfr_mpn_uq ON products (lower(manufacturer), lower(
 CREATE INDEX products_spec_key_idx ON products (spec_key);
 CREATE INDEX products_category_idx ON products (category_id);
 
+-- spec_key must be the canonical key of the attributes (leaf category, all required attributes present)
+CREATE FUNCTION products_spec_integrity() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.spec_key IS DISTINCT FROM compute_spec_key(NEW.category_id, NEW.spec_attributes) THEN
+    RAISE EXCEPTION 'product %: spec_key % does not match the canonical key of its attributes (%)', NEW.product_id, NEW.spec_key,
+      compute_spec_key(NEW.category_id, NEW.spec_attributes);
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER products_spec_integrity_trg BEFORE INSERT OR UPDATE ON products
+  FOR EACH ROW EXECUTE FUNCTION products_spec_integrity();
+
 -- ---------------------------------------------------------------------
 -- product_consumption  (manufacturer coverage/yield WITH film thickness, coats, conditions)
 -- ---------------------------------------------------------------------
@@ -247,7 +367,9 @@ CREATE TABLE product_consumption (
   CONSTRAINT pc_observed_chk CHECK (origin <> 'observed' OR
     (source_id IS NOT NULL AND coverage_qty IS NOT NULL AND coverage_unit_id IS NOT NULL AND per_unit_id IS NOT NULL
      AND source_locator IS NOT NULL AND coats IS NOT NULL)),
-  CONSTRAINT pc_missing_chk CHECK (origin <> 'missing' OR coverage_qty IS NULL)
+  CONSTRAINT pc_missing_chk CHECK (origin <> 'missing' OR coverage_qty IS NULL),
+  CONSTRAINT pc_positive_chk CHECK ((coverage_qty IS NULL OR coverage_qty > 0) AND (coats IS NULL OR coats > 0)),
+  CONSTRAINT pc_units_chk CHECK (origin <> 'observed' OR coverage_unit_id <> per_unit_id)
 );
 CREATE TRIGGER pc_append_only BEFORE UPDATE OR DELETE ON product_consumption
   FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
@@ -296,12 +418,26 @@ CREATE TABLE price_observations (
   reviewed_at      timestamptz,
   created_at       timestamptz NOT NULL DEFAULT now(),
   notes            text,
-  CONSTRAINT po_dates_chk CHECK (retrieved_at::date >= observed_at),
+  CONSTRAINT po_dates_chk CHECK (retrieved_at >= (observed_at::timestamp AT TIME ZONE 'UTC') - interval '1 day'),
   CONSTRAINT po_contractor_chk CHECK (NOT is_contractor_cost OR price_channel IN ('pro_account_quote','distributor_quote','supplier_quote')),
   CONSTRAINT po_location_chk CHECK (zip IS NOT NULL OR store_ref IS NOT NULL OR region_id IS NOT NULL)
 );
 CREATE INDEX po_product_date_idx ON price_observations (product_id, observed_at DESC);
 CREATE INDEX po_region_idx ON price_observations (region_id);
+
+-- the observation's pack must be the product's pack (a different pack size is a different SKU)
+CREATE FUNCTION po_pack_integrity() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE q numeric; u text;
+BEGIN
+  SELECT content_qty, content_unit_id INTO q, u FROM products WHERE product_id = NEW.product_id;
+  IF q IS DISTINCT FROM NEW.pack_content_qty OR u IS DISTINCT FROM NEW.pack_content_unit_id THEN
+    RAISE EXCEPTION 'observation %: pack % % differs from the product pack % % (different SKU?)', NEW.observation_id,
+      NEW.pack_content_qty, NEW.pack_content_unit_id, q, u;
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER po_pack_integrity_trg BEFORE INSERT ON price_observations
+  FOR EACH ROW EXECUTE FUNCTION po_pack_integrity();
 CREATE TRIGGER po_append_only BEFORE UPDATE OR DELETE ON price_observations
   FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
 
@@ -328,24 +464,30 @@ CREATE TABLE calculation_runs (
   missing_inputs   jsonb NOT NULL DEFAULT '[]'::jsonb,
   warnings         jsonb NOT NULL DEFAULT '[]'::jsonb,
   code_ref         text,
+  price_basis      text NOT NULL DEFAULT 'none' CHECK (price_basis IN ('none','contractor_quote','public_list','retail_proxy','assumed','mixed')),
+  input_review_floor text NOT NULL DEFAULT 'validated' CHECK (input_review_floor IN ('validated','unreviewed')),
+  price_total      numeric(18,6),
   origin           origin_t NOT NULL DEFAULT 'derived' CHECK (origin = 'derived'),
   review_status    review_status_t NOT NULL DEFAULT 'unreviewed',
   reviewed_by      text,
   reviewed_at      timestamptz,
   notes            text,
   CONSTRAINT cr_complete_chk CHECK (status <> 'complete' OR (direct_cost_total IS NOT NULL AND jsonb_array_length(missing_inputs) = 0)),
-  CONSTRAINT cr_strict_chk CHECK (NOT (mode = 'strict' AND has_assumptions))
+  CONSTRAINT cr_strict_chk CHECK (NOT (mode = 'strict' AND has_assumptions)),
+  CONSTRAINT cr_markup_chk CHECK ((target_type = 'markup') = (price_total IS NOT NULL)),
+  CONSTRAINT cr_floor_chk CHECK (NOT (mode = 'strict' AND input_review_floor = 'unreviewed' AND status = 'complete' AND review_status = 'validated'))
 );
 CREATE INDEX cr_target_idx ON calculation_runs (target_type, target_id, run_at DESC);
 
 CREATE TABLE calculation_run_lines (
-  run_id           id_t NOT NULL REFERENCES calculation_runs(run_id) ON DELETE CASCADE,
+  run_id           id_t NOT NULL REFERENCES calculation_runs(run_id),
   line_no          integer NOT NULL,
   line_kind        text NOT NULL CHECK (line_kind IN ('material','labor','equipment','other_direct','overhead','contingency','profit','adjustment','subtotal','assembly_component')),
   component_ref    text,
   description      text NOT NULL,
   quantity         numeric(24,10),
   quantity_unit_id text REFERENCES units(unit_id),
+  quantity_kind    text NOT NULL DEFAULT 'none' CHECK (quantity_kind IN ('material_qty','person_hours','crew_hours','equipment_hours','work_item_qty','none')),
   unit_cost        numeric(24,10),
   extended_cost    numeric(24,10),
   formula          text NOT NULL,
@@ -354,6 +496,25 @@ CREATE TABLE calculation_run_lines (
   warnings         jsonb NOT NULL DEFAULT '[]'::jsonb,
   PRIMARY KEY (run_id, line_no)
 );
+
+-- a 'complete' run must have lines and its total must equal the sum of its cost lines (checked at commit: insert run and lines in ONE transaction)
+CREATE FUNCTION check_complete_run() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE n int; s numeric;
+BEGIN
+  IF NEW.status = 'complete' THEN
+    SELECT count(*), COALESCE(sum(extended_cost) FILTER (WHERE line_kind IN ('material','labor','equipment','other_direct','assembly_component')), 0)
+      INTO n, s FROM calculation_run_lines WHERE run_id = NEW.run_id;
+    IF n = 0 THEN
+      RAISE EXCEPTION 'complete run % has no lines', NEW.run_id;
+    END IF;
+    IF NEW.target_type <> 'markup' AND abs(s - NEW.direct_cost_total) > 0.0005 THEN
+      RAISE EXCEPTION 'complete run %: total % differs from the sum of its lines %', NEW.run_id, NEW.direct_cost_total, s;
+    END IF;
+  END IF;
+  RETURN NULL;
+END $$;
+CREATE CONSTRAINT TRIGGER cr_complete_integrity AFTER INSERT ON calculation_runs DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION check_complete_run();
 
 -- ---------------------------------------------------------------------
 -- labor_rates
@@ -378,6 +539,8 @@ CREATE TABLE labor_rates (
   includes_fringe  boolean NOT NULL,
   includes_payroll_taxes boolean NOT NULL,
   includes_workers_comp boolean NOT NULL,
+  includes_overhead boolean NOT NULL DEFAULT false,
+  includes_profit  boolean NOT NULL DEFAULT false,
   wage_basis       text NOT NULL DEFAULT 'straight_time' CHECK (wage_basis IN ('straight_time','overtime_1_5x','overtime_2x','n/a')),
   project_type     text NOT NULL DEFAULT 'n/a' CHECK (project_type IN ('building','residential','heavy','highway','n/a')),
   use_context      text NOT NULL CHECK (use_context IN ('public_works_only','statistical_reference','employer_internal')),
@@ -408,7 +571,9 @@ CREATE TABLE labor_rates (
   CONSTRAINT lr_loaded_derived_chk CHECK (rate_type <> 'loaded_employer_cost' OR origin = 'derived'),
   CONSTRAINT lr_pw_scope_chk CHECK (rate_type NOT IN ('prevailing_wage','federal_wage_determination') OR use_context = 'public_works_only'),
   CONSTRAINT lr_stat_scope_chk CHECK (rate_type <> 'stat_wage' OR (use_context = 'statistical_reference' AND includes_fringe = false)),
-  CONSTRAINT lr_period_chk CHECK (effective_to IS NULL OR effective_to >= effective_from)
+  CONSTRAINT lr_period_chk CHECK (effective_to IS NULL OR effective_to >= effective_from),
+  CONSTRAINT lr_ovh_profit_chk CHECK (NOT (includes_overhead OR includes_profit) OR rate_type = 'company_actual'),
+  CONSTRAINT lr_stat_burden_chk CHECK (rate_type <> 'stat_wage' OR (NOT includes_payroll_taxes AND NOT includes_workers_comp))
 );
 CREATE INDEX lr_trade_region_idx ON labor_rates (trade_code, region_id, effective_from DESC);
 CREATE TRIGGER lr_append_only BEFORE UPDATE OR DELETE ON labor_rates
@@ -440,7 +605,9 @@ CREATE TABLE burden_rates (
   reviewed_at      timestamptz,
   created_at       timestamptz NOT NULL DEFAULT now(),
   notes            text,
-  CONSTRAINT br_observed_chk CHECK (origin <> 'observed' OR (source_id IS NOT NULL AND source_locator IS NOT NULL AND evidence_excerpt IS NOT NULL))
+  CONSTRAINT br_observed_chk CHECK (origin <> 'observed' OR (source_id IS NOT NULL AND source_locator IS NOT NULL AND evidence_excerpt IS NOT NULL)),
+  CONSTRAINT br_period_chk CHECK (effective_to IS NULL OR effective_to >= effective_from),
+  CONSTRAINT br_cap_chk CHECK (wage_cap_annual IS NULL OR (basis <> 'per_hour' AND wage_cap_annual > 0))
 );
 CREATE TRIGGER br_append_only BEFORE UPDATE OR DELETE ON burden_rates
   FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
@@ -569,6 +736,7 @@ CREATE TABLE work_item_components (
   product_spec_key text,
   product_id       id_t REFERENCES products(product_id),
   qty_mode         text NOT NULL DEFAULT 'fixed' CHECK (qty_mode IN ('fixed','from_product_consumption','from_productivity')),
+  equipment_type_code id_t REFERENCES equipment_types(equipment_type_code),
   qty_per_unit     numeric(24,10) CHECK (qty_per_unit >= 0),
   qty_unit_id      text REFERENCES units(unit_id),
   qty_formula      text,
@@ -579,6 +747,7 @@ CREATE TABLE work_item_components (
   crew_id          id_t REFERENCES crews(crew_id),
   productivity_id  id_t,
   consumption_application text,
+  consumption_selector jsonb CHECK (consumption_selector IS NULL OR jsonb_typeof(consumption_selector) = 'object'),
   coats_applied    numeric(4,1) CHECK (coats_applied > 0),
   cost_tags        text[] NOT NULL DEFAULT '{}',
   is_optional      boolean NOT NULL DEFAULT false,
@@ -587,6 +756,7 @@ CREATE TABLE work_item_components (
   FOREIGN KEY (work_item_id, work_item_version) REFERENCES work_items(work_item_id, version),
   CONSTRAINT wic_material_chk CHECK (component_kind <> 'material' OR product_spec_key IS NOT NULL OR product_id IS NOT NULL),
   CONSTRAINT wic_labor_chk CHECK (component_kind NOT IN ('labor','equipment') OR (crew_id IS NOT NULL AND productivity_id IS NOT NULL)),
+  CONSTRAINT wic_equipment_chk CHECK ((component_kind = 'equipment') = (equipment_type_code IS NOT NULL)),
   CONSTRAINT wic_fixed_chk CHECK (qty_mode <> 'fixed' OR qty_origin = 'missing' OR (qty_per_unit IS NOT NULL AND qty_unit_id IS NOT NULL AND qty_formula IS NOT NULL)),
   CONSTRAINT wic_waste_chk CHECK (waste_factor IS NULL OR (waste_origin IN ('observed','derived') AND waste_basis IS NOT NULL)),
   CONSTRAINT wic_consumption_chk CHECK (qty_mode <> 'from_product_consumption' OR (consumption_application IS NOT NULL AND coats_applied IS NOT NULL AND product_spec_key IS NOT NULL))
@@ -796,8 +966,25 @@ CREATE TABLE adjustment_factors (
   CONSTRAINT af_assumed_chk CHECK (origin <> 'assumed' OR assumption_basis IS NOT NULL),
   CONSTRAINT af_region_chk CHECK (factor_type <> 'region' OR (from_region_id IS NOT NULL AND to_region_id IS NOT NULL)),
   CONSTRAINT af_time_chk CHECK (factor_type <> 'time_index' OR index_id IS NOT NULL),
-  CONSTRAINT af_qty_chk CHECK (factor_type <> 'quantity' OR (qty_min IS NOT NULL OR qty_max IS NOT NULL))
+  CONSTRAINT af_qty_chk CHECK (factor_type <> 'quantity' OR (qty_min IS NOT NULL OR qty_max IS NOT NULL)),
+  CONSTRAINT af_region_distinct_chk CHECK (factor_type <> 'region' OR from_region_id <> to_region_id),
+  CONSTRAINT af_period_chk CHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from)
 );
+
+-- a time factor may only use an index series that applies to the same cost component
+CREATE FUNCTION af_index_integrity() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE a text;
+BEGIN
+  IF NEW.index_id IS NOT NULL THEN
+    SELECT applies_to INTO a FROM indices WHERE index_id = NEW.index_id;
+    IF a IS DISTINCT FROM 'all' AND a IS DISTINCT FROM (CASE WHEN NEW.applies_to = 'other_direct' THEN 'material' ELSE NEW.applies_to END) THEN
+      RAISE EXCEPTION 'factor %: index % applies to % but the factor applies to %', NEW.factor_id, NEW.index_id, a, NEW.applies_to;
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER af_index_integrity_trg BEFORE INSERT ON adjustment_factors
+  FOR EACH ROW EXECUTE FUNCTION af_index_integrity();
 
 -- ---------------------------------------------------------------------
 -- assumptions  (expert proposals — stored apart from observed data)
@@ -820,9 +1007,26 @@ CREATE TABLE assumptions (
   origin           origin_t NOT NULL DEFAULT 'assumed' CHECK (origin = 'assumed'),
   review_status    review_status_t NOT NULL DEFAULT 'unreviewed',
   notes            text,
-  CONSTRAINT as_value_chk CHECK (value_numeric IS NOT NULL OR value_text IS NOT NULL),
-  CONSTRAINT as_approval_chk CHECK (status <> 'approved' OR (approved_by IS NOT NULL AND approved_at IS NOT NULL))
+  CONSTRAINT as_value_chk CHECK (value_numeric IS NOT NULL OR (assumption_type = 'crew_composition' AND value_text IS NOT NULL)),
+  CONSTRAINT as_approval_chk CHECK (status <> 'approved' OR (approved_by IS NOT NULL AND approved_at IS NOT NULL AND expires_on IS NOT NULL)),
+  CONSTRAINT as_four_eyes_chk CHECK (approved_by IS NULL OR lower(btrim(approved_by)) <> lower(btrim(proposed_by))),
+  CONSTRAINT as_range_chk CHECK (value_numeric IS NULL OR
+    (assumption_type = 'waste' AND value_numeric >= 0 AND value_numeric < 1)
+    OR (assumption_type IN ('productivity','material_price','labor_rate','equipment_rate','factor') AND value_numeric > 0)
+    OR assumption_type IN ('crew_composition','other'))
 );
+
+-- an assumption's content is immutable; only its approval workflow fields change
+CREATE FUNCTION forbid_assumption_rewrite() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE mutable text[] := ARRAY['status','approved_by','approved_at','expires_on','review_status','notes'];
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'assumptions are never deleted (mark them rejected or superseded)'; END IF;
+  IF (to_jsonb(OLD) - mutable) IS DISTINCT FROM (to_jsonb(NEW) - mutable) THEN
+    RAISE EXCEPTION 'assumption content is immutable; propose a new assumption and supersede the old one';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER as_immutable BEFORE UPDATE OR DELETE ON assumptions FOR EACH ROW EXECUTE FUNCTION forbid_assumption_rewrite();
 
 -- ---------------------------------------------------------------------
 -- capture_targets  (work queue of data still to be collected)
@@ -840,6 +1044,8 @@ CREATE TABLE capture_targets (
   recommended_source_ids text[] NOT NULL DEFAULT '{}',
   status           text NOT NULL DEFAULT 'open' CHECK (status IN ('open','in_progress','captured','blocked')),
   blocked_reason   text,
+  origin           origin_t NOT NULL DEFAULT 'assumed' CHECK (origin = 'assumed'),
+  review_status    review_status_t NOT NULL DEFAULT 'unreviewed',
   notes            text
 );
 
@@ -859,7 +1065,8 @@ CREATE TABLE validation_issues (
   status           text NOT NULL DEFAULT 'open' CHECK (status IN ('open','resolved','waived')),
   resolution_note  text,
   resolved_at      timestamptz,
-  CONSTRAINT vi_resolved_chk CHECK (status = 'open' OR resolution_note IS NOT NULL)
+  CONSTRAINT vi_resolved_chk CHECK (status = 'open' OR resolution_note IS NOT NULL),
+  CONSTRAINT vi_waive_chk CHECK (status <> 'waived' OR severity <> 'error')
 );
 CREATE INDEX vi_record_idx ON validation_issues (record_table, record_id);
 CREATE INDEX vi_open_idx ON validation_issues (status, severity);
@@ -877,7 +1084,7 @@ WHERE f.is_fixed_conversion AND t.is_fixed_conversion;
 
 -- Price history with normalization (nothing is hidden or averaged).
 CREATE VIEW v_price_history AS
-SELECT o.observation_id, o.product_id, p.spec_key, p.name, o.observed_at, o.retrieved_at, o.zip, o.region_id,
+SELECT o.observation_id, o.product_id, p.spec_key, p.name, o.observed_at, o.retrieved_at, o.zip, o.store_ref, o.region_id,
        o.price_amount, o.currency, o.sold_as_label, o.pack_content_qty, o.pack_content_unit_id,
        o.price_per_content_unit, o.price_channel, o.is_contractor_cost, o.availability,
        o.delivery_included, o.sales_tax_included, o.promo_flag, o.review_status, o.source_id
@@ -885,10 +1092,10 @@ FROM price_observations o JOIN products p USING (product_id);
 
 -- Latest VALIDATED, non-promo observation per product+region (a convenience; the calc engine applies its own policy).
 CREATE VIEW v_price_latest_validated AS
-SELECT DISTINCT ON (product_id, region_id) *
+SELECT DISTINCT ON (product_id, COALESCE(region_id, zip, store_ref)) *
 FROM v_price_history
 WHERE review_status = 'validated' AND NOT promo_flag
-ORDER BY product_id, region_id, observed_at DESC, retrieved_at DESC;
+ORDER BY product_id, COALESCE(region_id, zip, store_ref), observed_at DESC, retrieved_at DESC;
 
 -- Confidence is DESCRIBED, never scored: source tier, data age, and spec match.
 CREATE VIEW v_price_confidence_facets AS
@@ -901,5 +1108,52 @@ FROM price_observations o JOIN products p USING (product_id) JOIN sources s ON s
 CREATE VIEW v_open_issue_summary AS
 SELECT record_table, rule_code, severity, count(*) AS open_count
 FROM validation_issues WHERE status = 'open' GROUP BY 1,2,3;
+
+-- ---------------------------------------------------------------------
+-- Protection wiring (needs every table to exist)
+-- ---------------------------------------------------------------------
+DO $$
+DECLARE t text;
+BEGIN
+  -- append-only: observed history, calculation records, products, versioned definitions, factors, crews
+  FOREACH t IN ARRAY ARRAY['products','calculation_runs','calculation_run_lines','work_item_components','assembly_components',
+                           'adjustment_factors','crews','crew_members'] LOOP
+    EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite()', t || '_append_only', t);
+  END LOOP;
+  -- versioned definitions: content frozen, only the derived status label may move
+  FOREACH t IN ARRAY ARRAY['work_items','assemblies'] LOOP
+    EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite(''status'')', t || '_append_only', t);
+  END LOOP;
+  -- TRUNCATE guard on everything protected
+  FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','calculation_runs','calculation_run_lines','labor_rates',
+                           'burden_rates','equipment_rates','crews','crew_members','work_items','work_item_components','productivity_observations',
+                           'assemblies','assembly_components','bid_benchmarks','index_values','adjustment_factors','assumptions','review_events'] LOOP
+    EXECUTE format('CREATE TRIGGER %I BEFORE TRUNCATE ON %I FOR EACH STATEMENT EXECUTE FUNCTION forbid_truncate()', t || '_no_truncate', t);
+  END LOOP;
+  -- review log (single-column and composite keys) and its own protection
+  FOREACH t IN ARRAY ARRAY['sources','products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
+                           'crews','productivity_observations','bid_benchmarks','indices','adjustment_factors','calculation_runs'] LOOP
+    EXECUTE format('CREATE TRIGGER %I AFTER UPDATE OF review_status ON %I FOR EACH ROW EXECUTE FUNCTION log_review_change(%L)',
+                   t || '_review_log', t, (SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY (i.indkey)
+                                           WHERE i.indrelid = t::regclass AND i.indisprimary ORDER BY a.attnum LIMIT 1));
+  END LOOP;
+  CREATE TRIGGER work_items_review_log AFTER UPDATE OF review_status ON work_items FOR EACH ROW EXECUTE FUNCTION log_review_change('work_item_id','version');
+  CREATE TRIGGER assemblies_review_log AFTER UPDATE OF review_status ON assemblies FOR EACH ROW EXECUTE FUNCTION log_review_change('assembly_id','version');
+  CREATE TRIGGER index_values_review_log AFTER UPDATE OF review_status ON index_values FOR EACH ROW EXECUTE FUNCTION log_review_change('index_id','period_start','vintage_date');
+  -- 'validated' needs a named reviewer and a timestamp
+  FOREACH t IN ARRAY ARRAY['sources','products','product_consumption','price_observations','calculation_runs','labor_rates','burden_rates',
+                           'equipment_rates','crews','work_items','productivity_observations','assemblies','bid_benchmarks','indices',
+                           'index_values','adjustment_factors'] LOOP
+    EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I CHECK (review_status <> ''validated'' OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL))',
+                   t, t || '_validated_reviewer_chk');
+  END LOOP;
+  -- source terms / fetch status gate
+  FOREACH t IN ARRAY ARRAY['products','product_consumption','price_observations','labor_rates','burden_rates','equipment_rates',
+                           'productivity_observations','bid_benchmarks','indices','adjustment_factors'] LOOP
+    EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION check_source_usable()', t || '_source_gate', t);
+  END LOOP;
+END $$;
+
+CREATE TRIGGER review_events_append_only BEFORE UPDATE OR DELETE ON review_events FOR EACH ROW EXECUTE FUNCTION forbid_history_rewrite();
 
 COMMIT;

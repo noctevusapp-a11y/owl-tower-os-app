@@ -142,7 +142,7 @@ def main() -> int:
         if c.get("append_notes"):
             row["notes"] = (row["notes"] + "\n" if row["notes"] else "") + c["append_notes"]
         if "review_status" in c["set"] or c["set"].get("review_status") == "flagged":
-            row["reviewed_by"] = corrections.get("reviewer", "reviewer")
+            row["reviewed_by"] = c.get("reviewer", corrections.get("reviewer", "reviewer"))
             row["reviewed_at"] = RETRIEVED
 
     # ------------------------------------------------- selected data rows
@@ -192,19 +192,19 @@ def main() -> int:
     # index SERIES definitions only (identifiers, no FRED-hosted values)
     series = [
         ("WPUID612", "PPI: Materials and components for construction (intermediate demand)", "SRC-BLS-PPI", "material",
-         "NSA, base 1982=100; identifier seen on a FRED page, verify at bls.gov"),
+         "identifier seen on a FRED page, verify at bls.gov", "1982=100", "not seasonally adjusted"),
         ("WPU1017", "PPI: Steel mill products", "SRC-BLS-PPI", "material",
-         "NSA, base 1982=100; identifier seen on a FRED page, verify at bls.gov"),
+         "identifier seen on a FRED page, verify at bls.gov", "1982=100", "not seasonally adjusted"),
         ("ECICONWAG", "ECI: Wages and salaries, private industry, construction", "SRC-BLS-ECI", "labor",
-         "SA; identifier seen on a FRED page (Dec 2005=100), verify at bls.gov"),
+         "identifier seen on a FRED page, verify at bls.gov", "Dec 2005=100", "seasonally adjusted"),
         ("CIU2012300000000I", "ECI: Total compensation, private industry, construction", "SRC-BLS-ECI", "labor",
-         "NSA; identifier seen on a FRED page (Dec 2005=100), verify at bls.gov"),
+         "identifier seen on a FRED page, verify at bls.gov", "Dec 2005=100", "not seasonally adjusted"),
     ]
-    for code, name, src, applies, note in series:
+    for code, name, src, applies, note, base, sa in series:
         db.add("indices", {
             "index_id": make_id("IDX", "BLS", code), "publisher": "BLS", "series_code": code, "name": name,
-            "base_period": None, "frequency": "quarterly" if code.startswith(("ECI", "CIU")) else "monthly",
-            "seasonal_adjustment": None, "geography": "United States", "applies_to": applies, "source_id": src,
+            "base_period": base, "frequency": "quarterly" if code.startswith(("ECI", "CIU")) else "monthly",
+            "seasonal_adjustment": sa, "geography": "United States", "applies_to": applies, "source_id": src,
             "origin": "observed", "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
             "notes": note + ". No index VALUES stored: FRED terms prohibit caching; ingest values from BLS directly."})
 
@@ -254,6 +254,8 @@ def main() -> int:
                          f"[evidence]({f['evidence_url']})")
         lines += ["", f"### Agent {r['agent']} — gaps", ""] + [f"- {g}" for g in r["gaps"]]
         lines += ["", f"### Agent {r['agent']} — blocked or unverifiable", ""] + [f"- {g}" for g in r["blocked_or_unverifiable"]] + [""]
+    if corrections.get("finding_notes"):
+        lines += ["## Reviewer corrections to the findings above", ""] + [f"- {n}" for n in corrections["finding_notes"]] + [""]
     (ROOT / "docs" / "source_findings.md").write_text("\n".join(lines), encoding="utf-8")
 
     print(f"sources={len(db['sources'])} labor_rates={len(db['labor_rates'])} burden_rates={len(db['burden_rates'])} "

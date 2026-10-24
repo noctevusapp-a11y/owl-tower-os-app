@@ -132,17 +132,28 @@ class DataGatesTest(unittest.TestCase):
 
         def close(a, b):
             self.assertLess(abs(a - b), F(1, 10 ** 9), (a, b))
-        close(val("WI-FRM-001", 1), F(12, 16) / 8)                 # studs per SF of 8 ft wall @16
-        close(val("WI-FRM-001", 2), F(3, 8))                       # 3 plates / 8 ft
-        close(val("WI-FRM-001", 3), F(12, 16) / 8 * 4 + F(12, 16) / 8)
+        # wall height: 92-5/8 in precut stud + 3 x 1.5 in plates = 97.125 in = 8.09375 ft (NOT a nominal 8 ft)
+        h_ft = (F(92) + F(5, 8) + 3 * F(3, 2)) / 12
+        self.assertEqual(h_ft, F(97125, 12000))
+        studs_sf = F(12, 16) / h_ft                                  # studs per SF @16 in o.c.
+        for w in ("WI-FRM-001", "WI-FRM-002"):
+            close(val(w, 1), studs_sf)
+            close(val(w, 2), 3 / h_ft)                                # bottom plate + double top plate per LF of wall
+            close(val(w, 3), studs_sf * 4 + studs_sf)                 # 4 end nails per stud + 1 lamination nail per 16 in of top plate
         close(val("WI-FRM-003", 1), F(3, 4)); close(val("WI-FRM-003", 2), F(3, 4) / 12 * 2)
         close(val("WI-FRM-004", 2), F(64, 32))
         close(val("WI-FRM-005", 1), F(3, 4) / 10); close(val("WI-FRM-005", 2), F(1, 5)); close(val("WI-FRM-005", 3), F(3, 4) / 10 * 4)
-        close(val("WI-FRM-006", 1), F(29, 32)); close(val("WI-FRM-006", 2), F(3))
-        # drywall: (48/frame+1) screw lines x (96/spacing) per sheet / 32 SF
-        close(val("WI-DRY-001", 2), F(4 * 6, 32))                  # 16/16 -> 0.75
-        close(val("WI-DRY-004", 2), F(4 * 8, 32))                  # 16 framing / 12 fastener -> 1.0
+        close(val("WI-FRM-006", 1), F(29, 2) / 16); close(val("WI-FRM-006", 2), F(3))
+        # drywall: screws are counted with the fence-post rule at BOTH ends: lines = across // framing + 1, per line = along // spacing + 1
+        def screws(across_in, along_in, framing_in, spacing_in):
+            return (across_in // framing_in + 1) * (along_in // spacing_in + 1)
+        close(val("WI-DRY-001", 2), F(screws(48, 96, 16, 16), 32))       # 4 x 8 sheet vertical on 16 in studs, screws @16: 28/32
+        close(val("WI-DRY-002", 2), F(screws(48, 96, 16, 16), 32))
+        close(val("WI-DRY-006", 2), F(screws(48, 96, 16, 16), 32))
+        close(val("WI-DRY-003", 2), F(screws(144, 48, 16, 16), 48))      # 4 x 12 sheet horizontal: 10 lines x 4 = 40 per 48 SF
+        close(val("WI-DRY-004", 2), F(screws(96, 48, 16, 12), 32))       # 4 x 8 ceiling sheet across 16 in joists, screws @12: 35/32
         close(val("WI-DRY-005", 1), F(12, 32))
+        close(val("WI-INS-001", 1), F(15, 16))                           # 15 in batt in a 16 in pitch
         close(val("WI-CON-001", 1), F(4, 12) / 27); close(val("WI-CON-002", 1), F(6, 12) / 27)
         close(val("WI-CON-002", 3), F(3, 2)); close(val("WI-CON-003", 1), F(3, 2) / 27); close(val("WI-CON-004", 1), F(1, 4))
         close(val("WI-PNT-004", 1), F(3, 4) / 231)                 # 1/4" x 1/4" bead per LF in US gallons
