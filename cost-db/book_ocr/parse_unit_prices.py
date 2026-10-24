@@ -242,9 +242,9 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
             assigned[k] = m
     if len(assigned) < 3:
         return bounds
-    # boundary between two neighbouring columns = midpoint of their number right edges (numbers never cross it)
-    for i in range(len(keys) - 1):
-        a, b = keys[i], keys[i + 1]
+    # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
+    # the Unit column sits between Hours and Material and keeps its header-based bounds
+    for a, b in (("output", "hours"), ("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):
         if a in assigned and b in assigned:
             mid = (assigned[a] + assigned[b]) / 2
             bounds[a] = (bounds[a][0], mid)
