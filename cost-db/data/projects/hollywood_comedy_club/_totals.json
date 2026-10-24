@@ -1,0 +1,837 @@
+{
+ "exact": {
+  "material": "6848.79",
+  "labor": "60128.41",
+  "equipment": "6555.44",
+  "direct": "73532.65",
+  "book_op": "104201.82",
+  "rows_without_op": 0,
+  "components": 4,
+  "sell": "88373.30"
+ },
+ "substitute": {
+  "material": "141241.34",
+  "labor": "120874.24",
+  "equipment": "212.66",
+  "direct": "262328.22",
+  "book_op": "237185.98",
+  "rows_without_op": 20,
+  "components": 46,
+  "sell": "315272.35"
+ },
+ "combined": {
+  "direct": "335860.87",
+  "sell": "403645.65",
+  "book_op": "341387.80",
+  "contingency": "13434.43",
+  "overhead": "27943.62",
+  "profit": "26406.73"
+ },
+ "sell_factor": "1.201824",
+ "items": {
+  "Demolition": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "0.00",
+    "labor": "371.38",
+    "equipment": "0.00",
+    "direct": "371.38",
+    "book_op": "0",
+    "rows_without_op": 1,
+    "components": 1
+   },
+   "lines": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10",
+    "D11",
+    "D12",
+    "D13",
+    "D14",
+    "D15",
+    "D16"
+   ],
+   "lines_with_price": [
+    "D02"
+   ],
+   "lines_unpriced": [
+    "D01",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10",
+    "D11",
+    "D12",
+    "D13",
+    "D14",
+    "D15",
+    "D16"
+   ],
+   "unpriced_components": 0
+  },
+  "Interior walls": {
+   "exact": {
+    "material": "531.50",
+    "labor": "1705.24",
+    "equipment": "0.00",
+    "direct": "2236.75",
+    "book_op": "3089.37",
+    "rows_without_op": 0,
+    "components": 1
+   },
+   "substitute": {
+    "material": "47903.54",
+    "labor": "84758.15",
+    "equipment": "0.00",
+    "direct": "132661.68",
+    "book_op": "151719.62",
+    "rows_without_op": 2,
+    "components": 5
+   },
+   "lines": [
+    "W01",
+    "W02",
+    "W03",
+    "W04",
+    "W05",
+    "W06",
+    "W07",
+    "W08",
+    "W09"
+   ],
+   "lines_with_price": [
+    "W01",
+    "W02",
+    "W08"
+   ],
+   "lines_unpriced": [
+    "W03",
+    "W04",
+    "W05",
+    "W06",
+    "W07",
+    "W09"
+   ],
+   "unpriced_components": 2
+  },
+  "Ceilings": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "2738.14",
+    "labor": "9382.10",
+    "equipment": "0.00",
+    "direct": "12120.24",
+    "book_op": "9065.35",
+    "rows_without_op": 2,
+    "components": 4
+   },
+   "lines": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08"
+   ],
+   "lines_with_price": [
+    "C01",
+    "C02",
+    "C04",
+    "C05"
+   ],
+   "lines_unpriced": [
+    "C03",
+    "C06",
+    "C07",
+    "C08"
+   ],
+   "unpriced_components": 1
+  },
+  "Flooring": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "2658.37",
+    "labor": "2950.70",
+    "equipment": "0.00",
+    "direct": "5609.07",
+    "book_op": "2665.60",
+    "rows_without_op": 2,
+    "components": 3
+   },
+   "lines": [
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "F06",
+    "F07",
+    "F08",
+    "F09",
+    "F10",
+    "F11",
+    "F12",
+    "F13"
+   ],
+   "lines_with_price": [
+    "F06",
+    "F09",
+    "F11"
+   ],
+   "lines_unpriced": [
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "F07",
+    "F08",
+    "F10",
+    "F12",
+    "F13"
+   ],
+   "unpriced_components": 0
+  },
+  "New Roofing": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "lines": [
+    "R01"
+   ],
+   "lines_with_price": [],
+   "lines_unpriced": [
+    "R01"
+   ],
+   "unpriced_components": 0
+  },
+  "Interior finishes": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "7453.90",
+    "labor": "8582.46",
+    "equipment": "0.00",
+    "direct": "16036.36",
+    "book_op": "11530.96",
+    "rows_without_op": 5,
+    "components": 8
+   },
+   "lines": [
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "I07",
+    "I08",
+    "I09",
+    "I10",
+    "I11",
+    "I12",
+    "I13",
+    "I14",
+    "I15",
+    "I16",
+    "I17",
+    "I18"
+   ],
+   "lines_with_price": [
+    "I01",
+    "I03",
+    "I04",
+    "I08",
+    "I09",
+    "I10",
+    "I13",
+    "I18"
+   ],
+   "lines_unpriced": [
+    "I02",
+    "I05",
+    "I06",
+    "I07",
+    "I11",
+    "I12",
+    "I14",
+    "I15",
+    "I16",
+    "I17"
+   ],
+   "unpriced_components": 0
+  },
+  "Exterior finishes": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "9274.84",
+    "labor": "2689.36",
+    "equipment": "0.00",
+    "direct": "11964.20",
+    "book_op": "14145.88",
+    "rows_without_op": 0,
+    "components": 4
+   },
+   "lines": [
+    "X01",
+    "X02",
+    "X03",
+    "X04",
+    "X05",
+    "X06"
+   ],
+   "lines_with_price": [
+    "X01"
+   ],
+   "lines_unpriced": [
+    "X02",
+    "X03",
+    "X04",
+    "X05",
+    "X06"
+   ],
+   "unpriced_components": 1
+  },
+  "Doors & Hardware": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "27685.37",
+    "labor": "5801.95",
+    "equipment": "0.00",
+    "direct": "33487.32",
+    "book_op": "158.18",
+    "rows_without_op": 5,
+    "components": 6
+   },
+   "lines": [
+    "DR1",
+    "DR2",
+    "DR3",
+    "DR4"
+   ],
+   "lines_with_price": [
+    "DR1",
+    "DR2",
+    "DR4"
+   ],
+   "lines_unpriced": [
+    "DR3"
+   ],
+   "unpriced_components": 2
+  },
+  "Stairs & railing": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "7390.99",
+    "labor": "1362.99",
+    "equipment": "212.66",
+    "direct": "8966.63",
+    "book_op": "1213.79",
+    "rows_without_op": 2,
+    "components": 3
+   },
+   "lines": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06",
+    "S07",
+    "S08",
+    "S09",
+    "S10",
+    "S11",
+    "S12",
+    "S13",
+    "S14"
+   ],
+   "lines_with_price": [
+    "S01",
+    "S03",
+    "S07"
+   ],
+   "lines_unpriced": [
+    "S02",
+    "S04",
+    "S05",
+    "S06",
+    "S08",
+    "S09",
+    "S10",
+    "S11",
+    "S12",
+    "S13",
+    "S14"
+   ],
+   "unpriced_components": 0
+  },
+  "Owner-provided equipment install": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "lines": [
+    "O01",
+    "O02",
+    "O03",
+    "O04",
+    "O05",
+    "O06",
+    "O07",
+    "O08"
+   ],
+   "lines_with_price": [],
+   "lines_unpriced": [
+    "O01",
+    "O02",
+    "O03",
+    "O04",
+    "O05",
+    "O06",
+    "O07",
+    "O08"
+   ],
+   "unpriced_components": 0
+  },
+  "Lighting": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "13.52",
+    "labor": "161.44",
+    "equipment": "0.00",
+    "direct": "174.96",
+    "book_op": "255.36",
+    "rows_without_op": 0,
+    "components": 1
+   },
+   "lines": [
+    "L_A1",
+    "L_B1",
+    "L_BR",
+    "L_C1",
+    "L_C2",
+    "L_D1",
+    "L_EX",
+    "L_F1",
+    "L_G",
+    "L_LED",
+    "L_RC",
+    "L_SW",
+    "L_X1",
+    "L_X2",
+    "L_Y1",
+    "L_Y2",
+    "L_Y3"
+   ],
+   "lines_with_price": [
+    "L_RC"
+   ],
+   "lines_unpriced": [
+    "L_A1",
+    "L_B1",
+    "L_BR",
+    "L_C1",
+    "L_C2",
+    "L_D1",
+    "L_EX",
+    "L_F1",
+    "L_G",
+    "L_LED",
+    "L_SW",
+    "L_X1",
+    "L_X2",
+    "L_Y1",
+    "L_Y2",
+    "L_Y3"
+   ],
+   "unpriced_components": 0
+  },
+  "Mechanical": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "3392.67",
+    "labor": "2189.67",
+    "equipment": "0.00",
+    "direct": "5582.34",
+    "book_op": "6899.68",
+    "rows_without_op": 0,
+    "components": 2
+   },
+   "lines": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "M06",
+    "M07",
+    "M08",
+    "M09"
+   ],
+   "lines_with_price": [
+    "M05",
+    "M08"
+   ],
+   "lines_unpriced": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M06",
+    "M07",
+    "M09"
+   ],
+   "unpriced_components": 0
+  },
+  "Plumbing": {
+   "exact": {
+    "material": "1947.00",
+    "labor": "2305.62",
+    "equipment": "0.00",
+    "direct": "4252.62",
+    "book_op": "5426.62",
+    "rows_without_op": 0,
+    "components": 2
+   },
+   "substitute": {
+    "material": "673.04",
+    "labor": "572.64",
+    "equipment": "0.00",
+    "direct": "1245.68",
+    "book_op": "1577.14",
+    "rows_without_op": 0,
+    "components": 1
+   },
+   "lines": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07"
+   ],
+   "lines_with_price": [
+    "P01",
+    "P02"
+   ],
+   "lines_unpriced": [
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07"
+   ],
+   "unpriced_components": 1
+  },
+  "Low Voltage": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "lines": [
+    "V01",
+    "V02",
+    "V03"
+   ],
+   "lines_with_price": [],
+   "lines_unpriced": [
+    "V01",
+    "V02",
+    "V03"
+   ],
+   "unpriced_components": 0
+  },
+  "F&B equipment": {
+   "exact": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "substitute": {
+    "material": "0",
+    "labor": "0",
+    "equipment": "0",
+    "direct": "0",
+    "book_op": "0",
+    "rows_without_op": 0,
+    "components": 0
+   },
+   "lines": [
+    "E01",
+    "E02",
+    "E03",
+    "E04"
+   ],
+   "lines_with_price": [],
+   "lines_unpriced": [
+    "E01",
+    "E02",
+    "E03",
+    "E04"
+   ],
+   "unpriced_components": 0
+  },
+  "Other required scope": {
+   "exact": {
+    "material": "4370.29",
+    "labor": "56117.55",
+    "equipment": "6555.44",
+    "direct": "67043.28",
+    "book_op": "95685.83",
+    "rows_without_op": 0,
+    "components": 1
+   },
+   "substitute": {
+    "material": "32056.96",
+    "labor": "2051.40",
+    "equipment": "0.00",
+    "direct": "34108.36",
+    "book_op": "37954.42",
+    "rows_without_op": 1,
+    "components": 8
+   },
+   "lines": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09",
+    "G10",
+    "G11",
+    "G12",
+    "G13",
+    "G14",
+    "G15",
+    "G16",
+    "G17",
+    "G18",
+    "G19",
+    "G20",
+    "G21",
+    "G22",
+    "G23",
+    "G24",
+    "G25",
+    "G26",
+    "G27",
+    "G28",
+    "G29",
+    "G30",
+    "G31",
+    "G32",
+    "G33",
+    "G34",
+    "G35",
+    "G36"
+   ],
+   "lines_with_price": [
+    "G07",
+    "G08",
+    "G22",
+    "G27",
+    "G28",
+    "G29",
+    "G30"
+   ],
+   "lines_unpriced": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G09",
+    "G10",
+    "G11",
+    "G12",
+    "G13",
+    "G14",
+    "G15",
+    "G16",
+    "G17",
+    "G18",
+    "G19",
+    "G20",
+    "G21",
+    "G23",
+    "G24",
+    "G25",
+    "G26",
+    "G31",
+    "G32",
+    "G33",
+    "G34",
+    "G35"
+   ],
+   "unpriced_components": 0
+  }
+ },
+ "n_takeoff_lines": 173,
+ "n_estimate_rows": 192,
+ "n_unpriced_lines": 134,
+ "n_unpriced_components": 7,
+ "duplicate_cost_codes_seen": {},
+ "changed_by_table_replacement": [
+  {
+   "item_id": "I02",
+   "component": "poplar crown molding",
+   "before": "priced_substitute (OT-06221330-2510, verified in the previous table)",
+   "after": "book_row_not_verified (p203 line 2510 is flagged and carries no cost code)"
+  },
+  {
+   "item_id": "G28",
+   "component": "robe hook OT-10281313-4400",
+   "before": "cost_code_duplicated (code shared with a flagged towel-bar row)",
+   "after": "priced_substitute (the code is now carried by the verified robe-hook row only)"
+  },
+  {
+   "item_id": "P03",
+   "component": "grease interceptor (candidate only)",
+   "before": "candidate OT-22131913-0150 / -0200 / -1060 / -1120 (verified)",
+   "after": "candidate p514 lines 0150 / 0200 / 1060 / 1120 (flagged, no cost code); line stays spec_not_issued"
+  },
+  {
+   "item_id": "D10",
+   "component": "aluminum window removal (candidate only)",
+   "before": "candidate OT-08050510-0200 (machine_read window row sharing the code with a flagged door row)",
+   "after": "candidate p268 window line 0200 (flagged, no cost code); line stays book_row_not_verified"
+  }
+ ]
+}
