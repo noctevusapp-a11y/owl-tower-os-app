@@ -1,0 +1,50 @@
+fetch started (UTC): 2026-10-24T06:20:50Z
+## BLS API v1, series 2021-2026
+curl -s -X POST https://api.bls.gov/publicAPI/v1/timeseries/data/ -H 'Content-Type: application/json' -d '{"seriesid":["WPU1022","WPU1025","WPU1017","WPU0811","WPU081","WPU133","WPU1332","WPU1333","WPU137","WPU0622","WPU114","WPU0573","WPU057303","WPUIP2300001","CIU2012300000000I","CIU2022300000000I","CUUR0000SA0","CUURS49ASA0"],"startyear":"2021","endyear":"2026"}' -o bls_series_2021_2026.json
+exit=0
+## BLS series title pages
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU1022?output_view=data" -o titles/WPU1022.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU1025?output_view=data" -o titles/WPU1025.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU1017?output_view=data" -o titles/WPU1017.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU0811?output_view=data" -o titles/WPU0811.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU081?output_view=data" -o titles/WPU081.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU133?output_view=data" -o titles/WPU133.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU1332?output_view=data" -o titles/WPU1332.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU1333?output_view=data" -o titles/WPU1333.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU137?output_view=data" -o titles/WPU137.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU0622?output_view=data" -o titles/WPU0622.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU114?output_view=data" -o titles/WPU114.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU0573?output_view=data" -o titles/WPU0573.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPU057303?output_view=data" -o titles/WPU057303.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/WPUIP2300001?output_view=data" -o titles/WPUIP2300001.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/CIU2012300000000I?output_view=data" -o titles/CIU2012300000000I.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/CIU2022300000000I?output_view=data" -o titles/CIU2022300000000I.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/CUUR0000SA0?output_view=data" -o titles/CUUR0000SA0.html
+curl -sL -m 60 -A 'Mozilla/5.0' "https://data.bls.gov/timeseries/CUURS49ASA0?output_view=data" -o titles/CUURS49ASA0.html
+## EIA diesel
+curl -sL -m 90 https://www.eia.gov/dnav/pet/hist_xls/EMD_EPD2D_PTE_NUS_DPGm.xls -o eia_diesel_us_monthly.xls
+curl -sL -m 90 https://www.eia.gov/dnav/pet/hist_xls/EMD_EPD2D_PTE_SCA_DPGm.xls -o eia_diesel_california_monthly.xls
+fetch finished (UTC): 2026-10-24T06:21:49Z
+## sha256 of every saved file
+92203c96ef7973b1a063d03a6e5b818fd47e61dccb1d28372da2e2a87dbf3c0f  ./bls_series_2021_2026.json
+07e2e8199280a5c44d27c4a7289f4fd918b82f371340c05b628ca16f941a79c8  ./eia_diesel_california_monthly.xls
+bcb103b4a2b4e2efaa809df0f4288f3a11a3af0770128bdb8a0480bb82f76077  ./eia_diesel_us_monthly.xls
+c66283f8572c8c271e4755191367325ebf37a475626d7de4990b9bcda18df88d  ./titles/CIU2012300000000I.html
+bd0a93068a467b685e515f7232c588248f6e7c10fb9379a48af016b1a57f8e3e  ./titles/CIU2022300000000I.html
+1671d9de290bb039437351b55ec8769affcb50add3843ce5c2bfdc9067edcc58  ./titles/CUUR0000SA0.html
+1830766205e8a51d361512a823237a51b7d63821d3c9fe991ca0486315631b78  ./titles/CUURS49ASA0.html
+a9b41fa7d1c03110119414bf4541cd8a62760de9427dd4a619ece63982c56ab5  ./titles/WPU0573.html
+3e67fe07cf6fe52696a85fbb0ec8fcb19c596dc31565738772b1f9d16c077581  ./titles/WPU057303.html
+4db2c01322d0f236525f2077a59f1d341d12cf0468b732506c0914d3640c0079  ./titles/WPU0622.html
+e4198315e516541045448a049b9af13b3350c02c0ed7d41189081cf3a9593f58  ./titles/WPU081.html
+765156e1540480007556f095ac9870c78e975e3a72966bce3780d3df5b0f846d  ./titles/WPU0811.html
+ba70c63198317ba232d78c784ae9060e4aeb58504241ba4a6390150971e07085  ./titles/WPU1017.html
+b1a915fc5f689478eb91539bea56ad0eb4f4cc60d244a678a465160500ca6252  ./titles/WPU1022.html
+043dc04bf1945dd6c862acaf135d8a45f849dfa9054813b32c1397c95f14b5e2  ./titles/WPU1025.html
+1a2b4d552b0943780b2d8395b315c580136201c8ee8e59b18f62332b3d91af85  ./titles/WPU114.html
+e9d10f142b2f196593423957234b629b450dc1259ce80c24b915341c78874308  ./titles/WPU133.html
+64c1d7913d16c6027c82c4b2d97799982736c8720ae138aaa4181264119e5f25  ./titles/WPU1332.html
+502e235500a1bc8bc57d71520fad4c1b90249b90bfd250e269db4652b4217fcc  ./titles/WPU1333.html
+99599da6a749467df704f0e85af4a3206c358bdb2c43688c2b40a5cdecbce244  ./titles/WPU137.html
+bdafec27c30c19653c29c4e5faf51f3a7edeb8702c7a4e6d1377a6ed3af01f07  ./titles/WPUIP2300001.html
+## note: titles/*.html are the BLS series pages as returned (no edits); all 18 series ids returned data from the API (status REQUEST_SUCCEEDED, latest observation 2026-09 for monthly series).
