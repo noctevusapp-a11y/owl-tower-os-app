@@ -33,10 +33,10 @@ DIVISION_NAMES = {
     "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
-              "EQUIP_CREW_MISMATCH", "CREW_UNKNOWN", "LINE_NUMBER_MISSING", "LINE_ORDER", "TOTAL_OP_IMPLAUSIBLE"}
+              "EQUIP_CREW_MISMATCH", "CREW_UNKNOWN", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "TOTAL_OP_IMPLAUSIBLE"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "EQUIPMENT_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
-              "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED"}
+              "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED"}
 DESC_FIXES = [(r"\b1b\.", "lb."), (r"\bIb\.", "lb."), (r"\b1bs\.", "lbs."), (r"(\d)\s*0C\b", r"\1 OC"), (r"\b0\.C\.", "O.C."), ("’", "'"), ("‘", "'"),
               ("”", '"'), ("“", '"'), ("″", '"'), ("—", "-"), ("–", "-"), (r"\s+,", ","), (r"\s{2,}", " "), (r"^[\s\-=~_.|:;'\"]+", ""), (r"[\s\-=~_|:;'\"]+$", "")]
 
@@ -99,65 +99,99 @@ def main() -> int:
         if s["section_id_fixed"]:
             titles.setdefault(s["section_id_fixed"], s["title"])
 
-    # ---- 2. lines in order, line numbers, hierarchy
-    rows = []
-    last_line_by_section: dict[str, int] = {}
-    stack_by_section: dict[str, list[tuple[int, str]]] = {}
-    report = Counter()
+    # ---- 2. lines in order: robust numbering check (longest increasing run per section; the rest are misreads), partial numbers
+    items = []
     for pg in pages:
         for ln in pg["lines"]:
             sec = fix_map.get((pg["pdf_page"], ln["section_id"])) if ln["section_id"] else None
             if sec is None and ln["section_id"]:
-                # the section was fixed on an earlier page (continuation): look it up by raw id
                 sec = next((s["section_id_fixed"] for s in all_sections if s["section_id"] == ln["section_id"] and s["section_id_fixed"]), None)
-            flags = list(ln["flags"])
-            line_no = ln["line"]
-            if ln.get("line_partial") and line_no and sec:
-                prev = last_line_by_section.get(sec)
-                tail = int(line_no[-3:])
-                if prev is None:
-                    cand = tail                                   # first line of a section is 0010-0999 almost always
-                else:
-                    cand = next((k * 1000 + tail for k in range(0, 10) if k * 1000 + tail > prev), None)
-                if cand is not None:
-                    line_no = f"{cand:04d}"
-                    flags.append("LINE_NUMBER_RECONSTRUCTED")
-                else:
-                    line_no = None
-                    flags.append("LINE_NUMBER_MISSING")
-            if line_no and sec and not ln.get("line_partial"):
-                prev = last_line_by_section.get(sec)
-                if prev is not None and int(line_no) <= prev and "LINE_ORDER" not in flags:
-                    flags.append("LINE_ORDER")
-            if line_no and sec:
-                last_line_by_section[sec] = max(int(line_no), last_line_by_section.get(sec, 0))
-            desc = fix_desc(better_desc(ln["description"] or "", ln.get("description_alt")))
-            indent = ln.get("indent_px")
-            path = []
-            if sec is not None and indent is not None:
-                st = stack_by_section.setdefault(sec, [])
-                while st and st[-1][0] >= indent - 25:
-                    st.pop()
-                path = [d for _, d in st]
-                st.append((indent, desc))
-            open_flags = [f for f in flags if f in OPEN_FLAGS]
-            has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
-            status = "header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified")
-            cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None
-            crew = crews.get(ln["crew"]) if ln["crew"] else None
-            rows.append({
-                "cost_code": cost_code, "division": sec[:2] if sec else None, "division_name": DIVISION_NAMES.get(sec[:2]) if sec else None,
-                "section_id": sec, "section_title": titles.get(sec) if sec else None, "line": line_no, "ref_line": (sec + " " + line_no) if sec and line_no else None,
-                "description": desc, "description_path": " | ".join(path + [desc]) if path else desc, "level": len(path),
-                "crew": ln["crew"], "crew_source": ln["crew_source"], "daily_output": ln["output"], "labor_hours": ln["hours"], "unit": ln["unit"],
-                "unit_source": ln["unit_source"], "material_2022": ln["material"], "labor_2022": ln["labor"], "equipment_2022": ln["equipment"],
-                "total_2022": ln["total"], "total_incl_op_2022": ln["total_op"], "ref_note": ln.get("ref_note"),
-                "book_page": ln["book_page"], "pdf_page": ln["pdf_page"], "status": status, "flags": ";".join(flags),
-                "conf": json.dumps(ln.get("conf", {})),
-                "crew_labor_hours_per_day": crew["labor_hours_per_day"] if crew else None})
-            report[status] += 1
-            for f in flags:
-                report["flag:" + f] += 1
+            items.append({"ln": ln, "sec": sec, "line_no": ln["line"], "order_bad": False})
+    # group by section in reading order (sections can continue over pages but never interleave)
+    groups: dict[str, list[int]] = {}
+    for i, it in enumerate(items):
+        if it["sec"] and it["line_no"] and not it["ln"].get("line_partial"):
+            groups.setdefault(it["sec"], []).append(i)
+    for sec, idxs in groups.items():
+        vals = [int(items[i]["line_no"]) for i in idxs]
+        # longest strictly increasing subsequence (O(n log n)) - everything outside it is a misread number
+        import bisect
+        tails, tails_idx, prev = [], [], [-1] * len(vals)
+        for k, v in enumerate(vals):
+            pos = bisect.bisect_left(tails, v)
+            if pos == len(tails):
+                tails.append(v)
+                tails_idx.append(k)
+            else:
+                tails[pos] = v
+                tails_idx[pos] = k
+            prev[k] = tails_idx[pos - 1] if pos else -1
+        keep = set()
+        k = tails_idx[-1] if tails_idx else -1
+        while k != -1:
+            keep.add(k)
+            k = prev[k]
+        for k, i in enumerate(idxs):
+            if k not in keep:
+                items[i]["order_bad"] = True
+    # partial numbers: the thousands digit from the neighbours that are in order
+    last_ok: dict[str, int] = {}
+    for it in items:
+        sec, ln = it["sec"], it["ln"]
+        if not sec:
+            continue
+        if ln.get("line_partial") and it["line_no"]:
+            prev = last_ok.get(sec)
+            tail = int(it["line_no"][-3:])
+            cand = tail if prev is None else next((k * 1000 + tail for k in range(0, 10) if k * 1000 + tail > prev), None)
+            if cand is not None:
+                it["line_no"] = f"{cand:04d}"
+                it["reconstructed"] = True
+            else:
+                it["line_no"] = None
+        elif it["line_no"] and not it["order_bad"]:
+            last_ok[sec] = int(it["line_no"])
+
+    rows = []
+    stack_by_section: dict[str, list[tuple[int, str]]] = {}
+    report = Counter()
+    for it in items:
+        ln, sec, line_no = it["ln"], it["sec"], it["line_no"]
+        flags = [f for f in ln["flags"] if f != "LINE_ORDER"]
+        if it.get("reconstructed"):
+            flags.append("LINE_NUMBER_RECONSTRUCTED")
+        if ln.get("line_partial") and line_no is None:
+            flags.append("LINE_NUMBER_MISSING")
+        if it["order_bad"]:
+            flags.append("LINE_ORDER")
+        desc = fix_desc(better_desc(ln["description"] or "", ln.get("description_alt")))
+        indent = ln.get("indent_px")
+        path = []
+        if sec is not None and indent is not None:
+            st = stack_by_section.setdefault(sec, [])
+            while st and st[-1][0] >= indent - 25:
+                st.pop()
+            path = [d for _, d in st]
+            st.append((indent, desc))
+        open_flags = [f for f in flags if f in OPEN_FLAGS]
+        has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
+        status = "header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified")
+        cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None
+        crew = crews.get(ln["crew"]) if ln["crew"] else None
+        pg_no = ln["pdf_page"]
+        rows.append({
+            "cost_code": cost_code, "division": sec[:2] if sec else None, "division_name": DIVISION_NAMES.get(sec[:2]) if sec else None,
+            "section_id": sec, "section_title": titles.get(sec) if sec else None, "line": line_no, "ref_line": (sec + " " + line_no) if sec and line_no else None,
+            "description": desc, "description_path": " | ".join(path + [desc]) if path else desc, "level": len(path),
+            "crew": ln["crew"], "crew_source": ln["crew_source"], "daily_output": ln["output"], "labor_hours": ln["hours"], "unit": ln["unit"],
+            "unit_source": ln["unit_source"], "material_2022": ln["material"], "labor_2022": ln["labor"], "equipment_2022": ln["equipment"],
+            "total_2022": ln["total"], "total_incl_op_2022": ln["total_op"], "ref_note": ln.get("ref_note"),
+            "book_page": pg_no - 14, "pdf_page": pg_no, "status": status, "flags": ";".join(flags),
+            "conf": json.dumps(ln.get("conf", {})),
+            "crew_labor_hours_per_day": crew["labor_hours_per_day"] if crew else None})
+        report[status] += 1
+        for f in flags:
+            report["flag:" + f] += 1
 
     # ---- 3. write
     out = Path(a.out_dir)

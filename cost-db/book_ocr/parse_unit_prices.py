@@ -441,7 +441,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     # ---- crew arithmetic checks on the settled values
     if crew and vals["labor"] is not None and crew.get("bare_labor_daily") is not None and vals["labor"] > 0:
         daily = Decimal(str(crew["bare_labor_daily"]))
-        ok = vals["output"] is not None and abs(book_round(daily / vals["output"]) - vals["labor"]) <= rstep(vals["labor"])
+        ok = vals["output"] is not None and vals["output"] > 0 and abs(book_round(daily / vals["output"]) - vals["labor"]) <= rstep(vals["labor"])
         if not ok:
             # the printed labor cost is crew daily cost / output: find the output reading (any source) that reproduces it
             alts = [o for o in opts("output") if o and o > 0 and abs(book_round(daily / o) - vals["labor"]) <= rstep(vals["labor"])]
@@ -465,7 +465,16 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                     flags[:] = [f for f in flags if f not in ("OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "HOURS_DERIVED_FROM_CREW")]
                     flags.append("OUTPUT_DERIVED_FROM_LABOR")
                 else:
-                    flags.append("LABOR_CREW_MISMATCH")
+                    # the crew rule and the printed total may agree on a labor value the OCR misread (79 read as 19)
+                    exp = book_round(daily / vals["output"]) if vals["output"] and vals["output"] > 0 else None
+                    tot, mat, eq = vals["total"], vals["material"], vals["equipment"]
+                    if exp is not None and tot is not None and (conf.get("total") or 0) >= 2.0 and (mat is None or (conf.get("material") or 0) >= 2.0) \
+                            and abs(tot - (mat or 0) - (eq or 0) - exp) <= rstep(exp):
+                        vals["labor"], conf["labor"] = tot - (mat or 0) - (eq or 0), None
+                        flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS")]
+                        flags.append("LABOR_DERIVED_FROM_CREW_SUM")
+                    else:
+                        flags.append("LABOR_CREW_MISMATCH")
     # the crew says whether an equipment cost exists at all; with labor confirmed, a total that does not add up pins the material
     if crew and crew.get("bare_labor_daily") is not None and vals["labor"] is not None and vals["output"] and vals["total"] is not None \
             and "LABOR_CREW_MISMATCH" not in flags and (crew.get("bare_equip_daily") or 0) == 0 and conf.get("total", 0) and conf["total"] >= 2.0:
@@ -475,7 +484,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 vals["material"], conf["material"], vals["equipment"], conf["equipment"] = (m if m > 0 else None), None, None, None
                 flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "EQUIPMENT_DERIVED_FROM_SUM", "MATERIAL_DERIVED_FROM_SUM")]
                 flags.append("MATERIAL_DERIVED_FROM_CREW_SUM")
-    if crew and vals["output"] and vals["equipment"] is not None and crew.get("bare_equip_daily") is not None:
+    if crew and vals["output"] and vals["output"] > 0 and vals["equipment"] is not None and crew.get("bare_equip_daily") is not None:
         exp = book_round(Decimal(str(crew["bare_equip_daily"])) / vals["output"])
         if abs(exp - vals["equipment"]) > rstep(exp):
             flags.append("EQUIP_CREW_MISMATCH")
@@ -734,14 +743,9 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
                     div2 = dv[1:]
                 out["divisions"].append(dv)
             continue
+        order_flag = None
         if line_no is not None and not partial:
-            if last_line is not None and int(line_no) <= last_line:
-                order_flag = "LINE_ORDER"
-            else:
-                order_flag = None
             last_line = int(line_no)
-        else:
-            order_flag = None
         ct = cell_tokens(body, bounds, desc_end)
         ci = cell_tokens([z for z in ir if not (re.fullmatch(r"\d{3,4}", z["t"]) and z["x0"] <= r[0]["x1"] + 5)], bounds, desc_end)
         desc_toks = [z for z in ct["desc"] if not JUNK_RE.fullmatch(z["t"])]
@@ -757,10 +761,14 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         cands = {k: numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w) for k in NUM_COLS}
         crew_id = normalise_crew(crew_raw, known) or normalise_crew(crew_raw_i, known)
         crew_src = "printed" if crew_id else None
-        if crew_id is None and (cands["hours"] or cands["output"]) and last_crew:
-            crew_id, crew_src = last_crew, "carried"
+        cell_has_text = bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) or bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or ""))
+        crew_unread = crew_id is None and cell_has_text
+        if crew_id is None and not cell_has_text and (cands["hours"] or cands["output"]) and last_crew:
+            crew_id, crew_src = last_crew, "carried"             # the book prints the crew once and leaves the cell blank below
         crew_row = crews.get(crew_id) if crew_id else None
         vals, confs, flags = settle(cands, crew_row)
+        if crew_unread:
+            flags.append("CREW_UNREAD")
         unit = normalise_unit(unit_raw) or normalise_unit(unit_raw_i)
         if unit:
             last_unit, unit_src = unit, "printed"
@@ -770,6 +778,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
             unit_src = None
         if crew_src == "printed":
             last_crew = crew_id
+        elif crew_unread:
+            last_crew = None                                   # whatever is printed here is what the lines below inherit: unknown
         if crew_id and crews and crew_row is None:
             flags.append("CREW_UNKNOWN")
         if partial:
