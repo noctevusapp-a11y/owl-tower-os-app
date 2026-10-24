@@ -15,46 +15,47 @@
 
 ## Numbers of this build
 
-* 651 table pages, 1337 sections, 27296 printed lines; **22521 priced lines**: **15049 verified** (67%), 7472 flagged (check the book page before use), 875 percentage-add lines, 3900 description-only lines.
-* 20277 lines carry a derived Los Angeles 2026-Q02 value (13446 of them verified).
+* 651 table pages (of 689; 38 with a damaged header are not parsed), 1337 sections, 27296 printed lines; **22521 priced lines**: **10630 verified**, 3347 machine_read (not verified), 8544 flagged (not verified), 875 percentage-add lines, 3900 description-only lines.
+* 20798 lines carry a derived Los Angeles 2026-Q02 value (10296 of them on verified lines).
 * Crews: 961 (incl. 378 single-trade crews built from the trade-rate table); trades: 45.
+* **verified** means: every printed money cell confirmed by all three readings (two OCR engines + the geometric reading of digits and decimal point) or computed by the book's arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; section id known. The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. No tolerance is attached to any number: a number is verified or it is not.
 
-| division | verified | flagged |
-|---|---|---|
-| 01 General Requirements | 288 | 102 |
-| 02 Existing Conditions | 330 | 150 |
-| 03 Concrete | 992 | 543 |
-| 04 Masonry | 468 | 350 |
-| 05 Metals | 992 | 630 |
-| 06 Wood, Plastics & Composites | 1422 | 467 |
-| 07 Thermal & Moisture Protection | 636 | 380 |
-| 08 Openings | 1078 | 610 |
-| 09 Finishes | 1302 | 527 |
-| 10 Specialties | 763 | 263 |
-| 11 Equipment | 297 | 134 |
-| 12 Furnishings | 312 | 107 |
-| 13 Special Construction | 424 | 213 |
-| 14 Conveying Equipment | 165 | 82 |
-| 21 Fire Suppression | 46 | 27 |
-| 22 Plumbing | 529 | 317 |
-| 23 Heating, Ventilating & Air Conditioning | 566 | 409 |
-| 26 Electrical | 883 | 320 |
-| 27 Communications | 54 | 39 |
-| 28 Electronic Safety & Security | 100 | 43 |
-| 31 Earthwork | 849 | 445 |
-| 32 Exterior Improvements | 565 | 272 |
-| 33 Utilities | 590 | 323 |
-| 34 Transportation | 40 | 17 |
-| 35 Waterway & Marine Construction | 8 | 5 |
-| 41 Material Processing & Handling Equipment | 16 | 4 |
-| 44 Pollution Control Equipment | 68 | 34 |
-| 46 Water & Wastewater Equipment | 6 | 5 |
-| 48 Electrical Power Generation | 1 | 7 |
+| division | verified | machine_read | flagged |
+|---|---|---|---|
+| 01 General Requirements | 258 | 31 | 102 |
+| 02 Existing Conditions | 245 | 100 | 162 |
+| 03 Concrete | 690 | 349 | 549 |
+| 04 Masonry | 363 | 96 | 359 |
+| 05 Metals | 673 | 319 | 633 |
+| 06 Wood, Plastics & Composites | 1088 | 340 | 472 |
+| 07 Thermal & Moisture Protection | 368 | 292 | 412 |
+| 08 Openings | 973 | 96 | 672 |
+| 09 Finishes | 613 | 707 | 532 |
+| 10 Specialties | 675 | 60 | 291 |
+| 11 Equipment | 294 | 15 | 134 |
+| 12 Furnishings | 268 | 20 | 131 |
+| 13 Special Construction | 314 | 110 | 213 |
+| 14 Conveying Equipment | 136 | 15 | 99 |
+| 21 Fire Suppression | 42 | 4 | 27 |
+| 22 Plumbing | 450 | 58 | 349 |
+| 23 Heating, Ventilating & Air Conditioning | 522 | 48 | 438 |
+| 26 Electrical | 810 | 97 | 339 |
+| 27 Communications | 50 | 4 | 39 |
+| 28 Electronic Safety & Security | 96 | 4 | 43 |
+| 31 Earthwork | 636 | 276 | 470 |
+| 32 Exterior Improvements | 374 | 190 | 273 |
+| 33 Utilities | 564 | 105 | 348 |
+| 34 Transportation | 37 | 3 | 17 |
+| 35 Waterway & Marine Construction | 7 | 1 | 5 |
+| 41 Material Processing & Handling Equipment | 16 | 0 | 4 |
+| 44 Pollution Control Equipment | 61 | 7 | 34 |
+| 46 Water & Wastewater Equipment | 6 | 0 | 5 |
+| 48 Electrical Power Generation | 1 | 0 | 7 |
 
 ## How to price a line (the rule)
 
 1. Find the line by `cost_code` (`OT-<section digits>-<line>`), by `section_id` + `line`, or by searching `description_path`. Check `unit` — the book's unit, not necessarily the takeoff unit.
-2. Read `status`. **verified** → usable as a reference. **flagged** → open `book_page` in the scan and read the line yourself; the values shown are the best readings, one of them may be wrong. **percent_add** → an adjustment in % of another line, not a cost.
+2. Read `status`. **verified** → usable as a reference. **machine_read** and **flagged** → not verified: open `book_page` in the scan and read the line yourself before using any of its numbers; do not use them with an allowance or a tolerance instead. **percent_add** → an adjustment in % of another line, not a cost.
 3. Take the **2022 national bare** columns when you want the book's own number (`material_2022`, `labor_2022`, `equipment_2022`, `total_2022`; `total_incl_op_2022` = with the installing contractor's O&P).
 4. Take the **Los Angeles 2026-Q02** columns (`material_la_latest`, `labor_la_latest`, `equipment_la_latest`, `total_la_latest`) for a current budget-level number: component × City Cost Index (LA, book) × BLS factor of that component. The factors used are written on the line (`material_factor_id`, `labor_factor`, …). These are *derived* values: `origin = derived`, unreviewed.
 5. Replace whatever you have better data for: a supplier quote replaces the material, the company's own crew cost / output replaces the labor (`labor_hours` × your loaded hourly rate is often the better path), a rental quote replaces the equipment.
@@ -62,14 +63,14 @@
 
 ## Worked example
 
-`OT-09291030-0115` — GYPSUM BOARD on walls & ceilings | 1/4" thick, on walls or ceilings, flexible, no finish included (book page 336, unit S.F., crew —, 1050 S.F./day, 0.015 labor-hours/S.F.)
+`OT-09291030-0590` — GYPSUM BOARD on walls & ceilings | 1/2" thick, on walls, standard, no finish included | Water resistant, no finish included | With compound skim coat (level 5 finish) (book page 336, unit S.F., crew —, 775 S.F./day, 0.021 labor-hours/S.F.)
 
 | component | 2022 national | × CCI LA | × BLS factor | LA latest |
 |---|---|---|---|---|
-| material | $0.32 | 1.051 | 1.1712 (WPU137) | $0.39 |
-| labor | $0.86 | 1.409 | 1.1718 (CIU2012300000000I) | $1.42 |
+| material | $0.44 | 1.051 | 1.1712 (WPU137) | $0.54 |
+| labor | $1.16 | 1.409 | 1.1718 (CIU2012300000000I) | $1.92 |
 | equipment | — | 1.409 | 1.3350 (WPU114) | — |
-| **total** | $1.18 | | | **$1.81** |
+| **total** | $1.60 | | | **$2.46** |
 
 ## Factors (BLS/EIA, January 2022 → latest)
 
@@ -170,7 +171,7 @@
 
 ## Limits (read before quoting from this table)
 
-* Machine-read from a scan; verified means two independent readings or the table arithmetic agree — a random spot check is in `spot_check/` and the rate of fully correct rows is in `extraction_report.md`. Flagged lines are not cleaned up.
+* Machine-read from a scan; verified means all three readings or the book's arithmetic confirm every number and the columns are tied — the random spot checks are in `spot_check/` and their results in `extraction_report.md`. machine_read and flagged lines are not cleaned up and are not verified; no error margin is attached to them or to anything else in the table.
 * 2022 national averages of union-wage cities; Los Angeles is applied through the book's own index; time through national BLS indices. No supplier, no quantity discount, no tax, no delivery, no company markup.
 * Equipment includes fuel in the book; fuel is not escalated separately (diesel rose faster than machinery).
 * Descriptions are OCR text; `description_path` applies the book's indentation rule mechanically.

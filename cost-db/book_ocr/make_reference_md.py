@@ -28,7 +28,7 @@ def main() -> int:
     trades = list(csv.DictReader(trades_csv.open(encoding="utf-8")))
     crews = list(csv.DictReader(crews_csv.open(encoding="utf-8")))
     st = Counter(r["status"] for r in rows)
-    priced = st["verified"] + st["flagged"]
+    priced = st["verified"] + st["machine_read"] + st["flagged"]
     by_div = defaultdict(lambda: Counter())
     names = {}
     for r in rows:
@@ -59,20 +59,25 @@ def main() -> int:
           "| `…/reference/crews_all_2022.csv`, `trade_rates_2022.csv`, `cci_los_angeles_2022.csv` | crews (labor-hours and daily cost per crew), trade rates, Los Angeles city cost index |",
           "| `cost-db/docs/price_update_factors.md` | the BLS/EIA factors 2022-01 → latest, with sources |", "",
           "## Numbers of this build", "",
-          f"* {rep['pages']} table pages, {rep['sections']} sections, {rep['lines']} printed lines; **{priced} priced lines**: "
-          f"**{st['verified']} verified** ({st['verified'] / max(1, priced):.0%}), {st['flagged']} flagged (check the book page before use), "
+          f"* {rep['pages']} table pages (of 689; 38 with a damaged header are not parsed), {rep['sections']} sections, {rep['lines']} printed lines; "
+          f"**{priced} priced lines**: **{st['verified']} verified**, {st['machine_read']} machine_read (not verified), {st['flagged']} flagged (not verified), "
           f"{st['percent_add']} percentage-add lines, {st['header']} description-only lines.",
-          f"* {drep['priced_latest']} lines carry a derived Los Angeles {latest.replace('M', '-')} value ({drep['verified_latest']} of them verified).",
+          f"* {drep['priced_latest']} lines carry a derived Los Angeles {latest.replace('M', '-')} value ({drep['verified_latest']} of them on verified lines).",
           f"* Crews: {len(crews)} (incl. {sum(1 for c in crews if c['crew_id'][0].isdigit() or c['crew_id'][0] == '.')} single-trade crews built from the trade-rate table); "
-          f"trades: {len(trades)}.", "",
-          "| division | verified | flagged |", "|---|---|---|"]
+          f"trades: {len(trades)}.",
+          "* **verified** means: every printed money cell confirmed by all three readings (two OCR engines + the geometric reading of digits and decimal "
+          "point) or computed by the book's arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; "
+          "section id known. The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. "
+          "No tolerance is attached to any number: a number is verified or it is not.", "",
+          "| division | verified | machine_read | flagged |", "|---|---|---|---|"]
     for d in sorted(by_div):
-        md.append(f"| {d} {names[d]} | {by_div[d]['verified']} | {by_div[d]['flagged']} |")
+        md.append(f"| {d} {names[d]} | {by_div[d]['verified']} | {by_div[d]['machine_read']} | {by_div[d]['flagged']} |")
     md += ["", "## How to price a line (the rule)", "",
            "1. Find the line by `cost_code` (`OT-<section digits>-<line>`), by `section_id` + `line`, or by searching `description_path`. "
            "Check `unit` — the book's unit, not necessarily the takeoff unit.",
-           "2. Read `status`. **verified** → usable as a reference. **flagged** → open `book_page` in the scan and read the line yourself; "
-           "the values shown are the best readings, one of them may be wrong. **percent_add** → an adjustment in % of another line, not a cost.",
+           "2. Read `status`. **verified** → usable as a reference. **machine_read** and **flagged** → not verified: open `book_page` in the scan and "
+           "read the line yourself before using any of its numbers; do not use them with an allowance or a tolerance instead. "
+           "**percent_add** → an adjustment in % of another line, not a cost.",
            "3. Take the **2022 national bare** columns when you want the book's own number (`material_2022`, `labor_2022`, `equipment_2022`, "
            "`total_2022`; `total_incl_op_2022` = with the installing contractor's O&P).",
            f"4. Take the **Los Angeles {latest.replace('M', '-')}** columns (`material_la_latest`, `labor_la_latest`, `equipment_la_latest`, `total_la_latest`) "
@@ -102,8 +107,9 @@ def main() -> int:
         if t["abbr"] and not t["abbr"].startswith("*"):
             md.append(f"| {t['abbr']} | {t['trade']} | {t['base_hourly']} | {t['rate_op_hourly']} |")
     md += ["", "## Limits (read before quoting from this table)", "",
-           "* Machine-read from a scan; verified means two independent readings or the table arithmetic agree — a random spot check is in "
-           "`spot_check/` and the rate of fully correct rows is in `extraction_report.md`. Flagged lines are not cleaned up.",
+           "* Machine-read from a scan; verified means all three readings or the book's arithmetic confirm every number and the columns are tied — "
+           "the random spot checks are in `spot_check/` and their results in `extraction_report.md`. machine_read and flagged lines are not cleaned up "
+           "and are not verified; no error margin is attached to them or to anything else in the table.",
            "* 2022 national averages of union-wage cities; Los Angeles is applied through the book's own index; time through national BLS indices. "
            "No supplier, no quantity discount, no tax, no delivery, no company markup.",
            "* Equipment includes fuel in the book; fuel is not escalated separately (diesel rose faster than machinery).",

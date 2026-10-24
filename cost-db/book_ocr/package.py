@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Copy the finished book table into the repository data folder and write the XLSX for the office.
 
-  python3 -I package.py <table_dir> <spot_dir> <dest_dir>
+  python3 -I package.py <table_dir> <dest_dir> [--spot label=spot_dir ...]
+
+Each --spot folder (sample.csv + sheet_*.png from spot_check.py, verdicts filled) is copied to <dest_dir>/spot_check/<label>/.
+The spot_check folder is regenerated: what was there before is removed.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import shutil
@@ -14,15 +18,35 @@ from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
+README = (
+    "Owl Tower book table: 2022 national bare costs read from the company's reference copy of the 2022 cost book, with derived Los Angeles latest-month estimates.",
+    "status = verified: every printed number confirmed by all three readings (two OCR engines + the geometric reading) or computed by the book's arithmetic, "
+    "no check open, money columns tied. machine_read: no check failed but a number rests on fewer readings. flagged: a check failed or a cell is unreadable.",
+    "Only verified lines are verified. machine_read and flagged lines: read the line on book_page before use. No tolerance is attached to any number.",
+    "*_la_latest = component x City Cost Index (LA, 2022) x BLS factor per component; derived, unreviewed. Not quotes, not observed 2026 prices.",
+    "Column dictionary: COLUMNS.md. Report: extraction_report.md. Spot checks: spot_check/.",
+)
+
 
 def main() -> int:
-    table, spot, dest = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("table")
+    ap.add_argument("dest")
+    ap.add_argument("--spot", action="append", default=[], help="label=directory of a spot-check sample")
+    a = ap.parse_args()
+    table, dest = Path(a.table), Path(a.dest)
     dest.mkdir(parents=True, exist_ok=True)
     for name in ("book_lines_la_latest.csv", "book_lines_la_latest.json", "book_sections.csv", "build_report.json", "derive_report.json"):
         shutil.copy(table / name, dest / name)
-    (dest / "spot_check").mkdir(exist_ok=True)
-    for p in spot.glob("*"):
-        shutil.copy(p, dest / "spot_check" / p.name)
+    spot_root = dest / "spot_check"
+    if spot_root.exists():
+        shutil.rmtree(spot_root)
+    for item in a.spot:
+        label, src = item.split("=", 1)
+        (spot_root / label).mkdir(parents=True, exist_ok=True)
+        for p in Path(src).glob("*"):
+            if p.is_file():
+                shutil.copy(p, spot_root / label / p.name)
     rows = list(csv.DictReader((table / "book_lines_la_latest.csv").open(encoding="utf-8")))
     wb = Workbook()
     ws = wb.active
@@ -60,14 +84,11 @@ def main() -> int:
         for row in csv.reader(f):
             ws2.append(row)
     ws3 = wb.create_sheet("readme")
-    for line in ("Owl Tower book table: 2022 national bare costs read from the company's reference copy of the 2022 cost book, with derived Los Angeles latest-month estimates.",
-                 "status = verified: every number supported by two independent readings or the table arithmetic; flagged: check against the book page before use.",
-                 "*_la_latest = component x City Cost Index (LA, 2022) x BLS factor per component; derived, unreviewed. Not quotes, not observed 2026 prices.",
-                 "Column dictionary: COLUMNS.md. Report: extraction_report.md."):
+    for line in README:
         ws3.append([line])
     wb.save(dest / "book_lines_la_latest.xlsx")
     rep = json.loads((table / "build_report.json").read_text(encoding="utf-8"))
-    print(f"packaged {len(rows)} rows; verified {rep.get('verified')} flagged {rep.get('flagged')} -> {dest}")
+    print(f"packaged {len(rows)} rows; verified {rep.get('verified')} machine_read {rep.get('machine_read')} flagged {rep.get('flagged')} -> {dest}")
     return 0
 
 
