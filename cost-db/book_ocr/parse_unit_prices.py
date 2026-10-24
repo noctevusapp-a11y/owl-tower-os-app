@@ -244,6 +244,8 @@ def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
                 return []
             if kind == "hours" and len(frac) != 3:
                 return []                                      # labor-hours are always printed with three decimals
+            if kind in MONEY and len(frac) > 2:
+                return []                                      # a cost never has more than two decimals: merged or garbled token
             out.append((Decimal((whole or "0") + "." + frac), "as_read"))
         else:
             s2 = s.replace(",", "")
@@ -297,7 +299,8 @@ def book_round(v: Decimal) -> Decimal:
 
 
 # ----------------------------------------------------------------------------------------------- settle one row
-WEIGHT = {("G", "as_read"): 3.0, ("T", "as_read"): 1.0, ("I", "as_read"): 1.0, ("T", "point_restored"): 0.25, ("I", "point_restored"): 0.25}
+WEIGHT = {("G", "as_read"): 3.0, ("T", "as_read"): 1.0, ("I", "as_read"): 1.0, ("T", "point_restored"): 0.25, ("I", "point_restored"): 0.25,
+          ("T", "count_mismatch"): 0.5, ("I", "count_mismatch"): 0.5}
 
 
 def weights(cands: list[tuple[Decimal, str, str]]) -> dict[Decimal, float]:
@@ -503,6 +506,19 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
         vals["total_op"] = None
         conf["total_op"] = None
         flags.append("TOTAL_OP_UNREADABLE")
+    if vals["total_op"] is not None and vals["labor"] is None and vals["equipment"] is None and vals["material"] is not None and not W["labor"] and not W["equipment"]:
+        # material-only line: the book adds 10% for overhead and profit
+        m = vals["material"]
+        tol = Decimal("0.55") * rstep(m) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
+        if abs(Decimal("1.10") * m - vals["total_op"]) > tol:
+            m2 = vals["total_op"] / Decimal("1.10")
+            alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]
+            if len(alts) == 1 and (conf.get("material") or 0) < 4.0:
+                vals["material"], conf["material"], vals["total"] = alts[0], None, alts[0]
+                flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "TOTAL_DERIVED_FROM_SUM")]
+                flags.append("MATERIAL_FROM_OP_CHECK")
+            else:
+                flags.append("OP_MISMATCH")
     if crew and vals["total_op"] is not None and vals["output"] and vals["output"] > 0 and crew.get("op_labor_daily") is not None \
             and (vals["labor"] is not None or vals["material"] is not None) and "LABOR_CREW_MISMATCH" not in flags:
         o = vals["output"]
@@ -614,6 +630,21 @@ def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
                 cells["output"].append({**z, "t": m.group(1), "x1": int(cut) - 8})
                 cells["hours"].append({**z, "t": "." + m.group(2), "x0": int(cut) + 8})
                 continue
+        if k in MONEY:
+            # one token spanning two money columns ("89.15105" = 89.15 | 105): split it at the column boundary
+            i = COLS.index(k)
+            pair = None
+            if k != "total_op" and z["x1"] > bounds[COLS[i + 1]][0] + 25 and z["x0"] < bounds[k][1] - 25:
+                pair = (k, COLS[i + 1])
+            elif k != "material" and z["x0"] < bounds[COLS[i - 1]][1] - 25 and z["x1"] > bounds[k][0] + 25:
+                pair = (COLS[i - 1], k)
+            if pair:
+                mm = re.fullmatch(r"(\d[\d,]*\.\d{2})(\d[\d,]*(?:\.\d{1,2})?)", z["t"].replace(" ", ""))
+                if mm:
+                    cut = bounds[pair[0]][1]
+                    cells[pair[0]].append({**z, "t": mm.group(1), "x1": int(cut) - 8})
+                    cells[pair[1]].append({**z, "t": mm.group(2), "x0": int(cut) + 8})
+                    continue
         if k:
             cells[k].append(z)
     return {"desc": desc, "cells": cells}
@@ -638,14 +669,22 @@ def numeric_candidates(kind: str, toks_t: list[dict], toks_i: list[dict], img: O
             g = analyse(img, x0, x1, y0, y1)
             if g is not None and len(g.points) <= 1:
                 # the geometry fixes the POINT of each OCR digit string; it does not decide between different digit strings
+                matched = False
                 for d in sorted({digits_of(raw_t), digits_of(raw_i)}):
                     if d:
                         s = g.apply(d)
                         if s is not None:
+                            frac = s.split(".")[1] if "." in s else ""
+                            if (kind == "hours" and len(frac) != 3) or (kind in MONEY and len(frac) > 2):
+                                continue                       # not a printable value: the box spans two cells or is garbled
+                            matched = True
                             try:
                                 out.append((Decimal(s), "as_read", "G"))
                             except Exception:
                                 pass
+                if not matched and g.tall and all(len(d) != len(g.tall) for d in (digits_of(raw_t), digits_of(raw_i)) if d):
+                    # the page shows another number of digit glyphs than any OCR string has: both readings are suspect
+                    out = [(v, "count_mismatch", src) for v, how, src in out]
     return out
 
 

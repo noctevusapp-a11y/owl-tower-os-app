@@ -48,13 +48,13 @@ def row_y(ocr_dir: Path, pdf_page: int, line: str, desc: str) -> tuple[int, int,
                 h = int(r["height"])
             if r["level"] == "5" and r["text"].strip():
                 words.append((int(r["left"]), int(r["top"]), int(r["width"]), int(r["height"]), r["text"].strip()))
-    first = (desc.split() or [""])[0][:4].lower()
+    want = [t[:4].lower() for t in desc.split()[:2]]
     cands = [w for w in words if w[0] < 230 and (w[4] == line or (line and w[4] == line[-3:] and w[0] < 60))]
     best = None
     for w in cands:
         yc = w[1] + w[3] / 2
-        same = [z for z in words if abs(z[1] + z[3] / 2 - yc) < 18 and z[0] > w[0] + 30]
-        if not first or any(z[4][:4].lower() == first for z in same):
+        same = [z[4][:4].lower() for z in words if abs(z[1] + z[3] / 2 - yc) < 18 and z[0] > w[0] + 30]
+        if all(t in same for t in want):
             best = w
             break
     if best is None:
