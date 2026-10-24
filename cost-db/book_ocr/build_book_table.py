@@ -34,9 +34,9 @@ DIVISION_NAMES = {
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
               "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING", "EQUIPMENT_DERIVED_FROM_SUM",
-              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED"}
+              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED", "COLUMN_SLIP_MOVED", "UNIT_UNREAD"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED", "HEADER_TEMPLATE",
-              "CREW_FROM_ARITHMETIC", "COLUMN_SLIP_MOVED",
+              "CREW_FROM_ARITHMETIC", "OUTPUT_HOURS_CREW_CHECK", "OUTPUT_FROM_CREW_CHECK", "LABOR_CREW_OK", "OP_CHECK_OK",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
               "PERCENT_ADD", "TOTAL_OP_UNREADABLE", "EQUIP_CREW_DIFFERS"}
@@ -211,9 +211,14 @@ def main() -> int:
             lo = prev if prev is not None else -1
             hi = nxt if nxt is not None else 10000
             cands = [v for v in range(int(tail), 10000, step) if lo < v < hi]
-            if len(cands) == 1:
+            if len(cands) == 1 and len(tail) == 3:
                 it["line_no"] = f"{cands[0]:04d}"
                 it["reconstructed"] = True
+                last_ok[sec] = cands[0]
+            elif len(cands) == 1:
+                # a two-digit tail may be a cut number or a number that lost a digit in OCR: the restored value is an assumption
+                it["line_no"] = f"{cands[0]:04d}"
+                it["assumed"] = True
                 last_ok[sec] = cands[0]
             elif len(cands) > 1 and len(tail) == 3 and prev is not None:
                 # only the thousands digit is cut and no later full number brackets it: the smallest value continuing the
@@ -268,21 +273,52 @@ def main() -> int:
         open_flags = [f for f in flags if f in OPEN_FLAGS or f.startswith("WEAK_READING")]
         pct = ln.get("percent") or {}
         conf = ln.get("conf", {})
-        # strict tier: every printed money cell confirmed by all three readings (both OCR engines + the geometry, weight >= 4) or
-        # computed from the others by the book's arithmetic; output and hours confirmed by two readings or by the crew rule
-        def cell_ok(c):
-            if ln[c] is None:
-                return True
-            w = conf.get(c)
-            derived = any(f.startswith(c.upper() + "_DERIVED") or (c == "material" and f == "MATERIAL_FROM_OP_CHECK") for f in flags)
-            return derived if w is None else w >= 4.0
-        oh_ok = (ln["labor"] is None) or all((conf.get(c) or 0) >= 2.0 or any(f.startswith(c.upper() + "_DERIVED") or f == "OUTPUT_FROM_LABOR_CHECK" for f in flags)
-                                           for c in ("output", "hours"))
+        # strict tier. A printed number is CONFIRMED when two different engines read exactly the same value (the scan's text
+        # layer and tesseract — tesseract at 360 and at 600 dpi is one engine; the geometric reading fixes the decimal point,
+        # it does not read digits), or when an identity of the book determines it from confirmed cells:
+        #   crew day      output x hours = crew labor-hours           (crew known; one cell confirms the other)
+        #   crew labor    labor = crew daily labor cost / output       (LABOR_CREW_OK; one confirms the other)
+        #   O&P           total incl. O&P = 1.10 M + crew O&P labor / output + 1.10 E   (OP_CHECK_OK; all but one confirm the last)
+        #   sum           total = material + labor + equipment        (money settled; all but one confirm the last)
+        # A cell computed by the settle step (…_DERIVED…) has no reading and is confirmed only through these identities.
+        raw = ln.get("raw", {})
+        fl = set(flags)
+        numeric = ("output", "hours", "material", "labor", "equipment", "total", "total_op")
+        present = [c for c in numeric if ln[c] is not None]
+
+        def engines(c):
+            srcs = {src for val, how, src in raw.get(c, []) if how == "as_read" and str(val) == str(ln[c])}
+            return ({"I"} if "I" in srcs else set()) | ({"T"} if srcs & {"T", "H"} else set())
+
+        covered = {c for c in present if len(engines(c)) >= 2}
+        money_settled = not (fl & {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS"})
+        for _ in range(4):
+            before = len(covered)
+            if crew is not None and "OUTPUT_HOURS_CREW_CHECK" in fl or any(f in fl for f in ("HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_CREW_CHECK")):
+                if ln["output"] is not None and ln["hours"] is not None and ({"output", "hours"} & covered):
+                    covered |= {"output", "hours"}
+            if "LABOR_CREW_OK" in fl and ln["labor"] is not None and ln["output"] is not None and ({"labor", "output"} & covered):
+                covered |= {"labor", "output"}
+            if "OUTPUT_FROM_LABOR_CHECK" in fl or "OUTPUT_DERIVED_FROM_LABOR" in fl:
+                if "labor" in covered and ln["output"] is not None:
+                    covered.add("output")
+            for ok_flag, cells in (("OP_CHECK_OK", ("material", "labor", "equipment", "total_op")), (None, ("material", "labor", "equipment", "total"))):
+                if ok_flag and ok_flag not in fl:
+                    continue
+                if ok_flag is None and not (money_settled and ln["total"] is not None):
+                    continue
+                members = [c for c in cells if ln[c] is not None]
+                missing = [c for c in members if c not in covered]
+                if len(members) >= 2 and len(missing) == 1:
+                    covered.add(missing[0])
+            if len(covered) == before:
+                break
+        cells_ok = all(c in covered for c in present)
         # column tie: when the total was not printed/read (derived) and no O&P value cross-checks the row, nothing ties the money
         # cells to their columns; an equipment value is then accepted only when the crew's own equipment cost confirms it
         columns_tied = ("TOTAL_DERIVED_FROM_SUM" not in flags) or ln["total_op"] is not None or ln["equipment"] is None \
             or (crew is not None and "EQUIP_CREW_DIFFERS" not in flags)
-        strict = all(cell_ok(c) for c in ("material", "labor", "equipment", "total")) and oh_ok and columns_tied
+        strict = cells_ok and columns_tied
         status = "percent_add" if pct else ("header" if not has_cost and ln["output"] is None else
                                            ("flagged" if open_flags else ("verified" if strict else "machine_read")))
         cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None

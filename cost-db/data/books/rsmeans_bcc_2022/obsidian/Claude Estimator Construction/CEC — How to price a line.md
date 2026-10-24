@@ -16,13 +16,13 @@ build: 2026-10-24
 
 ## Worked example
 
-`OT-09291030-0590` — GYPSUM BOARD on walls & ceilings | 1/2" thick, on walls, standard, no finish included | Water resistant, no finish included | With compound skim coat (level 5 finish) (book page 336, unit S.F., crew —, 775 S.F./day, 0.021 labor-hours/S.F.)
+`OT-09291030-1050` — GYPSUM BOARD on walls & ceilings | 1/2" thick, on walls, standard, no finish included | On ceilings, stondard, no finish included | Taped and finished (level 4 finish) (book page 336, unit S.F., crew —, 765 S.F./day, 0.021 labor-hours/S.F.)
 
 | component | 2022 national | × CCI LA | × BLS factor | LA latest |
 |---|---|---|---|---|
-| material | $0.44 | 1.051 | 1.1712 (WPU137) | $0.54 |
-| labor | $1.16 | 1.409 | 1.1718 (CIU2012300000000I) | $1.92 |
+| material | $0.30 | 1.051 | 1.1712 (WPU137) | $0.37 |
+| labor | $1.18 | 1.409 | 1.1718 (CIU2012300000000I) | $1.95 |
 | equipment | — | 1.409 | 1.3350 (WPU114) | — |
-| **total** | $1.60 | | | **$2.46** |
+| **total** | $1.48 | | | **$2.32** |
 
 Back to [[Claude Estimator Construction]].

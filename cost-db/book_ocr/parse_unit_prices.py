@@ -57,6 +57,9 @@ UNIT_TABLE = {"SF": "S.F.", "SY": "S.Y.", "LF": "L.F.", "CF": "C.F.", "CY": "C.Y
               "ACRE": "Acre", "LOAD": "Load", "TRIP": "Trip", "UNIT": "Unit", "HOUR": "Hr.", "SYST": "System", "SYSTEM": "System", "OUTLET": "Outlet",
               "FIXT": "Fixt.", "GALLON": "Gal.", "YEAR": "Year", "YR": "Year", "PERSON": "Person", "KW": "kW", "HP": "H.P.", "LBS": "Lb.", "TONS": "Ton",
               "EACH": "Ea.", "VERT": "V.L.F.", "SQFT": "S.F.", "LNFT": "L.F.", "CUYD": "C.Y.", "DRUM": "Drum", "CAN": "Can", "BUNDLE": "Bundle",
+              # units of the book missing above, and OCR shapes of printed units that no other unit can take (F read as E, C as O)
+              "BCY": "B.C.Y.", "LCY": "L.C.Y.", "ECY": "E.C.Y.", "STOP": "Stop", "POINT": "Point", "SFSURF": "S.F. Surf.",
+              "VLE": "V.L.F.", "CLE": "C.L.F.", "MLE": "M.L.F.", "MSE": "M.S.F.", "MBE": "M.B.F.", "CSE": "C.S.F.", "OLE": "C.L.F.",
               "BDL": "Bundle", "CARTON": "Carton", "PKG": "Pkg.", "SPAN": "Span", "SEAT": "Seat", "COURT": "Court", "LANE": "Lane", "BED": "Bed",
               "STALL": "Stall", "DOOR": "Door", "LEAF": "Leaf", "WINDOW": "Window", "VEHICLE": "Vehicle", "BAY": "Bay", "SPACE": "Space",
               "SE": "S.F.", "SR": "S.F.", "LE": "L.F.", "CE": "C.F.", "EO": "Ea.", "FA": "Ea.", "SYS": "System", "CSY": "C.S.Y."}
@@ -462,6 +465,8 @@ def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
                 return []
             if kind == "hours" and len(frac) != 3:
                 return []                                      # labor-hours are always printed with three decimals
+            if kind == "output" and len(frac) >= 3:
+                return []                                      # a daily output never has three decimals: the hours' digits merged into it
             if kind in MONEY and len(frac) > 2:
                 return []                                      # a cost never has more than two decimals: merged or garbled token
             out.append((Decimal((whole or "0") + "." + frac), "as_read"))
@@ -644,13 +649,33 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 continue
             score = W["output"].get(o, 0.0) + W["hours"].get(h, 0.0)
             if best_score is None or score > best_score + 1e-9:
-                best, best_score, ties = (o, h), score, 0
-            elif abs(score - best_score) <= 1e-9 and (o, h) != best:
+                # without a known crew the crew-day rule (a multiple of 4 labor-hours) is weak: a second pair of readings with
+                # other digits that also passes it leaves the cell undecided, whatever the weights
+                if best is not None and lh_known is None and (digits_of(str(o)) != digits_of(str(best[0])) or digits_of(str(h)) != digits_of(str(best[1]))):
+                    ties += 1
+                best, best_score = (o, h), score
+            elif (abs(score - best_score) <= 1e-9 or lh_known is None) and (o, h) != best \
+                    and (lh_known is not None or digits_of(str(o)) != digits_of(str(best[0])) or digits_of(str(h)) != digits_of(str(best[1]))):
                 ties += 1
     oh_settled = bool(best) and ties == 0
+
+    def reading_compatible(k, derived):
+        """A value computed by the crew rule must not contradict what was read in the cell: the digits of at least one
+        reading (even a doubtful one) must be the digits of the computed value or its tail (a cut leading digit)."""
+        if not W[k]:
+            return True
+        d = digits_of(str(derived))
+        for v in W[k]:
+            s = digits_of(str(v)).lstrip("0")
+            if s and (d == s or d.endswith(s)):
+                return True
+        return False
+
     if best and ties == 0:
         vals["output"], vals["hours"] = best
         conf["output"], conf["hours"] = W["output"].get(best[0]), W["hours"].get(best[1])
+        if lh_known is not None:
+            flags.append("OUTPUT_HOURS_CREW_CHECK")           # the pair reproduces the crew's labor-hours per day
     else:
         if best:
             flags.append("OUTPUT_HOURS_AMBIGUOUS")
@@ -660,18 +685,33 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
             strong[k] = good[0][1] if good and (len(good) == 1 or good[0][0] > good[1][0]) else None
         done = False
         if not best and lh_known is not None:
-            # labor-hours = crew labor-hours / daily output by definition: one strong value defines the other
+            # labor-hours = crew labor-hours / daily output by definition: one strong value defines the other, provided the
+            # computed value does not contradict what was read in the other cell
             if strong["output"] and strong["output"] > 0:
-                vals["output"], conf["output"] = strong["output"], W["output"].get(strong["output"])
-                vals["hours"] = (lh_known / strong["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
-                flags.append("HOURS_DERIVED_FROM_CREW")
-                done = True
+                h = (lh_known / strong["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                if reading_compatible("hours", h):
+                    vals["output"], conf["output"] = strong["output"], W["output"].get(strong["output"])
+                    vals["hours"] = h
+                    flags.append("HOURS_DERIVED_FROM_CREW")
+                    done = True
             elif strong["hours"] and strong["hours"] > 0:
-                vals["hours"], conf["hours"] = strong["hours"], W["hours"].get(strong["hours"])
-                o = lh_known / strong["hours"]
-                vals["output"] = o.quantize(Decimal("1")) if abs(o - o.quantize(Decimal("1"))) < Decimal("0.02") * o else o.quantize(Decimal("0.01"))
-                flags.append("OUTPUT_DERIVED_FROM_CREW")
-                done = True
+                # hours are printed to 3 decimals: the output is only known within an interval; it is taken when exactly one
+                # reading of the cell (any weight) lies in it, or, for outputs of 20 and more (printed as integers), when
+                # exactly one integer does and no reading contradicts it
+                h = strong["hours"]
+                o_lo, o_hi = lh_known / (h + Decimal("0.0005")), lh_known / (h - Decimal("0.0005"))
+                reads = [v for v in W["output"] if o_lo <= v <= o_hi]
+                ints = [Decimal(i) for i in range(int(o_lo) + 1, int(o_hi) + 1) if o_lo <= i <= o_hi] if o_hi >= 20 else []
+                if len(reads) == 1:
+                    vals["hours"], conf["hours"] = h, W["hours"].get(h)
+                    vals["output"], conf["output"] = reads[0], W["output"].get(reads[0])
+                    flags.append("OUTPUT_FROM_CREW_CHECK")
+                    done = True
+                elif not reads and len(ints) == 1 and reading_compatible("output", ints[0]):
+                    vals["hours"], conf["hours"] = h, W["hours"].get(h)
+                    vals["output"] = ints[0]
+                    flags.append("OUTPUT_DERIVED_FROM_CREW")
+                    done = True
         if not done:
             if not best and (W["output"] or W["hours"]):
                 flags.append("OUTPUT_HOURS_UNSETTLED")
@@ -682,6 +722,8 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     if crew and vals["labor"] is not None and crew.get("bare_labor_daily") is not None and vals["labor"] > 0:
         daily = Decimal(str(crew["bare_labor_daily"]))
         ok = vals["output"] is not None and vals["output"] > 0 and abs(book_round(daily / vals["output"]) - vals["labor"]) <= rstep(vals["labor"])
+        if ok:
+            flags.append("LABOR_CREW_OK")                      # labor = crew daily labor cost / output, as printed
         if not ok:
             # the printed labor cost is crew daily cost / output: find the output reading (any source) that reproduces it
             alts = [o for o in opts("output") if o and o > 0 and abs(book_round(daily / o) - vals["labor"]) <= rstep(vals["labor"])]
@@ -719,10 +761,12 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                         flags.append("LABOR_DERIVED_FROM_CREW_SUM")
                     else:
                         flags.append("LABOR_CREW_MISMATCH")
-    # labor confirmed by the crew rule + strong material (+ equipment): a total that does not add up is the misread cell
+    # labor confirmed by the crew rule + strong material (+ equipment): a total that does not add up is the misread cell —
+    # unless the total itself is geometry-backed (weight >= 4): then three well-read cells contradict and the line stays open
     if crew and vals["labor"] is not None and vals["material"] is not None and vals["total"] is not None and "LABOR_CREW_MISMATCH" not in flags \
             and crew.get("bare_labor_daily") is not None and vals["output"] and vals["output"] > 0 and (conf.get("material") or 0) >= 2.0 \
-            and (conf.get("labor") or 0) >= 2.0 and abs(vals["material"] + vals["labor"] + (vals["equipment"] or 0) - vals["total"]) > Decimal("0.011"):
+            and (conf.get("labor") or 0) >= 2.0 and (conf.get("total") or 0) < 4.0 \
+            and abs(vals["material"] + vals["labor"] + (vals["equipment"] or 0) - vals["total"]) > Decimal("0.011"):
         vals["total"], conf["total"] = vals["material"] + vals["labor"] + (vals["equipment"] or 0), None
         flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS")]
         flags.append("TOTAL_DERIVED_FROM_SUM")
@@ -730,7 +774,12 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     if crew and crew.get("bare_labor_daily") is not None and vals["labor"] is not None and vals["output"] and vals["total"] is not None \
             and "LABOR_CREW_MISMATCH" not in flags and (crew.get("bare_equip_daily") or 0) == 0 and conf.get("total", 0) and conf["total"] >= 2.0:
         m = vals["total"] - vals["labor"]
-        if vals["equipment"] is not None or (vals["material"] is not None and vals["material"] != m) or (vals["material"] is None and m > 0):
+        # only a material cell that was not read, or read weakly, is pinned by the total; a well-read material that
+        # disagrees means the total (or the labor) is the misread cell and the line stays open
+        # an equipment value read on a crew without equipment is NOT repaired here: it is the signature of a column slip and
+        # the line is flagged by the table builder (EQUIP_WITHOUT_CREW_EQUIP)
+        if vals["equipment"] is None and ((vals["material"] is not None and vals["material"] != m and (conf.get("material") or 0) < 2.0)
+                                          or (vals["material"] is None and m > 0)):
             if m >= 0 and (m <= 5 or m == book_round(m)):
                 vals["material"], conf["material"], vals["equipment"], conf["equipment"] = (m if m > 0 else None), None, None, None
                 flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "EQUIPMENT_DERIVED_FROM_SUM", "MATERIAL_DERIVED_FROM_SUM")]
@@ -744,14 +793,17 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     if good and good[0][0] >= 2.0 and (len(good) == 1 or good[0][0] > good[1][0]):
         vals["total_op"], conf["total_op"] = good[0][1], good[0][0]
     if vals["total_op"] is not None and vals["total"] is not None and not (vals["total"] <= vals["total_op"] <= vals["total"] * Decimal("2.2")):
+        strong_op = (conf["total_op"] or 0) >= 4.0           # geometry-backed: the glyphs are complete, not cut at the page edge
         vals["total_op"] = None
         conf["total_op"] = None
-        flags.append("TOTAL_OP_UNREADABLE")
+        flags.append("OP_MISMATCH" if strong_op else "TOTAL_OP_UNREADABLE")   # a well-read O&P that contradicts the total: the total is in doubt
     if vals["total_op"] is not None and vals["labor"] is None and vals["equipment"] is None and vals["material"] is not None and not W["labor"] and not W["equipment"]:
         # material-only line: the book adds 10% for overhead and profit
         m = vals["material"]
         tol = Decimal("0.55") * rstep(m) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
-        if abs(Decimal("1.10") * m - vals["total_op"]) > tol:
+        if abs(Decimal("1.10") * m - vals["total_op"]) <= tol:
+            flags.append("OP_CHECK_OK")                        # total incl. O&P = 1.10 x material, as printed
+        else:
             m2 = vals["total_op"] / Decimal("1.10")
             alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]
             if len(alts) == 1 and (conf.get("material") or 0) < 4.0:
@@ -769,7 +821,9 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
         exp = Decimal("1.10") * m + l_op + e_op
         tol = (Decimal("0.55") * rstep(m) if m else Decimal(0)) + (rstep(vals["labor"]) / 2 if vals["labor"] is not None else Decimal(0)) \
             + (rstep(vals["equipment"]) / 2 if vals["equipment"] is not None else Decimal(0)) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
-        if abs(exp - vals["total_op"]) > tol:
+        if abs(exp - vals["total_op"]) <= tol:
+            flags.append("OP_CHECK_OK")                        # total incl. O&P = 1.10 x M + crew O&P labor / output + 1.10 x E, as printed
+        else:
             # a material the O&P column disagrees with: pick the material candidate the O&P supports, if exactly one does
             m2 = (vals["total_op"] - l_op - e_op) / Decimal("1.10")
             alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]

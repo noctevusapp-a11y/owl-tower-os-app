@@ -30,8 +30,10 @@ MEANING = {"MONEY_UNSETTLED": "material/labor/equipment/total do not add up for 
            "EQUIPMENT_DERIVED_FROM_SUM": "equipment computed as total − material − labor (no crew confirmation)",
            "EQUIP_WITHOUT_CREW_EQUIP": "an equipment cost on a crew that owns no equipment — the signature of the total slipping one column left",
            "SECTION_UNKNOWN": "no section id read on the page and none could be carried from the previous page: the line has no cost code",
-           "LINE_NUMBER_ASSUMED": "thousands digit cut at the page edge and no later full number brackets it: the smallest value continuing the "
-                                  "numbering was taken (assumes the section skips no whole thousand)",
+           "LINE_NUMBER_ASSUMED": "leading digit(s) of the line number cut at the page edge; the restored value rests on an assumption "
+                                  "(no later full number brackets it, or only two digits were read)",
+           "UNIT_UNREAD": "the unit cell is printed but no reading could turn it into a unit of the book",
+           "COLUMN_SLIP_MOVED": "a reading under Equipment on a crew without equipment and nothing under Total was moved to Total: columns in doubt",
            "WEAK_READING": "a money cell kept on one reading only (prefix; the cells are named after the colon)"}
 
 
@@ -71,7 +73,7 @@ def main() -> int:
     for item in a.spot:
         label, path = item.split("=", 1)
         sample = list(csv.DictReader(Path(path).open(encoding="utf-8")))
-        tier = "verified" if label != "machine_read" else "machine_read"
+        tier = "machine_read" if label.startswith("machine_read") else "verified"
         still, ok, left = 0, 0, []
         for s in sample:
             v = s.get("reviewer_verdict", "").strip()
@@ -116,9 +118,13 @@ def main() -> int:
              f"lines stay without a section (`SECTION_UNKNOWN`, {flags.get('SECTION_UNKNOWN', 0)} lines) and without a cost code.", "",
              "## 2. Status of the priced lines (the rule)", "",
              "A line is **verified** only when all of the following hold. Nothing else is called verified; no tolerance is attached to any number.", "",
-             "1. every printed money cell (material, labor, equipment, total) carries evidence weight ≥ 4 for one value — the geometric reading (3) plus at "
-             "least one OCR reading (1 each: 360-dpi tesseract, text layer, 600-dpi tesseract) — or is computed from the other cells by the book's arithmetic;",
-             "2. daily output and labor-hours are confirmed by at least two readings or by the crew rule (crew labor-hours / output);",
+             "1. every printed number (output, hours, material, labor, equipment, total, total incl. O&P) is **confirmed**: two different engines read "
+             "exactly the same value (the scan's text layer and tesseract; tesseract at 360 and 600 dpi count as one engine; the geometric reading "
+             "fixes the decimal point but reads no digits), or an identity of the book determines it from confirmed cells — crew day (output × hours = "
+             "crew labor-hours), crew labor (labor = crew daily cost / output), O&P (1.10 × M + crew O&P labor / output + 1.10 × E), sum (M + L + E = T): "
+             "in each identity all cells but one confirm the last; a cell computed by the settle step has no reading and is confirmed only this way;",
+             "2. (contained in 1) a daily output / labor-hours pair without a known crew needs both numbers read by two engines: the crew-day rule alone "
+             "(a multiple of 4 labor-hours) is too weak to decide between readings;",
              "3. no check is open: the money cells add up, labor agrees with the crew's daily cost, output × hours is a crew-day, the line number is in "
              "the section's numbering order, the section id is known, the crew is read, total incl. O&P (where printed) agrees with the components;",
              "4. the money columns are tied: the total was read (so `total = M + L + E` ties the cells to their columns) or the O&P value checks the row "
@@ -145,7 +151,10 @@ def main() -> int:
     lines += ["", "\"Fully correct\" means every cell printed on the row strip (line number, description, crew, output, hours, unit, the money cells) "
               "matches the table. In the `section_carried` sample the carried section id is not visible on the strip: it rests on the numbering rule of "
               "section 1 (continuing line numbers, next printed section after it), not on an eye check.", "",
-              "The one wrong verified row found (page 322, 08 71 20.44 0610: the printed total 391.50 landed in the equipment column) is the reason for "
+              "Every wrong verified row found in a round became a rule before the next round, so the rows marked wrong above have left the tier "
+              "(the slipped total, the merged output token, the output computed from rounded hours, the carried unit, the dropped O&P, the off-grid "
+              "reading, the material pinned by a slipped O&P, the component derived beside an unread one, and the output/hours pair decided by "
+              "weights alone). The one wrong verified row found first (page 322, 08 71 20.44 0610: the printed total 391.50 landed in the equipment column) is the reason for "
               "rules 4–5 above; it is flagged in this build. Residual error types that no arithmetic reaches: a digit misread identically by all readings, "
               "a value overlapped by the row above, the cut right edge of the scan (total incl. O&P).", "",
               "## 4. Derived Los Angeles, latest-month values", "",
@@ -160,6 +169,10 @@ def main() -> int:
               "* The 2022 values are what the book printed, read by machine: the verified set is machine-verified by the rule above, not human-verified line by line; "
               "the spot checks in section 3 are the only human-read sample.",
               "* machine_read and flagged lines must be checked against the book page (`book_page`) before use.",
+              "* The crew id is confirmed by two identities only (labor-hours per day, daily labor cost). Crews that differ only in equipment "
+              "(B-13 / B-13B / B-13C) satisfy both; between them the OCR text of the crew cell decides, and the printed equipment column does not "
+              "reproduce the crew table closely enough to arbitrate (`EQUIP_CREW_DIFFERS` is informational). A crew suffix can therefore be wrong "
+              "on a verified line while every number on it is right.",
               "* Line numbers cut at the left edge of the scan (one or two leading digits lost) are restored only when exactly one value with that tail "
               "fits between the previous and the next fully read line numbers of the section (`LINE_NUMBER_RECONSTRUCTED`); otherwise the line keeps no number "
               "and is flagged (`LINE_NUMBER_MISSING`).",

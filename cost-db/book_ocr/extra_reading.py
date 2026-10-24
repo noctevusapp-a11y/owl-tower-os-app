@@ -70,6 +70,9 @@ def main() -> int:
             crew_txt = " ".join(z["t"] for z in cells.get("crew", [])).strip(" |:;.,'‘’`\"~=_")
             if crew_txt:
                 entry["crew_text"] = crew_txt
+            unit_txt = " ".join(z["t"] for z in cells.get("unit", [])).strip(" |:;,'‘’`\"~=_")
+            if unit_txt:
+                entry["unit_text"] = unit_txt
             if entry:
                 res[str(i)] = entry
                 n_lines += 1

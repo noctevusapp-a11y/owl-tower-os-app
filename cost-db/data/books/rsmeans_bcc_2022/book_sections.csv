@@ -22,7 +22,12 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 01 51 13.80,Temporary Utilities,01,General Requirements,31,01
 01 52 13.20,Office and Storage Space,01,General Requirements,31,
 01 52 13.40,Field Office Expense,01,General Requirements,31,01
-01 54 23.60,Pump Staging,01,General Requirements,33,01
+01 54 09.50,Personnel Protective,01,General Requirements,32,
+01 54 09.60,Safety Nets,01,General Requirements,32,
+01 54 16.50,Weekly ForkliftCrew,01,General Requirements,32,
+01 54 19.50,Daily Crane Crews A,01,General Requirements,32,
+01 54 19.60,Monthly Tower Crane Crew,01,General Requirements,32,
+01 54 23.60,Pump Staging,01,General Requirements,32,
 01 54 23.70,Scaffolding,01,General Requirements,33,
 01 54 23.75,Scaffolding Specialties,01,General Requirements,34,
 01 54 23.80,Staging Aids,01,General Requirements,35,
@@ -33,6 +38,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 01 56 16.10,"Dust Barriers, Temporary",01,General Requirements,37,01
 01 56 23.10,Barricades,01,General Requirements,38,
 01 56 26.50,Temporary Fencing:,01,General Requirements,38,
+01 57 33.50,Watchman,01,General Requirements,39,01
 01 58 13.50,Signs,01,General Requirements,39,01
 01 66 19.10,Material Handling,01,General Requirements,39,01
 01 71 23.19,Surveyor Stakes,01,General Requirements,39,
@@ -44,14 +50,23 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 02 21 13.16,Aerial Surveys,02,Existing Conditions,42,
 02 31 23.10,Ground Penetrating Radar,02,Existing Conditions,42,
 02 32 13.10,Boring and Exploratory Drilling,02,Existing Conditions,42,
+02 32 19.10,Test Pits,02,Existing Conditions,43,02
+02 41 13.15,Hydrodemolition,02,Existing Conditions,43,
+02 41 13.16,Hydroexcavation,02,Existing Conditions,43,02
+02 41 13.17,"Demolish, Remove Pavement and Curb",02,Existing Conditions,43,
 02 41 13.23,Utility Line Removal,02,Existing Conditions,44,
 02 41 13.30,Minor Site Demolition,02,Existing Conditions,44,
 02 41 13.33,Railtrack Removal,02,Existing Conditions,44,
-02 41 16.17,Building Demolition Footings and Foundations,02,Existing Conditions,46,
+02 41 16.13,Building Demolition,02,Existing Conditions,45,
+02 41 16.15,Explosive/Implosive Demolition,02,Existing Conditions,45,
+02 41 16.17,Building Demolition Footings and Foundations,02,Existing Conditions,45,
 02 41 19.13,Selective Building Demolition,02,Existing Conditions,46,
 02 41 19.16,"Selective Demolition, Cutout",02,Existing Conditions,46,
-02 41 19.19,Selective Demolition,02,Existing Conditions,48,
+02 41 19.18,"Selective Demolition, Disposal Only",02,Existing Conditions,47,02
+02 41 19.19,Selective Demolition,02,Existing Conditions,47,02
 02 41 19.20,"Selective Demolition, Dump Charges",02,Existing Conditions,48,
+02 41 19.25,"Selective Demolition, Saw Cutting",02,Existing Conditions,49,02
+02 41 19.27,"Selective Demolition, Torch Cutting",02,Existing Conditions,49,02
 02 42 10.20,Deconstruction of Building Components,02,Existing Conditions,50,
 02 42 10.30,Deconstruction Material Handling,02,Existing Conditions,51,
 02 43 13.13,Building Relocation,02,Existing Conditions,52,
@@ -61,6 +76,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 02 81 20.10,Hazardous Waste Cleanup/Pickup/Disposal,02,Existing Conditions,54,
 02 82 13.39,Asbestos Remediation Plans and Methods,02,Existing Conditions,54,
 02 82 13.41,Asbestos Abatement Equipment,02,Existing Conditions,54,
+02 82 13.42,Preparation of Asbestos Containment Area,02,Existing Conditions,55,02
 02 82 13.43,BulkAsbestosRemoval,02,Existing Conditions,56,
 02 82 13.44,Demolition In Asbestos Contaminated Area,02,Existing Conditions,56,
 02 82 13.45,OSHA Testing,02,Existing Conditions,57,02
@@ -71,6 +87,11 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 02 83 19.26,Removal of Lead-Based Paint,02,Existing Conditions,59,02
 02 87 13.16,Mold Remediation Preparation and,02,Existing Conditions,59,02
 02 87 13.33,Removal and Disposal of Materials With Mold,02,Existing Conditions,60,
+02 87 19.10,"Temporary Barriers, Including Ppe",02,Existing Conditions,61,02
+02 87 19.20,"Temporary Protection, Including Ppe",02,Existing Conditions,61,02
+02 87 19.30,Infectious Control Equipment and Supplies,02,Existing Conditions,61,02
+02 87 19.40,"Infectious Control Cleaning, Includes Pope",02,Existing Conditions,62,
+02 91 10.10,"Monitoring, Chem. Sampling, Testing",02,Existing Conditions,62,
 03 01 30.62,Concrete Patching,03,Concrete,66,
 03 05 05.10,"Selective Demolition, Concrete",03,Concrete,66,
 03 05 13.20,Concrete Admixtures and Surface,03,Concrete,66,
@@ -97,6 +118,8 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 03 15 05.15,Column Form Accessories,03,Concrete,78,
 03 15 05.30,Hangers,03,Concrete,78,
 03 15 05.70,Shores,03,Concrete,78,
+03 15 05.75,Sleeves and Chases,03,Concrete,79,03
+03 15 05.80,SnapTies,03,Concrete,79,03
 03 15 05.85,Stair Tread Inserts,03,Concrete,80,
 03 15 05.95,Wall and Foundation Form,03,Concrete,80,
 03 15 13.50,Waterstops,03,Concrete,80,
@@ -225,6 +248,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 04 43 10.75,Sandstone or Brownstone,04,Masonry,132,
 04 43 10.80,Slate,04,Masonry,132,
 04 43 10.85,Window Sill,04,Masonry,133,04
+04 51 10.10,Flue Lining,04,Masonry,134,
 04 54 10.10,FireBrick,04,Masonry,134,
 04 54 10.20,FireClay,04,Masonry,134,
 04 57 10.10,Fireplace,04,Masonry,134,
@@ -245,6 +269,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 05 05 23.35,Machine Screws,05,Metals,143,05
 05 05 23.50,Powder Actuated Tools and Fasteners,05,Metals,143,05
 05 05 23.55,Rivets,05,Metals,143,05
+05 05 23.70,Structural Blind Bolts,05,Metals,144,
 05 05 23.80,Vibration and Bearing Pads,05,Metals,144,
 05 05 23.85,Weld Shear Connectors,05,Metals,144,
 05 05 23.87,Weld Studs,05,Metals,144,
@@ -364,6 +389,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 06 22 13.30,"Moldings, Casings",06,"Wood, Plastics & Composites",215,06
 06 22 13.35,"Moldings, Ceilings",06,"Wood, Plastics & Composites",218,
 06 22 13.40,"Moldings, Exterior",06,"Wood, Plastics & Composites",218,
+06 22 13.45,"Moldings, Trim",06,"Wood, Plastics & Composites",224,
 06 22 13.50,"Moldings, Window and Door",06,"Wood, Plastics & Composites",225,5
 06 22 13.60,"Moldings, Soffits",06,"Wood, Plastics & Composites",225,5
 06 25 13.10,"Paneling, Hardboard",06,"Wood, Plastics & Composites",226,
@@ -388,6 +414,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 06 52 10.20,Fiberglass Stair Treads,06,"Wood, Plastics & Composites",234,
 06 52 10.30,Fiberglass Grating,06,"Wood, Plastics & Composites",234,
 06 52 10.40,Fiberglass Floor Grating,06,"Wood, Plastics & Composites",235,16
+06 65 10.10,"PVC Trim, Exterior",06,"Wood, Plastics & Composites",235,96
 06 73 13.10,Woodgrained Composite Decking,06,"Wood, Plastics & Composites",237,6
 07 01 50.10,Roof Coatings,07,Thermal & Moisture Protection,240,
 07 01 90.81,Joint Sealant Replacement,07,Thermal & Moisture Protection,240,
@@ -420,6 +447,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 07 32 16.10,Concrete Ties,07,Thermal & Moisture Protection,253,97
 07 32 19.10,MetalRoofTiles,07,Thermal & Moisture Protection,254,
 07 33 63.10,Green Roof Systems,07,Thermal & Moisture Protection,254,
+07 41 13.10,Aluminum Roof Panels Grew,07,Thermal & Moisture Protection,255,7
 07 41 13.20,SteelRoofingPanels,07,Thermal & Moisture Protection,255,17
 07 41 33.10,Fiberglass Panels,07,Thermal & Moisture Protection,256,
 07 42 13.20,Aluminum Siding Panels,07,Thermal & Moisture Protection,256,
@@ -444,6 +472,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 07 54 16.10,Ketone Ethylene Ester Roofing,07,Thermal & Moisture Protection,264,
 07 54 19.10,Polyvinyl-Chioride Roofing (PVC),07,Thermal & Moisture Protection,264,
 07 55 10.10,Protected Membrane Roofing Components,07,Thermal & Moisture Protection,265,7
+07 58 10.10,RollRoofng,07,Thermal & Moisture Protection,266,
+07 61 13.10,"Standing Seam Sheet Metal Roofing,",07,Thermal & Moisture Protection,266,
+07 61 16.10,"Batten Seam Sheet Metal Roofing, FieldFabe",07,Thermal & Moisture Protection,266,
+07 61 19.10,"Flat Seam Sheet Metal Roofing, Field",07,Thermal & Moisture Protection,266,
 07 65 12.10,Fabric ‘and Mastic Flashing ord Counter Fl,07,Thermal & Moisture Protection,267,7
 07 65 13.10,Laminated Sheet Flashing,07,Thermal & Moisture Protection,268,
 07 65 19.10,Plastic Sheet Flashing andCounterFlashing,07,Thermal & Moisture Protection,268,
@@ -459,6 +491,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 07 71 43.10,"Drip Edge, Rake Edge, Ice Belts:",07,Thermal & Moisture Protection,273,7
 07 72 23.10,Roof Vents,07,Thermal & Moisture Protection,274,
 07 72 26.10,Ridge Ventsand Accessories,07,Thermal & Moisture Protection,274,
+07 76 16.10,Roof PaversandSupports,07,Thermal & Moisture Protection,275,7
+07 81 16.10,Sprayed Cementitious Fireproofing:,07,Thermal & Moisture Protection,275,7
+07 84 13.10,Firestopping nd,07,Thermal & Moisture Protection,277,7
+07 91 13.10,Compression Seals,07,Thermal & Moisture Protection,278,
 07 91 16.10,Joint Gaskets,07,Thermal & Moisture Protection,278,
 07 91 23.10,Backer Rods,07,Thermal & Moisture Protection,278,
 07 91 26.10,Joint Fillers,07,Thermal & Moisture Protection,278,
@@ -471,11 +507,13 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 08 11 63.23,Aluminum Screen and Storm Doors and,08,Openings,283,8
 08 12 13.13,Standard Hollow Metal Frames,08,Openings,284,
 08 13 13.13,"Standard Hollow MetalDoors,",08,Openings,285,3
+08 13 43.13,Standard Hollow Metal Doors,08,Openings,286,
+08 13 13.15,Metal Fire Doors,08,Openings,286,
 08 13 13.20,Residential Steel Doors,08,Openings,287,8
 08 13 13.25,Doors Hollow Metal,08,Openings,287,8
 08 13 16.10,Commercial Aluminum Doors,08,Openings,288,
 08 14 13.10,"Types of Wood Doors, Carved",08,Openings,288,
-08 14 16.09,Smooth Wood Doors,08,Openings,290,
+08 14 16.09,Smooth Wood Doors,08,Openings,289,3
 08 14 16.20,Wood FireDoors,08,Openings,290,
 08 14 33.10,WoodDoorsPaneled,08,Openings,291,8
 08 14 33.20,Wood Doors Residential,08,Openings,292,
@@ -483,6 +521,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 08 14 40.10,Cafe Style Doors,08,Openings,294,
 08 16 13.10,"Entrance Doors, Fibrous Glass",08,Openings,294,
 08 16 14.10,Exterior Doors With Glass Lites,08,Openings,294,
+08 17 13.20,"Stainless Steel Doors and Frames""",08,Openings,295,8
 08 17 23.10,Pre-Hung Doors,08,Openings,295,8
 08 31 13.10,Types of Framed Access Doors,08,Openings,296,
 08 31 13.20,Bulkhead/Cellar Doors,08,Openings,296,
@@ -547,6 +586,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 08 53 13.30,Vinyl Double-Hung Windows,08,Openings,314,
 08 53 13.40,Vinyl Casement Windows,08,Openings,314,
 08 53 13.50,Vinyl PictureWindows,08,Openings,315,08
+08 54 13.10,Fiberglass Single-Hung Windows,08,Openings,316,
 08 62 13.20,Skylights,08,Openings,316,
 08 63 13.20,Skylight Rigid Metal-Framed,08,Openings,316,
 08 71 13.10,Automatic Openers Commercial,08,Openings,317,08
@@ -570,6 +610,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 08 71 20.95,KickPlates,08,Openings,325,08
 08 71 21.10,"Exterior Mouldings, Astragals",08,Openings,326,
 08 71 25.10,"Mechanical Seals, Weatherstripping",08,Openings,327,08
+08 75 30.10,Mechanical Weather Seals,08,Openings,328,
 08 79 20.10,Door Hardware Accessories,08,Openings,328,
 08 81 10.10,Various Types and Thickness of Float,08,Openings,328,
 08 81 13.10,BeveledGlass,08,Openings,329,08
@@ -583,13 +624,12 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 08 81 50.10,Glass for Non Vision Areas,08,Openings,330,
 08 81 55.10,SheetGlass,08,Openings,330,
 08 83 13.10,Mirrors,08,Openings,331,8
-08 84 10.10,Plexiglass Acrylic:,08,Openings,331,98
 08 87 13.10,SolarFilmsOnGlass,08,Openings,332,
 08 87 16.10,Safety Films On Glass,08,Openings,332,
 08 87 26.10,Bird Control Film,08,Openings,332,
 08 87 33.20,Window Film,08,Openings,332,
 08 87 53.10,Security Film Adhered On Glass,08,Openings,332,
-08 91 26.10,"Steel Louvers, Gauge, Fixed Blade",08,Openings,334,
+08 91 26.10,"Steel Louvers, Gauge, Fixed",08,Openings,333,18
 08 91 26.20,Aluminum Louvers,08,Openings,334,
 08 95 16.10,Louvers,08,Openings,334,
 09 01 60.10,Carpet Maintenance,09,Finishes,336,
@@ -617,7 +657,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 09 23 20.20,Gauging Plaster,09,Finishes,348,
 09 23 20.30,Keenes Cement,09,Finishes,348,
 09 24 23.40,Stucco,09,Finishes,348,
-09 26 13.80,Thin Plaster,09,Finishes,349,99
+09 25 23.10,Venetian Plaster,09,Finishes,349,09
 09 28 13.10,Cementitious Backerboard,09,Finishes,349,99
 09 29 10.30,Gypsum Board,09,Finishes,350,
 09 29 10.50,High Abuse Gypsum Board,09,Finishes,353,19
@@ -651,6 +691,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 09 62 19.10,Floating Floor,09,Finishes,362,
 09 62 29.10,Cork Tile Flooring,09,Finishes,362,
 09 63 13.10,Miscellaneous Brick Flooring,09,Finishes,362,
+09 63 40.10,Marble Ave,09,Finishes,363,09
 09 63 40.20,Slate Tile,09,Finishes,363,09
 09 64 16.10,End Grain Block Flooring,09,Finishes,363,09
 09 64 19.10,Wood Composition,09,Finishes,363,09
@@ -766,6 +807,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 10 31 23.10,"Fireplace, Prefabricated",10,Specialties,410,
 10 32 13.10,Dampers,10,Specialties,410,
 10 32 23.10,Doors,10,Specialties,410,
+10 35 13.10,Wood Burning Stoves,10,Specialties,411,10
 10 43 13.05,Defibrillator Cabinets,10,Specialties,411,10
 10 44 13.53,Fire Equipment Cabinets,10,Specialties,411,10
 10 44 16.13,Portable Fire Extinguishers,10,Specialties,412,
@@ -791,23 +833,63 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 10 86 20.10,Domes,10,Specialties,419,10
 10 88 05.10,Scales,10,Specialties,419,10
 11 05 05.10,Selective Demolition,11,Equipment,422,
-11 14 19.13,Portable Posts and Railings,11,Equipment,427,11
+11 05 10.10,Industrial Equipment Installation,11,Equipment,424,
+11 11 13.10,Compressed Air Equipment,11,Equipment,424,
+11 11 19.10,Lubrication Equipment,11,Equipment,424,
+11 11 33.10,Spray Painting Equipment,11,Equipment,424,
+11 12 13.10,Parking Control Units,11,Equipment,424,
+11 12 16.10,Ticket Dispensers,11,Equipment,424,
+11 12 26.13,Parking Fee Coin Collection Equipment,11,Equipment,424,
+11 12 33.13,Lift Arm Parking Gates,11,Equipment,425,11
+11 13 13.10,Dock Bumpers,11,Equipment,425,11
+11 13 16.10,Dock Seals and Shelters,11,Equipment,425,11
+11 13 19.10,Dock Equipment,11,Equipment,425,11
+11 13 26.10,Dock Lights,11,Equipment,426,
+11 14 13.19,Turnstiles,11,Equipment,426,
+11 14 19.13,Portable Posts and Railings,11,Equipment,426,
 11 21 13.10,Checkout Counter So,11,Equipment,427,11
 11 21 33.10,Clothes Check Equipment:,11,Equipment,427,11
 11 21 53.10,Barber Equipment,11,Equipment,427,11
 11 21 73.13,Dry Cleaning Equipment,11,Equipment,427,11
+11 21 73.19,Finishing Equipment,11,Equipment,428,
+11 21 73.23,Commercial Ironing Equipment,11,Equipment,428,
+11 21 73.26,Commercial Washers and Extractors,11,Equipment,428,
+11 21 73.33,Coin-Operated Laundry Equipment,11,Equipment,428,
+11 21 83.13,Darkroom Equipment,11,Equipment,428,
 11 22 13.16,Safes,11,Equipment,429,11
 11 22 16.13,Teller Equipment Systems,11,Equipment,429,11
-11 30 15.43,Air Quality,11,Equipment,432,
+11 30 13.15,Cooking Equipment,11,Equipment,430,
+11 30 13.16,Refrigeration Equipment,11,Equipment,430,
+11 30 13.17,Kitchen Cleaning Equipment,11,Equipment,430,
+11 30 13.18,Waste Disposal Equipment,11,Equipment,430,
+11 30 13.19,Kitchen Ventilation Equipment,11,Equipment,431,1
+11 30 13.24,Washers,11,Equipment,431,11
+11 30 13.25,Dryers,11,Equipment,431,11
+11 30 15.13,Sump Pumps,11,Equipment,431,11
+11 30 15.23,Water Heaters,11,Equipment,431,11
+11 30 15.43,Air Quality,11,Equipment,431,11
 11 30 33.10,Disappearing Stairway,11,Equipment,432,
 11 32 13.10,Commercial Unit Kitchens,11,Equipment,432,
 11 41 13.10,Refrigerated Food Cases,11,Equipment,432,
+11 41 13.20,Refrigerated Food Storage Equipment,11,Equipment,433,11
+11 41 13.30,Wine Cellar,11,Equipment,433,11
 11 41 33.20,Metal Food Storage Shelving,11,Equipment,434,
 11 42 10.10,"Choppers, Mixers and Misc. Equipment",11,Equipment,434,
-11 52 13.10,"Projection Screens, Wall or Ceiling Hung",11,Equipment,438,
+11 44 13.10,Cooking Equipment,11,Equipment,435,11
+11 46 16.10,Commercial Food Dispensing Equipment,11,Equipment,436,
+11 46 83.10,Commercial Ice Equipment,11,Equipment,437,11
+11 48 13.10,Dishwashers,11,Equipment,437,11
+11 52 13.10,"Projection Screens, Wall or Ceiling Hung",11,Equipment,437,11
 11 52 16.10,Movie Equipment,11,Equipment,438,
 11 52 16.20,Movie Equipment- Digital,11,Equipment,438,
-11 53 43.13,Fittings,11,Equipment,440,
+11 53 03.13,Test Equipment,11,Equipment,439,11
+11 53 13.13,Recirculating Laboratory Fume Hoods,11,Equipment,439,11
+11 53 16.13,Incubators,11,Equipment,439,11
+11 53 19.13,Sterilizers,11,Equipment,439,11
+11 53 23.13,Refrigerators,11,Equipment,439,11
+11 53 26.10,Freezers,11,Equipment,439,11
+11 53 33.13,Emergency Equipment,11,Equipment,439,11
+11 53 43.13,Fittings,11,Equipment,439,11
 11 53 53.10,Pharmacy Cabinets,11,Equipment,440,
 11 57 10.10,Vocational School Shop Equipment,11,Equipment,440,
 11 61 23.10,Portable Stages,11,Equipment,440,
@@ -815,15 +897,30 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 11 61 43.10,Curtains,11,Equipment,441,11
 11 62 16.10,BellTowerEquipment,11,Equipment,441,11
 11 66 13.10,Physical Training Equipment,11,Equipment,441,11
+11 66 23.13,Basketball Equipment,11,Equipment,442,
+11 66 23.19,Boxing Ring,11,Equipment,442,
+11 66 23.47,Gym Mats,11,Equipment,442,
 11 66 43.10,Scoreboards,11,Equipment,443,11
 11 66 53.10,Divider Curtains,11,Equipment,443,11
 11 67 13.10,Bowling Alleys,11,Equipment,443,11
 11 67 23.10,Shooting Range,11,Equipment,443,11
+11 68 13.10,Free-Standing Playground Equipment,11,Equipment,444,
+11 68 13.20,Modular Playground,11,Equipment,444,
 11 68 16.10,Handball/Squash Court,11,Equipment,445,11
 11 68 16.30,Platform/Paddle Tennis Court,11,Equipment,445,11
 11 68 33.13,Football Field Equipment,11,Equipment,445,11
 11 71 10.10,Sterilizers and Distillers,11,Equipment,445,11
-11 82 19.10,Packaged Gas Fired Incinerators,11,Equipment,449,11
+11 72 13.13,Examination Equipment,11,Equipment,446,
+11 72 53.13,Medical Treatment Equipment,11,Equipment,446,
+11 73 10.10,Treatment Equipment,11,Equipment,446,
+11 73 10.20,Bariatric Equipment,11,Equipment,446,
+11 74 10.10,Diagnostic and Treatment Equipment,11,Equipment,447,11
+11 76 10.10,Surgical Equipment =e,11,Equipment,447,11
+11 77 10.10,X-Ray Equipment,11,Equipment,448,
+11 78 13.10,Mortuary and Autopsy Equipment,11,Equipment,448,
+11 78 16.10,Crematory,11,Equipment,448,
+11 81 19.10,Vacuum Cleaning,11,Equipment,448,
+11 82 19.10,Packaged Gas Fired Incinerators,11,Equipment,448,
 11 82 26.10,Compactors,11,Equipment,449,11
 11 82 39.10,Off-Site Disposal,11,Equipment,449,11
 11 82 39.20,Disposal Carts,11,Equipment,449,11
@@ -834,6 +931,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 11 97 30.10,Pass Through Drawer,11,Equipment,451,11
 11 98 21.13,Visitor Cubicle Windows,11,Equipment,451,11
 11 98 30.10,Cell Equipment,11,Equipment,451,11
+12 05 05.10,"Selective Demolition, Interiors",12,Furnishings,454,
 12 21 13.13,Metal Horizontal Louver Blinds,12,Furnishings,454,
 12 21 13.33,Vinyl Horizontal Louver Blinds,12,Furnishings,454,
 12 21 16.13,Metal Vertical Louver Blinds,12,Furnishings,455,12
@@ -843,6 +941,9 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 12 23 13.13,Wood Panels,12,Furnishings,456,
 12 24 13.10,Shades,12,Furnishings,456,
 12 32 23.10,"Manufactured Wood Casework, Stock Units",12,Furnishings,457,12
+12 32 23.30,Manufactured Wood Casework Vanities,12,Furnishings,458,
+12 32 23.35,Manufactured Wood Casework Hardware,12,Furnishings,458,
+12 35 39.13,Metal Kitchen Casework,12,Furnishings,458,
 12 35 50.13,Educational Casework,12,Furnishings,459,12
 12 35 53.13,Metal Laboratory Casework,12,Furnishings,459,12
 12 35 59.10,DisplayCases,12,Furnishings,459,12
@@ -851,17 +952,21 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 12 36 16.10,Stainless Steel Countertops,12,Furnishings,460,
 12 36 19.10,Maple Countertops,12,Furnishings,460,
 12 36 23.13,Plastic-Laminate-Clad Countertops,12,Furnishings,460,
+12 36 33.10,Ceramic Tile Countertops weal,12,Furnishings,461,12
 12 36 40.10,Natural Stone Countertops,12,Furnishings,461,12
 12 36 53.10,Laboratory Countertops and Sinks,12,Furnishings,461,12
 12 36 61.16,Solid Surface Countertops,12,Furnishings,461,12
 12 36 61.17,Solid Surface Vanity Tops,12,Furnishings,462,
 12 36 61.19,Quartz Agglomerate Countertops,12,Furnishings,462,
 12 46 13.10,Ash/Trash Receivers,12,Furnishings,462,
+12 46 19.50,Wall Clocks ie fa,12,Furnishings,463,12
+12 48 13.13,Entrance Floor Mats,12,Furnishings,463,12
 12 51 16.13,Metal Case Goods,12,Furnishings,464,
 12 51 16.16,Wood Case Goods,12,Furnishings,464,
 12 51 23.33,Conference Tables,12,Furnishings,464,
 12 52 93.13,Office Chairs,12,Furnishings,464,
 12 52 23.13,Office Chairs,12,Furnishings,465,12
+12 54 16.10,"Tables, Folding",12,Furnishings,465,12
 12 54 16.70,Booths,12,Furnishings,465,12
 12 55 13.13,Cots,12,Furnishings,466,
 12 56 33.10,"Furniture, School",12,Furnishings,466,
@@ -890,6 +995,9 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 13 11 13.50,SwimmingPools =———————C—C_—C,13,Special Construction,476,
 13 11 23.50,Swimming Pools,13,Special Construction,476,
 13 11 46.50,Swimming Pool Equipment,13,Special Construction,476,
+13 12 13.10,OutdoorFountains,13,Special Construction,477,13
+13 12 23.10,Indoor Fountains,13,Special Construction,477,13
+13 17 33.10,Whirlpool Bath,13,Special Construction,478,
 13 18 13.50,Ice Skating,13,Special Construction,478,
 13 18 16.50,Ice Rink Dasher Boards,13,Special Construction,478,
 13 21 13.50,Clean Room Components,13,Special Construction,478,
@@ -899,6 +1007,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 13 21 53.50,Darkrooms,13,Special Construction,480,
 13 21 56.50,Music Rooms,13,Special Construction,480,
 13 24 16.50,Saunas and Heaters,13,Special Construction,480,
+13 24 26.50,Steam Baths and Components,13,Special Construction,481,13
 13 31 13.09,Air Supported Tank Covers,13,Special Construction,481,13
 13 31 13.13,Single-Walled Air-Supported Structures,13,Special Construction,481,13
 13 31 23.50,Tension Structures,13,Special Construction,482,
@@ -932,6 +1041,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 14 21 33.20,Residential Elevators,14,Conveying Equipment,495,14
 14 24 13.10,Hydraulic Freight Elevators and Options,14,Conveying Equipment,495,14
 14 24 23.10,Hydraulic Passenger Elevators and Options,14,Conveying Equipment,496,
+14 27 13.10,Cab Finishes us,14,Conveying Equipment,497,14
 14 28 10.10,Elevator Controls and Doors,14,Conveying Equipment,497,14
 14 31 10.10,Escalators,14,Conveying Equipment,498,
 14 42 13.10,Inclined Wheelchair Lifts and Stairclimbers,14,Conveying Equipment,499,14
@@ -943,6 +1053,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 21 05 23.50,General-Duty Valves,21,Fire Suppression,504,
 21 11 16.50,Fire Hydrants for Buildings,21,Fire Suppression,504,
 21 11 19.50,Connections for the Fire-Department,21,Fire Suppression,504,
+21 12 13.50,Fire Hoses and Nozzles pas ab iP,21,Fire Suppression,505,21
 21 12 19.50,Fire Hose Racks,21,Fire Suppression,505,21
 21 12 23.70,Fire Hose Valves,21,Fire Suppression,505,21
 21 13 13.50,Wet-Pipe Sprinkler System Components,21,Fire Suppression,506,
@@ -961,6 +1072,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 22 11 13.14,"Pipe, Brass",22,Plumbing,518,
 22 11 13.23,"Pipe/Tube, Copper",22,Plumbing,518,
 22 11 13.44,"Pipe, Steel",22,Plumbing,519,22
+22 11 13.48,"Pipe, Fittings and Valves, Steel,",22,Plumbing,520,
 22 11 13.74,"Pipe, Plastic",22,Plumbing,521,22
 22 11 19.26,PressureRegulators,22,Plumbing,523,22
 22 11 19.38,Water Supply Meters,22,Plumbing,524,
@@ -984,8 +1096,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 22 34 30.13,"Residential, Atmos, Gas Domestic Wtr",22,Plumbing,531,22
 22 34 36.13,"Commercial, Atmos., Gas Domestic Water",22,Plumbing,532,
 22 34 46.20,Commercial Oil-Fired Water Heaters,22,Plumbing,532,
-22 41 13.13,Water Closets,22,Plumbing,533,22
+22 41 06.10,Plumbing Fixture Notes,22,Plumbing,533,22
+22 41 13.13,Water Closets,22,Plumbing,533,92
 22 44 16.13,bavatories,22,Plumbing,533,22
+22 41 16.13,Lavatories,22,Plumbing,534,
 22 41 16.16,Sinks,22,Plumbing,534,
 22 41 19.10,Baths,22,Plumbing,534,99
 22 41 23.20,Showers,22,Plumbing,534,
@@ -995,6 +1109,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 22 42 13.16,Urinals,22,Plumbing,536,
 22 42 16.13,Lavatories,22,Plumbing,536,
 22 42 16.40,Service Sinks nm,22,Plumbing,536,
+22 42 23.30,Group Showers,22,Plumbing,537,22
 22 42 33.20,Commercial Wash Fountains,22,Plumbing,537,22
 22 42 39.10,Faucets andFittings,22,Plumbing,538,
 22 42 39.30,Carriers and Supports,22,Plumbing,538,
@@ -1004,6 +1119,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 22 45 26.10,Eye/Face Wash Safety Equipment,22,Plumbing,540,
 22 47 13.10,Drinking Water Fountains,22,Plumbing,540,
 22 47 16.10,Electric Water Coolers,22,Plumbing,541,22
+22 51 19.50,Swimming Pool Filtration Equipment,22,Plumbing,542,
+22 52 16.10,Fountain Water Pumps,22,Plumbing,542,
+22 52 33.10,"Fountain Miscellaneous,",22,Plumbing,542,
+22 66 53.60,CorrosionResistant Pipe,22,Plumbing,542,
 23 05 02.10,"Air Conditioning, General",23,"Heating, Ventilating & Air Conditioning",546,
 23 05 05.10,HVAC Demolition,23,"Heating, Ventilating & Air Conditioning",546,
 23 05 23.30,"Valves, lron Body",23,"Heating, Ventilating & Air Conditioning",546,
@@ -1055,6 +1174,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 23 51 13.13,Draft-Induction Fans,23,"Heating, Ventilating & Air Conditioning",568,
 23 51 23.10,Gas Chimney Vents,23,"Heating, Ventilating & Air Conditioning",568,
 23 51 26.30,"All-Fuel Vent Chimneys, Double Wall, St. Stl",23,"Heating, Ventilating & Air Conditioning",568,
+23 52 13.10,"Electric Boilers, ASME",23,"Heating, Ventilating & Air Conditioning",569,23
 23 52 23.20,Gas-Fired Boilers,23,"Heating, Ventilating & Air Conditioning",569,23
 23 52 93.40,Oil-FiredBoilers,23,"Heating, Ventilating & Air Conditioning",570,
 23 52 26.40,Oil-Fired Boilers,23,"Heating, Ventilating & Air Conditioning",570,
@@ -1063,7 +1183,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 23 54 16.16,Oil-Fired Furnaces,23,"Heating, Ventilating & Air Conditioning",571,23
 23 55 13.16,Gas-Fired Duct Heaters,23,"Heating, Ventilating & Air Conditioning",571,23
 23 55 23.10,Infrared Type Heating Units,23,"Heating, Ventilating & Air Conditioning",571,23
-23 56 19.50,Solar Heating Ancillary,23,"Heating, Ventilating & Air Conditioning",573,23
+23 55 33.13,Oil-Fired Unit Heaters,23,"Heating, Ventilating & Air Conditioning",572,
+23 55 33.16,Gas-Fired UnitHeaters,23,"Heating, Ventilating & Air Conditioning",572,
+23 56 16.40,Solar Heating Systems,23,"Heating, Ventilating & Air Conditioning",572,
+23 56 19.50,Solar Heating Ancillary,23,"Heating, Ventilating & Air Conditioning",572,
 23 57 19.13,"Plate-Type, Liquid-to-Liquid Heat",23,"Heating, Ventilating & Air Conditioning",573,23
 23 57 19.16,"Shell-Type, Liquid-to-Liquid Heat",23,"Heating, Ventilating & Air Conditioning",574,
 23 62 13.10,Packaged Air-Cooled Refrig. Condensing,23,"Heating, Ventilating & Air Conditioning",574,
@@ -1088,7 +1211,10 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 23 82 33.10,Convector Units,23,"Heating, Ventilating & Air Conditioning",581,23
 23 82 36.10,Finned Tube Radiation,23,"Heating, Ventilating & Air Conditioning",581,23
 23 82 39.16,Propeller Unit Heaters,23,"Heating, Ventilating & Air Conditioning",581,23
-23 83 16.10,Radiant Floor Heating,23,"Heating, Ventilating & Air Conditioning",583,23
+23 83 16.10,Radiant Floor Heating,23,"Heating, Ventilating & Air Conditioning",582,
+23 84 13.10,Humidifier Units,23,"Heating, Ventilating & Air Conditioning",584,
+26 01 02.20,Labor Adjustment Factors,26,Electrical,586,
+26 05 05.10,Electrical Demolition,26,Electrical,587,26
 26 05 13.16,"Medium-Voltage, Single Cable",26,Electrical,589,
 26 05 19.20,Armored Cable,26,Electrical,589,26
 26 05 19.35,Cable Terminations,26,Electrical,590,
@@ -1129,6 +1255,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 26 28 16.20,Safety Switches,26,Electrical,612,
 26 29 13.20,Control Stations,26,Electrical,612,
 26 32 13.13,Diesel-Engine-Driven Generator Sets,26,Electrical,612,
+26 32 13.16,Gas-Engine-Driven Generator Sets,26,Electrical,613,26
 26 33 43.55,Electric Vehicle Charging,26,Electrical,613,26
 26 35 13.10,Capacitors Indoor,26,Electrical,613,26
 26 51 13.50,Interior Lighting Fixtures,26,Electrical,614,
@@ -1155,7 +1282,6 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 27 13 23.13,Communications Optical Fiber,27,Communications,624,
 27 41 33.10,TV Systems,27,Communications,624,
 27 51 16.10,Public Address System,27,Communications,625,27
-27 51 19.10,Sound System,27,Communications,625,97
 27 52 23.10,Nurse Call Systems,27,Communications,626,
 27 53 13.50,Clock Equipments,27,Communications,626,
 28 15 11.11,Standard Card Readers,28,Electronic Safety & Security,628,
@@ -1178,12 +1304,14 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 31 06 60.14,Piling Special Costs,31,Earthwork,634,
 31 06 60.15,Mobilization,31,Earthwork,635,31
 31 11 10.10,Clear and Grub Site,31,Earthwork,635,31
+31 13 13.10,Selective Clearing,31,Earthwork,636,
 31 13 13.20,Selective Tree Removal,31,Earthwork,636,
 31 14 13.23,Topsoil Stripping and Stockpiling,31,Earthwork,637,31
 31 22 13.20,Rough Grading Sites,31,Earthwork,637,31
 31 22 16.10,FinishGrading,31,Earthwork,638,
 31 23 16.13,"Excavating, Trench",31,Earthwork,638,
 31 23 16.14,"Excavating, Utility Trench",31,Earthwork,641,31
+31 23 16.16,Structural Excavation for Minor Structures,31,Earthwork,642,
 31 23 16.30,Drilling and Blasting Rock,31,Earthwork,642,
 31 23 16.42,"Excavating, Bulk Bank Measure",31,Earthwork,643,31
 31 23 16.46,"Excavating, Bulk, Dozer",31,Earthwork,644,
@@ -1210,6 +1338,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 31 46 13.10,Needle Beams,31,Earthwork,662,
 31 48 13.10,Underpinning Foundations,31,Earthwork,663,31
 31 52 16.10,Cofferdams,31,Earthwork,663,31
+31 56 23.20,Slurry Trench ue,31,Earthwork,664,
 31 62 13.23,Prestressed Concrete Piles,31,Earthwork,664,
 31 62 16.13,Steel Piles,31,Earthwork,664,
 31 62 19.10,Wood Piles,31,Earthwork,665,31
@@ -1223,6 +1352,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 32 01 13.64,Sand Seal,32,Exterior Improvements,672,
 32 01 13.66,Fog Seal,32,Exterior Improvements,672,
 32 01 19.61,Sealing of Joints In Rigid Paving,32,Exterior Improvements,672,
+32 06 10.20,Steps,32,Exterior Improvements,673,32
 32 11 23.23,Base Course Drainage Layers,32,Exterior Improvements,673,32
 32 11 26.19,Bituminous-Stabilized Base Courses,32,Exterior Improvements,674,
 32 12 16.13,Plant-Mix Asphalt Paving,32,Exterior Improvements,674,
@@ -1294,6 +1424,7 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 33 01 10.10,Corrosion Resistance,33,Utilities,698,
 33 01 30.72,Cured-In-Place Pipe,33,Utilities,698,
 33 01 30.75,Cured-In-place Pipe Lining,33,Utilities,698,
+33 05 07.36,"Microtunneling,",33,Utilities,699,33
 33 05 61.10,"Storm Drainage Manholes, Frames and Covers",33,Utilities,699,33
 33 05 63.13,Precast Concrete Utility Structures,33,Utilities,700,
 33 05 97.05,Utility Connection,33,Utilities,700,
@@ -1321,15 +1452,20 @@ section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
 33 52 16.20,"Piping, Gas Service and Distribution, PE",33,Utilities,712,
 33 52 16.23,Medium Density Polyethylene Piping,33,Utilities,712,
 33 52 16.26,High Density Polyethylene Piping,33,Utilities,719,33
-33 71 19.17,Electric and Telephone Underground,33,Utilities,727,33
+34 71 16.33,Wood Electrical Utility Poles,34,Transportation,727,33
+34 71 19.17,Electric and Telephone Underground,34,Transportation,727,33
 33 81 13.10,RadioTowers,33,Utilities,728,
+34 01 23.51,Maintenance of Railroads,34,Transportation,730,
 34 11 93.50,Track Accessories,34,Transportation,730,
 34 41 13.10,Traffic Signals Systems,34,Transportation,731,34
 34 71 13.17,Security Vehicle Barriers,34,Transportation,731,34
 34 71 19.13,Fixed Vehicle Delineators,34,Transportation,733,34
 34 72 16.60,Railroad Turnouts,34,Transportation,733,34
+35 24 13.13,Cutter Suction Dredging Ran,35,Waterway & Marine Construction,736,
 35 24 23.13,Mechanical Dredging,35,Waterway & Marine Construction,736,
 35 51 13.23,Floating Wood Piers,35,Waterway & Marine Construction,736,
+41 21 23.16,Container Piece Material Conveyors,41,Material Processing & Handling Equipment,738,
+41 22 13.13,Bridge Cranes,41,Material Processing & Handling Equipment,738,
 41 29 13.19,Jib Cranes,41,Material Processing & Handling Equipment,739,41
 41 29 93.10,Material Handling,41,Material Processing & Handling Equipment,739,41
 44 11 16.10,Dust CollectionSystems,44,Pollution Control Equipment,742,

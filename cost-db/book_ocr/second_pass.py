@@ -28,7 +28,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from parse_unit_prices import NUM_COLS, settle, weights, rstep, _lev  # noqa: E402
+from parse_unit_prices import NUM_COLS, settle, weights, rstep, book_round, normalise_unit, _lev  # noqa: E402
 
 
 def strong_value(cands: list, min_w: float = 2.0):
@@ -115,6 +115,9 @@ def main() -> int:
             stats["lines"] += 1
             raw = ln.get("raw", {})
             cands = {k: [(Decimal(v), how, src) for v, how, src in raw.get(k, [])] for k in NUM_COLS}
+            for k in ("material", "labor", "equipment", "total_op"):
+                # a printed component or O&P value above $5 always sits on the book's rounding grid: a reading off it is a misread
+                cands[k] = [(v, how, src) for v, how, src in cands[k] if v <= 5 or book_round(v) == v]
             if str(i) in extra:
                 for k, lst in extra[str(i)].items():
                     if k not in cands or not cands[k]:
@@ -131,7 +134,7 @@ def main() -> int:
             flags_before = set(ln["flags"])
             stats["open_before"] += bool(flags_before & OPEN or any(f.startswith("WEAK_READING") for f in flags_before))
             keep = [f for f in ln["flags"] if f in ("PERCENT_ADD", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_MISSING", "HEADER_TEMPLATE",
-                                                    "CREW_FROM_ARITHMETIC", "COLUMN_SLIP_MOVED")]
+                                                    "CREW_FROM_ARITHMETIC", "COLUMN_SLIP_MOVED", "UNIT_UNREAD")]
             crew_id = ln.get("crew")
             crew_row = crews.get(crew_id) if crew_id else None
             unread = "CREW_UNREAD" in flags_before or "CREW_UNKNOWN" in flags_before
@@ -146,12 +149,30 @@ def main() -> int:
                     unread = False
                 elif how == "ambiguous":
                     stats["crew_ambiguous"] += 1
-            # column slip: zero-equipment crew, nothing under Total, something under Equipment
+            # column slip: zero-equipment crew, nothing under Total, something under Equipment, labor read (the sum check decides)
             if crew_row is not None and (crew_row.get("bare_equip_daily") or 0) == 0 and not cands["total"] and cands["equipment"] \
-                    and not ln.get("percent"):
+                    and cands["labor"] and not ln.get("percent"):
                 cands["total"], cands["equipment"] = cands["equipment"], []
                 keep.append("COLUMN_SLIP_MOVED")
                 stats["slip_moved"] += 1
+            # a unit cell with text that the first readings could not turn into a unit: the extended unit table, then the
+            # 600-dpi reading (accepted only when the first readings' text is a close OCR shape of it); else not carried
+            if ln.get("unit_source") in ("carried", None) and ln.get("unit_raw") and re.search(r"[A-Za-z]{2,}", ln["unit_raw"]) \
+                    and not re.fullmatch(r"[\s|'\"‘’“”″lIi1!jt]{0,3}", ln["unit_raw"]):
+                u = normalise_unit(ln["unit_raw"])
+                src = "printed"
+                if u is None:
+                    h_txt = extra.get(str(i), {}).get("unit_text")
+                    uh = normalise_unit(h_txt) if h_txt else None
+                    if uh and _lev(re.sub(r"[^A-Za-z%]", "", ln["unit_raw"]).upper(), re.sub(r"[^A-Za-z%]", "", uh).upper()) <= 2:
+                        u, src = uh, "second_reading"
+                if u:
+                    ln["unit"], ln["unit_source"] = u, src
+                    stats["unit_recovered"] = stats.get("unit_recovered", 0) + 1
+                else:
+                    ln["unit"], ln["unit_source"] = None, None
+                    keep.append("UNIT_UNREAD")
+                    stats["unit_unread"] = stats.get("unit_unread", 0) + 1
             vals, confs, flags = settle(cands, crew_row)
             if ln.get("percent"):
                 flags = [f for f in flags if f not in ("MONEY_UNSETTLED", "TOTAL_DERIVED_FROM_SUM")]

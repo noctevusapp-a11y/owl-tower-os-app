@@ -15,42 +15,42 @@
 
 ## Numbers of this build
 
-* 651 table pages (of 689; 38 with a damaged header are not parsed), 1337 sections, 27296 printed lines; **22521 priced lines**: **10630 verified**, 3347 machine_read (not verified), 8544 flagged (not verified), 875 percentage-add lines, 3900 description-only lines.
-* 20798 lines carry a derived Los Angeles 2026-Q02 value (10296 of them on verified lines).
+* 692 table pages (all unit-price table pages of the scan; 41 with an unreadable header read through the neighbouring page's column anchors), 1473 sections, 29629 printed lines; **24117 priced lines**: **11745 verified**, 3394 machine_read (not verified), 8978 flagged (not verified), 949 percentage-add lines, 4563 description-only lines.
+* 23064 lines carry a derived Los Angeles 2026-Q02 value (11411 of them on verified lines).
 * Crews: 961 (incl. 378 single-trade crews built from the trade-rate table); trades: 45.
-* **verified** means: every printed money cell confirmed by all three readings (two OCR engines + the geometric reading of digits and decimal point) or computed by the book's arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; section id known. The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. No tolerance is attached to any number: a number is verified or it is not.
+* **verified** means: every printed money cell carries evidence weight ≥ 4 for one value (the geometric reading of digits and decimal point, 3, plus at least one of the three OCR readings: 360-dpi tesseract, the scan's text layer, 600-dpi tesseract) or is computed by the book's arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; section id known. An unreadable crew cell is filled only when exactly one crew of the crew table satisfies the line's labor-hours, daily labor cost, equipment presence and O&P at once (`CREW_FROM_ARITHMETIC`). The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. No tolerance is attached to any number: a number is verified or it is not.
 
 | division | verified | machine_read | flagged |
 |---|---|---|---|
-| 01 General Requirements | 258 | 31 | 102 |
-| 02 Existing Conditions | 245 | 100 | 162 |
-| 03 Concrete | 690 | 349 | 549 |
-| 04 Masonry | 363 | 96 | 359 |
-| 05 Metals | 673 | 319 | 633 |
-| 06 Wood, Plastics & Composites | 1088 | 340 | 472 |
-| 07 Thermal & Moisture Protection | 368 | 292 | 412 |
-| 08 Openings | 973 | 96 | 672 |
-| 09 Finishes | 613 | 707 | 532 |
-| 10 Specialties | 675 | 60 | 291 |
-| 11 Equipment | 294 | 15 | 134 |
-| 12 Furnishings | 268 | 20 | 131 |
-| 13 Special Construction | 314 | 110 | 213 |
-| 14 Conveying Equipment | 136 | 15 | 99 |
-| 21 Fire Suppression | 42 | 4 | 27 |
-| 22 Plumbing | 450 | 58 | 349 |
-| 23 Heating, Ventilating & Air Conditioning | 522 | 48 | 438 |
-| 26 Electrical | 810 | 97 | 339 |
-| 27 Communications | 50 | 4 | 39 |
-| 28 Electronic Safety & Security | 96 | 4 | 43 |
-| 31 Earthwork | 636 | 276 | 470 |
-| 32 Exterior Improvements | 374 | 190 | 273 |
-| 33 Utilities | 564 | 105 | 348 |
-| 34 Transportation | 37 | 3 | 17 |
-| 35 Waterway & Marine Construction | 7 | 1 | 5 |
-| 41 Material Processing & Handling Equipment | 16 | 0 | 4 |
-| 44 Pollution Control Equipment | 61 | 7 | 34 |
-| 46 Water & Wastewater Equipment | 6 | 0 | 5 |
-| 48 Electrical Power Generation | 1 | 0 | 7 |
+| 01 General Requirements | 265 | 44 | 122 |
+| 02 Existing Conditions | 388 | 120 | 255 |
+| 03 Concrete | 857 | 257 | 511 |
+| 04 Masonry | 399 | 124 | 322 |
+| 05 Metals | 723 | 379 | 581 |
+| 06 Wood, Plastics & Composites | 1129 | 245 | 695 |
+| 07 Thermal & Moisture Protection | 375 | 209 | 711 |
+| 08 Openings | 820 | 218 | 810 |
+| 09 Finishes | 851 | 461 | 626 |
+| 10 Specialties | 628 | 99 | 307 |
+| 11 Equipment | 582 | 98 | 361 |
+| 12 Furnishings | 291 | 38 | 182 |
+| 13 Special Construction | 338 | 100 | 265 |
+| 14 Conveying Equipment | 128 | 26 | 112 |
+| 21 Fire Suppression | 66 | 3 | 20 |
+| 22 Plumbing | 519 | 102 | 402 |
+| 23 Heating, Ventilating & Air Conditioning | 519 | 123 | 459 |
+| 26 Electrical | 964 | 116 | 290 |
+| 27 Communications | 17 | 26 | 23 |
+| 28 Electronic Safety & Security | 100 | 12 | 32 |
+| 31 Earthwork | 638 | 283 | 508 |
+| 32 Exterior Improvements | 432 | 119 | 291 |
+| 33 Utilities | 541 | 162 | 350 |
+| 34 Transportation | 76 | 8 | 55 |
+| 35 Waterway & Marine Construction | 7 | 3 | 6 |
+| 41 Material Processing & Handling Equipment | 37 | 0 | 22 |
+| 44 Pollution Control Equipment | 53 | 14 | 35 |
+| 46 Water & Wastewater Equipment | 0 | 5 | 7 |
+| 48 Electrical Power Generation | 2 | 0 | 6 |
 
 ## How to price a line (the rule)
 
@@ -63,14 +63,14 @@
 
 ## Worked example
 
-`OT-09291030-0590` — GYPSUM BOARD on walls & ceilings | 1/2" thick, on walls, standard, no finish included | Water resistant, no finish included | With compound skim coat (level 5 finish) (book page 336, unit S.F., crew —, 775 S.F./day, 0.021 labor-hours/S.F.)
+`OT-09291030-1050` — GYPSUM BOARD on walls & ceilings | 1/2" thick, on walls, standard, no finish included | On ceilings, stondard, no finish included | Taped and finished (level 4 finish) (book page 336, unit S.F., crew —, 765 S.F./day, 0.021 labor-hours/S.F.)
 
 | component | 2022 national | × CCI LA | × BLS factor | LA latest |
 |---|---|---|---|---|
-| material | $0.44 | 1.051 | 1.1712 (WPU137) | $0.54 |
-| labor | $1.16 | 1.409 | 1.1718 (CIU2012300000000I) | $1.92 |
+| material | $0.30 | 1.051 | 1.1712 (WPU137) | $0.37 |
+| labor | $1.18 | 1.409 | 1.1718 (CIU2012300000000I) | $1.95 |
 | equipment | — | 1.409 | 1.3350 (WPU114) | — |
-| **total** | $1.60 | | | **$2.46** |
+| **total** | $1.48 | | | **$2.32** |
 
 ## Factors (BLS/EIA, January 2022 → latest)
 
