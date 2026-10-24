@@ -20,6 +20,7 @@ flagged. Nothing is typed in by hand.
 from __future__ import annotations
 
 import argparse
+import os
 import csv
 import json
 import re
@@ -244,7 +245,7 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
         return bounds
     # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
     # the Unit column sits between Hours and Material and keeps its header-based bounds
-    for a, b in (("output", "hours"), ("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):
+    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):      # not output|hours: header bounds do better there
         if a in assigned and b in assigned:
             mid = (assigned[a] + assigned[b]) / 2
             bounds[a] = (bounds[a][0], mid)
@@ -758,7 +759,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     img = parts.image(pdf_page)
     if img is not None and img.shape[1] != w:
         img = None                                             # OCR was run at another size; no geometry then
-    bounds, desc_end = calibrate_bounds(hdr, trows), hdr["desc_end"]
+    bounds, desc_end = (calibrate_bounds(hdr, trows) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
     irow_by_y = [(r[0]["_yc"], r) for r in irows]
     known = set(crews)
 
