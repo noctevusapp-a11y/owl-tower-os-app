@@ -19,5 +19,7 @@ Different data go stale at different speeds and need different re-checks. Cadenc
 | **Region/trade/classification codes** | CBSA delineations and SOC revisions are rare | **annually** check; on SOC/NAICS revision | OMB bulletin | `regions`, `trades` |
 | **Source terms and reachability** | websites change terms and block automation | **annual** review; before any new bulk capture | site redesign; blocked access | person reads Terms of Use + robots.txt; update `sources.reuse_status` |
 | **Waste factors, crews, assumptions** | company practice | **annually** and after each completed project (actual vs estimate) | variance > 10 % on a project | project manager; approve in `assumptions` |
+| **Work-item and assembly definitions** | scope, specification, quantities change with practice and code | review **before first use** (strict runs refuse unreviewed definitions) and **annually**; new content = new version (definitions are frozen in the database) | spec or code change; a project variance traced to a definition | estimator who did not write it; record in `review_events` |
+
 
 **Process rules for every refresh:** (1) capture into new rows; (2) record `observed_at`, `retrieved_at`, effective period, source locator and evidence; (3) run `pipeline/scripts/build.py`; (4) review `validation_issues` and the coverage matrix; (5) only then promote — and only records whose source was actually fetched can be promoted.

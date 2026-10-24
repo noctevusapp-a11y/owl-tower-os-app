@@ -730,3 +730,56 @@ Engine arithmetic checked by hand and re-run (all match; the project's own tests
 ## 6. Housekeeping
 
 The only files written by this review are this report, `data/raw_agent_returns/agent_F1_findings.json` and scratch files under `/tmp/claude-0/f1/`; the scratch PostgreSQL database `f1_review` was dropped at the end. No git command was run; no repository file other than the two outputs was modified.
+
+---
+
+# Resolution (author's response, added after the review)
+
+Status of every finding after the remediation round (commits `a909f7a` … `bf5dad1` and later; engine rewritten, schema hardened, validator/importer extended). "Test" names the regression test that fails if the fix is reverted (`tests/test_review_fixes.py` = RF, `test_calc.py`, `test_validate.py`, `test_postgres.py` = PG, `test_connectors.py`, `test_data_gates.py`). **These are the author's statements; the independent re-check is `docs/independent_review_F3.md` (when present), which supersedes this table where it disagrees.**
+
+| id | status | what was done | test |
+|---|---|---|---|
+| F1-001 | fixed | each product's coverage is paired with its own price; coverage unit converted to the output unit; positive checks; several rows need a `consumption_selector` (new column); unusable products leave the pool | RF F001ConsumptionPairing (7) |
+| F1-002 | fixed | one `Engine._why_not` over sources, products (also pinned), crews, indices/values, assumptions, factors, rates, norms, coverage, definitions | RF F002StrictModeLeaks (6) |
+| F1-003 | fixed | calculation runs/lines append-only (trigger), TRUNCATE guard, no cascade delete, deferred check that a complete run has lines adding up to its total | PG calculation_records…, complete_run… |
+| F1-004 | fixed | `enums.NO_DATA_USE` (prohibited, restricted_no_storage, licence_required) imported by engine, validator, importer, DB triggers; importer refuses them whatever the capture method | RF F002…restricted, test_validate ReviewFixRules, test_connectors, PG restricted_sources… |
+| F1-005 | fixed | factors pass the usability test; newest valid factor chosen deterministically | RF F005 |
+| F1-006 | fixed | prices ranked by region class (exact < sub-region < ancestor < factor-adjusted); ancestor/sub-region need opt-in and are flagged with the region; `retrieved_at` parsed as an instant | RF F006 (5) |
+| F1-007 | fixed | straight-time non-apprentice rows; regime and wage class for prevailing; `classification`; ties with different values = `LABOR_RATE_AMBIGUOUS` | RF F007 (4) |
+| F1-008 | fixed | a source that includes a component uses its own stated amount; contradicting totals fail; payroll types by state; general_liability/other flagged `OMITTED_BURDEN` | RF F008 (5) |
+| F1-009 | fixed | score = (region rank, trade specificity, newest date); ties differing in value are ambiguous; `wc_class_code` | RF F009 (4) |
+| F1-010 | fixed | unusable factor = `CONDITION_FACTOR_UNUSABLE`; a condition that changes no line = `CONDITION_FACTOR_MISSING` | RF F010 (3) |
+| F1-011 | fixed | tier prices need a quantity that reaches the tier; quantity factors honour validity and ambiguity; assembly children priced at their own quantity | RF F011 (4) |
+| F1-012 | fixed | `price_policy` validated; real `latest` | RF F012 |
+| F1-013 | fixed | run id covers every line with inputs and every missing input; `calc_version` = hash of the computing code | RF F013 (3) |
+| F1-014 | fixed | productivity assumption path | RF F014F015 |
+| F1-015 | fixed | approved/unexpired/four-eyes/typed/ranged/unique assumptions; units honoured | RF F014F015 (6) |
+| F1-016 | fixed, one documented decision | fuel added or a gap; equipment bound to its crew; operator by flag or `TR-OPR`; operator-needed-but-absent is a gap; member hours in person-hours. **Decision:** delivery/pickup, mobilization and minimum rental are *not* unit-cost items; the amount found is shown as a flag on the line (`EQUIPMENT_DELIVERY_PICKUP_EXCLUDED:<amount>`) instead of being spread over an unknown quantity | RF F016 (9) |
+| F1-017 | fixed | index must apply to the cost kind; every price of another period is adjusted; fallback to the latest published period is flagged; `known_at` honoured for vintages | RF F017 (5) |
+| F1-018 | fixed | retail is opt-in (`accept_retail_proxy`); runs record `price_basis` (contractor_quote / public_list / retail_proxy / assumed / mixed) and `input_review_floor` | RF F018 (4) |
+| F1-019 | fixed | price in `price_total`; fraction ranges; basis texts in the run id | RF F019 (4) |
+| F1-020 | fixed | CHECK validated-needs-reviewer on 16 tables; source gates (fetched, terms) incl. `index_values`; append-only `review_events` log; validator `VALIDATED_WITHOUT_REVIEWER` | PG validated_needs…, test_validate |
+| F1-021 | fixed | products, crews, members, definitions, components, factors append-only (definitions: only `status` may move); assumptions content immutable | PG product_identity…, definitions_are_frozen…, assumptions_are… |
+| F1-022 | fixed | SQL `compute_spec_key` + trigger; leaf-category check; observation pack must equal product pack | PG product_identity…, spec_key_function… |
+| F1-023 | fixed | work item `material_specs` re-derived and compared with the priced components; assembly `work_items` compared with its component rows; duplicate cost tags are errors in work items and assemblies | test_validate ReviewFixRules (5) |
+| F1-024 | fixed | assembly `included_scope` derived from the children, children's exclusions surfaced; validator `ASM_NO_INCLUSIONS`, `ASM_INCLUDED_NOT_PRICED`, `ASM_CHILD_EXCLUSION_NOT_SURFACED`, `ASM_SCOPE_CONTRADICTION` | test_validate, test_data_gates |
+| F1-025 | fixed | single labor-table pass; index values promotable through their series source; evidence required per table; restricted sources never promoted; promotions logged | test_validate PromotionGaps (3) |
+| F1-026 | fixed (1–3, 6), documented (4, 5, 7) | screws counted with the fence-post rule at both ends (0.875 / 1.09375 / 0.8333 per SF); batts 15/16; wall height 97.125 in; 10 ft wall uses 4x12 board hung horizontally. Bottom-plate fasteners are an explicit exclusion; the framing nail is a 16d sinker by stated spec (the 8d *common* nail belongs to a different spec line, WI-FRM-004); bar supports remain excluded in WI-CON-003 | test_data_gates arithmetic |
+| F1-027 | fixed | duplicate scope tokens removed; the 50 LF duct is an assembly spec parameter, its quantity documented as such | test_validate (WI_SCOPE_DUPLICATE_TOKEN) |
+| F1-028 | partly fixed, partly **open** | work-item specs now state every priced attribute (`material_specs`); capture targets carry origin/review status and per-target recommended sources. **Open (minor):** required attributes of connectors (no load rating/ICC-ES) and paints (no solids/tier) cannot be tightened without inventing the spec value the company wants; products sharing a key may still differ there | — |
+| F1-029 | fixed | `cooling_capacity_ton_refrig`, `container_gal_us`; `quantity_kind` separates person-, crew- and equipment-hours; stored quantities have 10 decimals (the formulas state the exact rationals) | RF F016, data dictionary |
+| F1-030 | fixed | finding text and geography notes corrected/marked assumed, duplicate BLS entries cross-referenced, index metadata filled, CSI = `licence_required` in methodology | test_data_gates |
+| F1-031 | fixed (index vintage limitation documented) | observation id covers price and retrieval time; whole-token price match; time zone required; collisions rejected; BLS contact from `COSTDB_CONTACT` | test_connectors |
+| F1-032 | fixed | TRUNCATE guards, units immutable with NULL-safe qualifier CHECKs, burden/consumption/factor CHECKs, `waived` only for non-errors, four-eyes | PG (units…, other_check…, assumptions…) |
+| F1-033 | fixed (view unchanged otherwise) | `po_dates_chk` independent of the session time zone; latest-validated view keyed on region/zip/store. The view remains a convenience (it does not separate channels/units); the engine applies its own policy | PG observation_date… |
+| F1-034 | fixed (fractions documented) | plain decimals only are numbers (Python = SQL, tested on edge values); 12-hex ids with collision detection. `'15/32'` and `0.46875` remain different strings: attribute values must be entered in the form the category states — a mismatch can only miss a target, never merge two products | PG spec_key_function… |
+| F1-035 | fixed | `calc_version` hashes the computing code; `code_ref` = git commit (+uncommitted marker) | build.py |
+| F1-036 | fixed | person-hours = Σ member quantity × member hours | RF F016 |
+| F1-037 | fixed | `includes_overhead/includes_profit` flags (company rates containing either are refused as cost); derived loaded rate takes region/period from the governing wage | RF F036… |
+| F1-038 | fixed | `RunParams.__post_init__` validates every enumeration and number | RF F036… |
+| F1-039 | fixed | no result-affecting default thresholds; validator thresholds in `DEFAULT_POLICY` with stated bases; local Decimal context | test_validate |
+| F1-040 | fixed | `known_at` (default as_of) filters on `retrieved_at`/vintage | RF F036… |
+| F1-041 | fixed | retired / not-yet-valid / rejected definitions fail, unreviewed are incomplete; optional components excluded unless selected | RF F036… |
+| F1-042 | fixed | database tests start their own PostgreSQL and fail (not skip) when none is available; one regression test per engine finding; independent arithmetic re-derives all non-trivial fixed quantities (screws by fence-post counting, studs/plates from the true wall height, batts, paint bead, concrete volumes) | test_data_gates, test_postgres |
+
+New defects found while fixing (by running the new database tests against a real server): `compute_spec_key` could not run (`ORDER BY` on an alias with `COLLATE`); trigger functions failed outside the `costdb` search path (now pinned); the TON/GAL qualifier CHECKs let a NULL qualifier through (NULL-safe now). All three are covered by PG tests.
