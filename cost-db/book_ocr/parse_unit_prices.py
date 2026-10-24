@@ -210,7 +210,53 @@ def find_header(rows: list[list[dict]]) -> Optional[dict]:
     return {"row": i, "centres": c, "bounds": bounds, "desc_end": order[0] - 95, "y": rows[i][0]["_yc"]}
 
 
-def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
+def calibrate_bounds_header(hdr: dict, rows: list[list[dict]]) -> dict:
+    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column. Re-fit the
+    column boundaries to those clusters (the header words alone are off by a few mm on skewed or cut pages)."""
+    bounds = dict(hdr["bounds"])
+    centres = hdr["centres"]
+    keys = ["output", "hours", "material", "labor", "equipment", "total", "total_op"]
+    xs = []
+    for r in rows:
+        if r[0]["_yc"] <= hdr["y"] + 10:
+            continue
+        for z in r:
+            if z["x0"] > bounds["output"][0] - 30 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
+                xs.append(z["x1"])
+    if len(xs) < 12:
+        return bounds
+    xs.sort()
+    clusters, cur = [], [xs[0]]
+    for x in xs[1:]:
+        if x - cur[-1] > 45:
+            clusters.append(cur)
+            cur = [x]
+        else:
+            cur.append(x)
+    clusters.append(cur)
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    names = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment", "total": "Total", "total_op": "Incl"}
+    assigned: dict[str, float] = {}
+    for m in meds:
+        k = min(keys, key=lambda kk: abs(centres[names[kk]] + 45 - m))
+        if abs(centres[names[k]] + 45 - m) <= 110 and (k not in assigned or abs(centres[names[k]] + 45 - m) < abs(centres[names[k]] + 45 - assigned[k])):
+            assigned[k] = m
+    if len(assigned) < 3:
+        return bounds
+    bounds["_anchors"] = dict(assigned)                       # right-edge anchors (used for numeric tokens in cell_tokens)
+    # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
+    # the Unit column sits between Hours and Material and keeps its header-based bounds
+    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):      # not output|hours: header bounds do better there
+        if a in assigned and b in assigned:
+            mid = (assigned[a] + assigned[b]) / 2
+            bounds[a] = (bounds[a][0], mid)
+            bounds[b] = (mid, bounds[b][1])
+    return bounds
+
+
+
+
+def calibrate_bounds_clusters(hdr: dict, rows: list[list[dict]]) -> dict:
     """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column, evenly spaced
     (about 190 px at 360 dpi). The clusters right of the Unit column are the money columns in order (material, labor,
     equipment, total, total incl. O&P); a double gap means an empty column. This is more reliable than the header words,
@@ -267,6 +313,17 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
     bounds["total_op"] = (bounds["total_op"][0], 10 ** 6)
     bounds["_anchors"] = dict(anchors)                       # right-edge anchors (used for numeric tokens in cell_tokens)
     return bounds
+
+
+def calibrate_bounds(hdr: dict, rows: list[list[dict]], page_w: int = 2814) -> dict:
+    """Header words give the columns when they are regularly spaced (the normal case); when the header is damaged (a word
+    lost or shifted by a column, a centre beyond the page) the evenly spaced right-edge clusters of the page's numbers do."""
+    c = hdr["centres"]
+    xs = [c[k] for k in ("Material", "Labor", "Equipment", "Total", "Incl")]
+    gaps = [b - a for a, b in zip(xs, xs[1:])]
+    med = sorted(gaps)[len(gaps) // 2]
+    regular = all(0.75 * med <= g <= 1.25 * med for g in gaps) and xs[-1] <= page_w - 20 and 120 <= med <= 260
+    return calibrate_bounds_header(hdr, rows) if regular else calibrate_bounds_clusters(hdr, rows)
 
 
 def col_of(xc: float, bounds: dict) -> Optional[str]:
@@ -793,7 +850,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     img = parts.image(pdf_page)
     if img is not None and img.shape[1] != w:
         img = None                                             # OCR was run at another size; no geometry then
-    bounds, desc_end = (calibrate_bounds(hdr, trows) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
+    bounds, desc_end = (calibrate_bounds(hdr, trows, w) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
     irow_by_y = [(r[0]["_yc"], r) for r in irows]
     known = set(crews)
 
