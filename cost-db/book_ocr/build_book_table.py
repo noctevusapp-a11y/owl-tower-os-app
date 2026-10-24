@@ -34,7 +34,7 @@ DIVISION_NAMES = {
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
               "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING", "EQUIPMENT_DERIVED_FROM_SUM",
-              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED", "COLUMN_SLIP_MOVED", "UNIT_UNREAD"}
+              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED", "COLUMN_SLIP_MOVED", "UNIT_UNREAD", "LINE_NUMBER_DUPLICATE"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED", "HEADER_TEMPLATE",
               "CREW_FROM_ARITHMETIC", "OUTPUT_HOURS_CREW_CHECK", "OUTPUT_FROM_CREW_CHECK", "LABOR_CREW_OK", "OP_CHECK_OK",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
@@ -144,18 +144,34 @@ def main() -> int:
         for it in items:
             it["order_bad"] = False
             it.pop("restart", None)
+            it["run"] = 0
         groups: dict[str, list[int]] = {}
         run_of: dict[str, int] = {}
         last_in_sec: dict[str, int] = {}
-        for i, it in enumerate(items):
-            if it["sec"] and it["line_no"] and not it["ln"].get("line_partial"):
-                v = int(it["line_no"])
-                prev = last_in_sec.get(it["sec"])
-                if prev is not None and v <= 300 and prev - v >= 1000:
+        full_idx = [i for i, it in enumerate(items) if it["sec"] and it["line_no"] and not it["ln"].get("line_partial")]
+        for k, i in enumerate(full_idx):
+            it = items[i]
+            v = int(it["line_no"])
+            prev = last_in_sec.get(it["sec"])
+            if prev is not None and v <= 300 and prev - v >= 1000:
+                # the numbering fell back to the start of a section: either one misread number or a new section whose header line
+                # (its id) was unreadable, so that its lines inherited the previous id. It is a restart only when the numbering goes
+                # on from the low value: at least two of the next three fully read numbers under this id (all of them when fewer
+                # exist) stay below the value reached before; a single low number among continuing high ones is a misread (LIS below)
+                nxt = [int(items[j]["line_no"]) for j in full_idx[k + 1:k + 4] if items[j]["sec"] == it["sec"]]
+                low = sum(1 for n in nxt if n < prev)
+                if (len(nxt) >= 2 and low >= 2) or (0 < len(nxt) < 2 and low == len(nxt)):
                     run_of[it["sec"]] = run_of.get(it["sec"], 0) + 1          # numbering restarts: a new section whose id was misread as this one
                     it["restart"] = True
-                last_in_sec[it["sec"]] = v
-                groups.setdefault(f"{it['sec']}#{run_of.get(it['sec'], 0)}", []).append(i)
+            last_in_sec[it["sec"]] = v
+            groups.setdefault(f"{it['sec']}#{run_of.get(it['sec'], 0)}", []).append(i)
+        # every line after a restart, under the same id, belongs to the restarted run (its section id is not the one it carries)
+        cur_run: dict[str, int] = {}
+        for it in items:
+            if it["sec"]:
+                if it.get("restart"):
+                    cur_run[it["sec"]] = cur_run.get(it["sec"], 0) + 1
+                it["run"] = cur_run.get(it["sec"], 0)
         for sec, idxs in groups.items():
             vals = [int(items[i]["line_no"]) for i in idxs]
             # longest strictly increasing subsequence (O(n log n)) - everything outside it is a misread number
@@ -246,17 +262,21 @@ def main() -> int:
             flags.append("LINE_NUMBER_MISSING")
         if it["order_bad"]:
             flags.append("LINE_ORDER")
-        if it.get("restart"):
-            flags.append("SECTION_ID_DOUBTFUL")                 # the numbering restarted under the same section id: one of the two ids is misread
+        if it.get("run", 0) >= 1:
+            # the numbering restarted under this section id: a new section began whose header line (id) was unreadable, and every
+            # line from the restart on inherited the previous id. The id is not theirs: no section, no cost code, line flagged
+            flags.append("SECTION_ID_DOUBTFUL")
+            sec = None
         if it.get("carried"):
             flags.append("SECTION_CARRIED")                     # page starts mid-section: id taken from the previous page, confirmed by the numbering
-        if sec is None and line_no:
+        if sec is None and line_no and it.get("run", 0) < 1:
             flags.append("SECTION_UNKNOWN")                     # no section id could be read or carried: the line has no cost code
         desc = fix_desc(better_desc(ln["description"] or "", ln.get("description_alt")))
         indent = ln.get("indent_px")
         path = []
-        if sec is not None and indent is not None:
-            st = stack_by_section.setdefault(sec, [])
+        stack_key = sec if sec is not None else (f"{it['sec']}#run{it['run']}" if it["sec"] and it.get("run", 0) >= 1 else None)
+        if stack_key is not None and indent is not None:
+            st = stack_by_section.setdefault(stack_key, [])
             while st and st[-1][0] >= indent - 25:
                 st.pop()
             path = [d for _, d in st]
@@ -335,9 +355,32 @@ def main() -> int:
             "book_page": pg_no - 14, "pdf_page": pg_no, "status": status, "flags": ";".join(flags),
             "conf": json.dumps(ln.get("conf", {})),
             "crew_labor_hours_per_day": crew["labor_hours_per_day"] if crew else None})
-        report[status] += 1
-        for f in flags:
-            report["flag:" + f] += 1
+
+    # ---- 2b. the cost code must name one printed line. When two or more lines ended up with the same code, the line whose number
+    # and section carry no doubt (no numbering or section flag) keeps it if it is the only such line; every other line loses the
+    # code and is flagged LINE_NUMBER_DUPLICATE (open): a verified or machine_read line becomes flagged
+    NUMBERING_DOUBT = {"LINE_ORDER", "LINE_NUMBER_ASSUMED", "LINE_NUMBER_RECONSTRUCTED", "LINE_NUMBER_PARTIAL", "SECTION_ID_DOUBTFUL", "SECTION_CARRIED"}
+    by_code: dict[str, list[dict]] = {}
+    for r in rows:
+        if r["cost_code"]:
+            by_code.setdefault(r["cost_code"], []).append(r)
+    for code, group in by_code.items():
+        if len(group) < 2:
+            continue
+        clean = [r for r in group if not (set(r["flags"].split(";")) & NUMBERING_DOUBT)]
+        keep = clean[0] if len(clean) == 1 else None
+        for r in group:
+            if r is keep:
+                continue
+            r["cost_code"] = None
+            r["flags"] = ";".join([f for f in r["flags"].split(";") if f] + ["LINE_NUMBER_DUPLICATE"])
+            if r["status"] in ("verified", "machine_read"):
+                r["status"] = "flagged"
+    for r in rows:
+        report[r["status"]] += 1
+        for f in r["flags"].split(";"):
+            if f:
+                report["flag:" + f] += 1
 
     # ---- 3. write
     out = Path(a.out_dir)

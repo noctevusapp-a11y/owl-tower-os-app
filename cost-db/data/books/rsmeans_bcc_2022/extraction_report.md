@@ -1,6 +1,6 @@
 # Book table extraction report — Building Construction Costs with RSMeans data 2022 (company reference copy)
 
-Generated 2026-10-24 16:29Z. Scripts: `cost-db/book_ocr/` (OCR, three-reading parser, table builder, derivation, spot check). Data: `cost-db/data/books/rsmeans_bcc_2022/`.
+Generated 2026-10-24 19:40Z. Scripts: `cost-db/book_ocr/` (OCR, three-reading parser, table builder, derivation, spot check). Data: `cost-db/data/books/rsmeans_bcc_2022/`.
 
 ## 1. What was read
 
@@ -26,9 +26,9 @@ A line is **verified** only when all of the following hold. Nothing else is call
 
 | status | lines | share of priced |
 |---|---|---|
-| verified | 11745 | 48.7% |
-| machine_read | 3394 | 14.1% |
-| flagged | 8978 | 37.2% |
+| verified | 11378 | 47.2% |
+| machine_read | 3285 | 13.6% |
+| flagged | 9454 | 39.2% |
 
 Every verified and machine_read line carries a cost code (0 without one).
 
@@ -37,31 +37,31 @@ By division (verified / machine_read / flagged):
 | division | verified | machine_read | flagged |
 |---|---|---|---|
 | 01 | 265 | 44 | 122 |
-| 02 | 388 | 120 | 255 |
-| 03 | 857 | 257 | 511 |
-| 04 | 399 | 124 | 322 |
-| 05 | 723 | 379 | 581 |
-| 06 | 1129 | 245 | 695 |
-| 07 | 375 | 209 | 711 |
-| 08 | 820 | 218 | 810 |
-| 09 | 851 | 461 | 626 |
-| 10 | 628 | 99 | 307 |
-| 11 | 582 | 98 | 361 |
-| 12 | 291 | 38 | 182 |
-| 13 | 338 | 100 | 265 |
-| 14 | 128 | 26 | 112 |
-| 21 | 66 | 3 | 20 |
-| 22 | 519 | 102 | 402 |
-| 23 | 519 | 123 | 459 |
+| 02 | 382 | 115 | 250 |
+| 03 | 817 | 253 | 476 |
+| 04 | 389 | 112 | 305 |
+| 05 | 703 | 364 | 551 |
+| 06 | 1114 | 245 | 689 |
+| 07 | 346 | 193 | 671 |
+| 08 | 803 | 206 | 787 |
+| 09 | 837 | 452 | 614 |
+| 10 | 626 | 99 | 306 |
+| 11 | 573 | 98 | 360 |
+| 12 | 285 | 37 | 180 |
+| 13 | 328 | 96 | 242 |
+| 14 | 122 | 25 | 111 |
+| 21 | 61 | 3 | 20 |
+| 22 | 441 | 93 | 346 |
+| 23 | 468 | 110 | 409 |
 | 26 | 964 | 116 | 290 |
 | 27 | 17 | 26 | 23 |
 | 28 | 100 | 12 | 32 |
-| 31 | 638 | 283 | 508 |
-| 32 | 432 | 119 | 291 |
+| 31 | 611 | 278 | 499 |
+| 32 | 426 | 119 | 290 |
 | 33 | 541 | 162 | 350 |
-| 34 | 76 | 8 | 55 |
+| 34 | 60 | 5 | 38 |
 | 35 | 7 | 3 | 6 |
-| 41 | 37 | 0 | 22 |
+| 41 | 37 | 0 | 19 |
 | 44 | 53 | 14 | 35 |
 | 46 | 0 | 5 | 7 |
 | 48 | 2 | 0 | 6 |
@@ -75,15 +75,16 @@ Open flags (one line can carry several):
 | `MONEY_UNSETTLED` | 1586 | material/labor/equipment/total do not add up for any combination of readings |
 | `WEAK_READING` | 1244 | a money cell kept on one reading only (prefix; the cells are named after the colon) |
 | `LINE_NUMBER_MISSING` | 1129 | no reading caught the line number |
+| `SECTION_ID_DOUBTFUL` | 1041 | the line numbering restarted under a section id: a new section began whose header line (id) was unreadable, so the lines from the restart on carried the previous id — they get no section id and no cost code |
 | `OP_MISMATCH` | 1033 | total incl. O&P contradicts the components |
 | `LABOR_CREW_MISMATCH` | 924 | labor ≠ crew daily cost / output |
 | `SECTION_UNKNOWN` | 761 | no section id read on the page and none could be carried from the previous page: the line has no cost code |
 | `OUTPUT_HOURS_MISSING` | 648 | a labor cost is printed but no output/hours were read |
-| `LINE_ORDER` | 366 | line number out of the section's numbering order (misread) |
+| `LINE_ORDER` | 379 | line number out of the section's numbering order (misread) |
 | `EQUIPMENT_DERIVED_FROM_SUM` | 265 | equipment computed as total − material − labor (no crew confirmation) |
 | `EQUIP_WITHOUT_CREW_EQUIP` | 223 | an equipment cost on a crew that owns no equipment — the signature of the total slipping one column left |
 | `OUTPUT_HOURS_AMBIGUOUS` | 173 | two output/hours pairs fit |
-| `SECTION_ID_DOUBTFUL` | 82 | numbering restarted under the same section id (one id misread) |
+| `LINE_NUMBER_DUPLICATE` | 118 | another line carries the same section and line number without doubt: this line's cost code is removed (a code names one printed line) |
 | `COST_MISSING` | 61 | a crew-day was printed but no cost was read |
 | `MONEY_AMBIGUOUS` | 16 | two combinations add up equally well |
 
@@ -91,18 +92,20 @@ Informational flags (a cell computed from the others by the book's own rules, or
 
 ## 3. Spot check against the page images
 
-* **verified_final** sample (`spot_check/verified_final/`): 49 rows drawn and compared cell by cell against the page image; 49 of them are in the `verified` tier of this build — **49 of 49 fully correct**.
-* **verified_round3** sample (`spot_check/verified_round3/`): 56 rows drawn and compared cell by cell against the page image; 49 of them are in the `verified` tier of this build — **49 of 49 fully correct**.
+* **verified_final** sample (`spot_check/verified_final/`): 49 rows drawn and compared cell by cell against the page image; 47 of them are in the `verified` tier of this build — **47 of 47 fully correct**.
+  * left the tier under the current rule: p537 22 42 33.20 0972 → flagged: ok
+  * left the tier under the current rule: p73 03 11 13.65 1050 → flagged: ok
+* **verified_round3** sample (`spot_check/verified_round3/`): 56 rows drawn and compared cell by cell against the page image; 50 of them are in the `verified` tier of this build — **50 of 50 fully correct**.
   * left the tier under the current rule: p654 31 23 23.20 1480 → machine_read: ok
   * left the tier under the current rule: p270 07 71 23.10 6300 → machine_read: ok
   * left the tier under the current rule: p226 06 25 13.10 2200 → machine_read: ok
   * left the tier under the current rule: p624 27 13 23.13 0080 → machine_read: ok
   * left the tier under the current rule: p87 03 21 05.10 1900 → flagged: ok
-  * left the tier under the current rule: p407 10 28 13.13 4400 → flagged: ok
   * left the tier under the current rule: p346 09 22 36.23 4900 → machine_read: ok
-* **verified_round2** sample (`spot_check/verified_round2/`): 46 rows drawn and compared cell by cell against the page image; 37 of them are in the `verified` tier of this build — **37 of 37 fully correct**.
+* **verified_round2** sample (`spot_check/verified_round2/`): 46 rows drawn and compared cell by cell against the page image; 35 of them are in the `verified` tier of this build — **35 of 35 fully correct**.
   * left the tier under the current rule: p604 26 09 13.30 0220 → machine_read: ok
   * left the tier under the current rule: p480 13 24 16.50 2500 → machine_read: ok
+  * left the tier under the current rule: p514 22 05 23.20 1270 → flagged: ok
   * left the tier under the current rule: p480 13 24 16.50 0400 → machine_read: wrong:hours (printed 14, table 44: two readings 14/44 both pass the crew-day rule without a crew) []
   * left the tier under the current rule: p474 13 05 05.70 0620 → machine_read: ok
   * left the tier under the current rule: p274 07 72 26.10 0450 → machine_read: ok
@@ -110,11 +113,13 @@ Informational flags (a cell computed from the others by the book's own rules, or
   * left the tier under the current rule: p454 12 05 05.10 3130 → flagged: wrong:material,total (printed T 24.50 O&P 36; O&P slipped into the total column, material computed from it) [MONEY_UNSETTLED;OUTPUT_HOURS_CREW_CHECK;LABOR_CREW_OK;EQUIP_CREW_DIFFERS;EQUIP_WITHOUT_CREW_EQUIP]
   * left the tier under the current rule: p418 10 75 16.10 3400 → machine_read: ok
   * left the tier under the current rule: p637 31 22 13.20 0120 → machine_read: ok
-* **verified_round1** sample (`spot_check/verified_round1/`): 39 rows drawn and compared cell by cell against the page image; 30 of them are in the `verified` tier of this build — **30 of 30 fully correct**.
+  * left the tier under the current rule: p732 34 71 13.17 1400 → flagged: ok
+* **verified_round1** sample (`spot_check/verified_round1/`): 39 rows drawn and compared cell by cell against the page image; 29 of them are in the `verified` tier of this build — **29 of 29 fully correct**.
   * left the tier under the current rule: p304 08 41 13.20 1650 → machine_read: ok
   * left the tier under the current rule: p304 08 41 13.20 2250 → machine_read: ok
   * left the tier under the current rule: p433 11 41 13.20 8410 → flagged: wrong:output,hours (printed 5.60 / 4.643; output token merged with the hours digits, hours derived from the crew) [HEADER_TEMPLATE;OUTPUT_HOURS_UNSETTLED;LABOR_CREW_OK;OP_CHECK_OK]
   * left the tier under the current rule: p274 07 72 26.10 0200 → flagged: ok
+  * left the tier under the current rule: p85 03 15 19.30 0140 → flagged: ok
   * left the tier under the current rule: p169 05 42 23.50 1100 → machine_read: ok
   * left the tier under the current rule: p656 31 23 23.20 9230 → machine_read: ok
   * left the tier under the current rule: p200 06 11 10.14 0460 → flagged: ok
@@ -142,25 +147,28 @@ Informational flags (a cell computed from the others by the book's own rules, or
 * **header_template_round1** sample (`spot_check/header_template_round1/`): 13 rows drawn and compared cell by cell against the page image; 11 of them are in the `verified` tier of this build — **11 of 11 fully correct**.
   * left the tier under the current rule: p79 03 15 05.80 0500 → flagged: wrong:material,total (printed 77 77 84.50; 7 read as 1 by both engines, O&P check lost) [HEADER_TEMPLATE;MATERIAL_DERIVED_FROM_SUM;OP_MISMATCH]
   * left the tier under the current rule: p435 11 44 13.10 7500 → machine_read: ok
-* **whole_hours** sample (`spot_check/whole_hours/`): 12 rows drawn and compared cell by cell against the page image; 11 of them are in the `verified` tier of this build — **11 of 11 fully correct**.
+* **whole_hours** sample (`spot_check/whole_hours/`): 12 rows drawn and compared cell by cell against the page image; 10 of them are in the `verified` tier of this build — **10 of 10 fully correct**.
+  * left the tier under the current rule: p537 22 42 33.20 0880 → flagged: ok
   * left the tier under the current rule: p605 26 22 13.10 2700 → machine_read: ok
 * **whole_hours_round1** sample (`spot_check/whole_hours_round1/`): 12 rows drawn and compared cell by cell against the page image; 6 of them are in the `verified` tier of this build — **6 of 6 fully correct**.
-  * left the tier under the current rule: p276 07 81 16.10 0470 → machine_read: ok
+  * left the tier under the current rule: p276 07 81 16.10 0470 → flagged: ok
   * left the tier under the current rule: p528 22 13 29.14 0500 → flagged: ok
   * left the tier under the current rule: p466 12 56 43.10 1850 → flagged: ok
   * left the tier under the current rule: p418 10 75 16.10 0800 → machine_read: ok
-  * left the tier under the current rule: p579 23 81 93.10 1060 → machine_read: ok
+  * left the tier under the current rule: p579 23 81 93.10 1060 → flagged: ok
   * left the tier under the current rule: p629 28 23 13.10 4200 → flagged: ok
 * **crew_arithmetic** sample (`spot_check/crew_arithmetic/`): 14 rows drawn and compared cell by cell against the page image; 12 of them are in the `verified` tier of this build — **12 of 12 fully correct**.
   * left the tier under the current rule: p164 05 41 13.30 5330 → machine_read: ok
   * left the tier under the current rule: p272 07 71 23.30 5320 → machine_read: ok
 * **crew_arithmetic_round1** sample (`spot_check/crew_arithmetic_round1/`): 16 rows drawn and compared cell by cell against the page image; 15 of them are in the `verified` tier of this build — **15 of 15 fully correct**.
   * left the tier under the current rule: p542 22 52 33.10 1500 → flagged: ok
-* **unit_second_reading** sample (`spot_check/unit_second_reading/`): 11 rows drawn and compared cell by cell against the page image; 10 of them are in the `verified` tier of this build — **10 of 10 fully correct**.
+* **unit_second_reading** sample (`spot_check/unit_second_reading/`): 11 rows drawn and compared cell by cell against the page image; 9 of them are in the `verified` tier of this build — **9 of 9 fully correct**.
+  * left the tier under the current rule: p527 22 13 16.60 1400 → flagged: ok
   * left the tier under the current rule: p232 06 48 16.10 3600 → machine_read: ok
-* **verified_v1** sample (`spot_check/verified_v1/`): 53 rows drawn and compared cell by cell against the page image; 40 of them are in the `verified` tier of this build — **40 of 40 fully correct**.
+* **verified_v1** sample (`spot_check/verified_v1/`): 53 rows drawn and compared cell by cell against the page image; 38 of them are in the `verified` tier of this build — **38 of 38 fully correct**.
   * left the tier under the current rule: p317 08 71 20.15 2000 → flagged: ok
   * left the tier under the current rule: p653 31 23 23.20 1296 → machine_read: ok
+  * left the tier under the current rule: p661 31 41 13.10 1600 → flagged: ok
   * left the tier under the current rule: p467 12 61 13.13 2200 → flagged: ok
   * left the tier under the current rule: p655 (no section) 1710 → machine_read: ok
   * left the tier under the current rule: p404 10 22 33.10 1500 → machine_read: ok
@@ -170,6 +178,7 @@ Informational flags (a cell computed from the others by the book's own rules, or
   * left the tier under the current rule: p653 31 23 23.20 1240 → flagged: ok
   * left the tier under the current rule: p68 03 11 13.20 3000 → machine_read: ok
   * left the tier under the current rule: p535 22 41 39.10 2810 → machine_read: ok
+  * left the tier under the current rule: p217 (no section) 2740 → flagged: ok
   * left the tier under the current rule: p192 06 05 23.60 6146 → flagged: ok
   * left the tier under the current rule: p589 26 05 19.20 0400 → machine_read: ok
 * **machine_read_v1** sample (`spot_check/machine_read_v1/`): 25 rows drawn and compared cell by cell against the page image; 13 of them are in the `machine_read` tier of this build — **13 of 13 fully correct**.
@@ -196,7 +205,7 @@ Every wrong verified row found in a round became a rule before the next round, s
 
 ## 4. Derived Los Angeles, latest-month values
 
-* 23205 lines carry a 2022 cost; 23064 got a derived Los Angeles value for 2026-Q02 (11411 of them on verified lines).
+* 22393 lines carry a 2022 cost; 22252 got a derived Los Angeles value for 2026-Q02 (11045 of them on verified lines).
 * Formula per line: component × City Cost Index (LA, book 2022; material index for material, installation index for labor and equipment) × BLS factor (material: PPI series by material class; labor: ECI total compensation, construction; equipment: PPI machinery). Every factor is written next to the value. `origin = derived`, `review_status = unreviewed`.
 * Not escalated separately: fuel inside the equipment cost (the fuel share of a crew's equipment cost is not published). Not applied: any company-specific markup, sales tax, delivery, quantity discounts, current supplier quotes.
 

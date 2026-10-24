@@ -19,13 +19,17 @@ from pathlib import Path
 
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
               "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING",
-              "EQUIPMENT_DERIVED_FROM_SUM", "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN"}
+              "EQUIPMENT_DERIVED_FROM_SUM", "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_DUPLICATE"}
 MEANING = {"MONEY_UNSETTLED": "material/labor/equipment/total do not add up for any combination of readings",
            "MONEY_AMBIGUOUS": "two combinations add up equally well", "OUTPUT_HOURS_UNSETTLED": "daily output × labor-hours is not a crew-day",
            "OUTPUT_HOURS_AMBIGUOUS": "two output/hours pairs fit", "LABOR_CREW_MISMATCH": "labor ≠ crew daily cost / output",
            "CREW_UNREAD": "the crew cell is printed but unreadable", "LINE_NUMBER_MISSING": "no reading caught the line number",
            "LINE_ORDER": "line number out of the section's numbering order (misread)",
-           "SECTION_ID_DOUBTFUL": "numbering restarted under the same section id (one id misread)", "OP_MISMATCH": "total incl. O&P contradicts the components",
+           "SECTION_ID_DOUBTFUL": "the line numbering restarted under a section id: a new section began whose header line (id) was unreadable, "
+                                  "so the lines from the restart on carried the previous id — they get no section id and no cost code",
+           "LINE_NUMBER_DUPLICATE": "another line carries the same section and line number without doubt: this line's cost code is removed "
+                                    "(a code names one printed line)",
+           "OP_MISMATCH": "total incl. O&P contradicts the components",
            "COST_MISSING": "a crew-day was printed but no cost was read", "OUTPUT_HOURS_MISSING": "a labor cost is printed but no output/hours were read",
            "EQUIPMENT_DERIVED_FROM_SUM": "equipment computed as total − material − labor (no crew confirmation)",
            "EQUIP_WITHOUT_CREW_EQUIP": "an equipment cost on a crew that owns no equipment — the signature of the total slipping one column left",
@@ -67,8 +71,26 @@ def main() -> int:
     no_code = sum(1 for r in priced if r["status"] in ("verified", "machine_read") and not r["cost_code"])
 
     # spot checks against the current table
-    by_key = {(r["section_id"], r["line"], r["pdf_page"]): r for r in rows}
-    by_key2 = {(r["line"], r["pdf_page"]): r for r in rows}
+    by_key: dict = {}
+    by_key2: dict = {}
+    for r in rows:
+        by_key.setdefault((r["section_id"], r["line"], r["pdf_page"]), []).append(r)
+        by_key2.setdefault((r["line"], r["pdf_page"]), []).append(r)
+
+    def find_row(s):
+        """the table row a sample row refers to; when two rows share page and line number (a duplicate number), the description decides"""
+        cands = by_key.get((s["section_id"], s["line"], s["pdf_page"])) or by_key2.get((s["line"], s["pdf_page"])) or []
+        if len(cands) > 1:
+            # the sample carries the cells as they were when drawn: the row with the same unit and printed money is the one
+            cells = ("unit", "material_2022", "labor_2022", "equipment_2022", "total_2022")
+            same = [r for r in cands if all((r.get(c) or "") == (s.get(c) or "") for c in cells if c in s)]
+            if len(same) == 1:
+                return same[0]
+            if s.get("description"):
+                same = [r for r in cands if (r.get("description") or "").strip() == s["description"].strip()]
+                if same:
+                    return same[0]
+        return cands[0] if cands else None
     spot_lines = []
     for item in a.spot:
         label, path = item.split("=", 1)
@@ -79,7 +101,7 @@ def main() -> int:
             v = s.get("reviewer_verdict", "").strip()
             if not v:
                 continue
-            t = by_key.get((s["section_id"], s["line"], s["pdf_page"])) or by_key2.get((s["line"], s["pdf_page"]))
+            t = find_row(s)
             cur = t["status"] if t else "missing"
             if cur == tier:
                 still += 1
