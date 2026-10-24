@@ -33,7 +33,7 @@ DIVISION_NAMES = {
     "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
-              "EQUIP_CREW_MISMATCH", "CREW_UNKNOWN", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "TOTAL_OP_IMPLAUSIBLE"}
+              "EQUIP_CREW_MISMATCH", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "EQUIPMENT_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED"}
@@ -109,9 +109,17 @@ def main() -> int:
             items.append({"ln": ln, "sec": sec, "line_no": ln["line"], "order_bad": False})
     # group by section in reading order (sections can continue over pages but never interleave)
     groups: dict[str, list[int]] = {}
+    run_of: dict[str, int] = {}
+    last_in_sec: dict[str, int] = {}
     for i, it in enumerate(items):
         if it["sec"] and it["line_no"] and not it["ln"].get("line_partial"):
-            groups.setdefault(it["sec"], []).append(i)
+            v = int(it["line_no"])
+            prev = last_in_sec.get(it["sec"])
+            if prev is not None and v <= 300 and prev - v >= 1000:
+                run_of[it["sec"]] = run_of.get(it["sec"], 0) + 1          # numbering restarts: a new section whose id was misread as this one
+                it["restart"] = True
+            last_in_sec[it["sec"]] = v
+            groups.setdefault(f"{it['sec']}#{run_of.get(it['sec'], 0)}", []).append(i)
     for sec, idxs in groups.items():
         vals = [int(items[i]["line_no"]) for i in idxs]
         # longest strictly increasing subsequence (O(n log n)) - everything outside it is a misread number
@@ -164,6 +172,8 @@ def main() -> int:
             flags.append("LINE_NUMBER_MISSING")
         if it["order_bad"]:
             flags.append("LINE_ORDER")
+        if it.get("restart"):
+            flags.append("SECTION_ID_DOUBTFUL")                 # the numbering restarted under the same section id: one of the two ids is misread
         desc = fix_desc(better_desc(ln["description"] or "", ln.get("description_alt")))
         indent = ln.get("indent_px")
         path = []

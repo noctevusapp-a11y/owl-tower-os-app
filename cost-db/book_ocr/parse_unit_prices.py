@@ -399,8 +399,8 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
             if lh_known is not None:
                 ok = abs(prod - lh_known) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.05"))
             else:
-                k8 = (prod / 8).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-                ok = 1 <= k8 <= 60 and abs(prod - 8 * k8) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.06"))
+                k4 = (prod / 4).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                ok = 1 <= k4 <= 120 and abs(prod - 4 * k4) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.06"))
             if not ok:
                 continue
             score = W["output"].get(o, 0.0) + W["hours"].get(h, 0.0)
@@ -475,6 +475,13 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                         flags.append("LABOR_DERIVED_FROM_CREW_SUM")
                     else:
                         flags.append("LABOR_CREW_MISMATCH")
+    # labor confirmed by the crew rule + strong material (+ equipment): a total that does not add up is the misread cell
+    if crew and vals["labor"] is not None and vals["material"] is not None and vals["total"] is not None and "LABOR_CREW_MISMATCH" not in flags \
+            and crew.get("bare_labor_daily") is not None and vals["output"] and vals["output"] > 0 and (conf.get("material") or 0) >= 2.0 \
+            and (conf.get("labor") or 0) >= 2.0 and abs(vals["material"] + vals["labor"] + (vals["equipment"] or 0) - vals["total"]) > Decimal("0.011"):
+        vals["total"], conf["total"] = vals["material"] + vals["labor"] + (vals["equipment"] or 0), None
+        flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS")]
+        flags.append("TOTAL_DERIVED_FROM_SUM")
     # the crew says whether an equipment cost exists at all; with labor confirmed, a total that does not add up pins the material
     if crew and crew.get("bare_labor_daily") is not None and vals["labor"] is not None and vals["output"] and vals["total"] is not None \
             and "LABOR_CREW_MISMATCH" not in flags and (crew.get("bare_equip_daily") or 0) == 0 and conf.get("total", 0) and conf["total"] >= 2.0:
@@ -495,7 +502,8 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     if vals["total_op"] is not None and vals["total"] is not None and not (vals["total"] <= vals["total_op"] <= vals["total"] * Decimal("2.2")):
         vals["total_op"] = None
         conf["total_op"] = None
-        flags.append("TOTAL_OP_IMPLAUSIBLE")
+        flags.append("TOTAL_OP_UNREADABLE")
+    flags[:] = list(dict.fromkeys(flags))
     return vals, conf, flags
 
 
@@ -520,10 +528,8 @@ def normalise_crew(s: str, known: set[str]) -> Optional[str]:
         if len(close) == 1 and qty:
             return f"{qty} {close[0][0].upper() + close[0][1:]}"
     m = re.match(r"^([A-Za-z])-?(\d{1,2})([A-Za-z]?)$", t)
-    if m:
-        cid = f"{m.group(1).upper()}-{int(m.group(2))}{m.group(3).upper()}"
-        if not known or cid in known:
-            return cid
+    if m and m.group(1).upper() in "ABCDEFGHJKLMNPQR":
+        return f"{m.group(1).upper()}-{int(m.group(2))}{m.group(3).upper()}"
     # fuzzy against the known crew list (e.g. 'lloth' -> '1 Lath', 'C14A' -> 'C-14A')
     if known:
         key = t.lower().replace("-", "")
@@ -710,6 +716,9 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         if r[0]["x0"] > desc_end * 0.25:
             continue
         sec = section_from(r)
+        if sec is None and not LINE_RE.fullmatch(r[0]["t"]):
+            ia_r = ia_row_near(r[0]["_yc"])
+            sec = section_from(ia_r) if ia_r else None     # tesseract lost the id, the scan's own text layer may have it
         if sec:
             section = sec
             out["sections"].append(sec)
