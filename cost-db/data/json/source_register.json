@@ -261,7 +261,7 @@
   "reviewed_by": null,
   "reviewed_at": null,
   "registered_at": "2026-10-24",
-  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F1): this entry and SRC-BLS-PUBLIC-DATA-API describe the same BLS API FAQ page. The registry keeps both for traceability; the effective terms are the more cautious of the two until a person reads https://www.bls.gov/developers/api_faqs.htm."
  },
  {
   "source_id": "SRC-BLS-ECEC",
@@ -393,7 +393,7 @@
   "reviewed_by": null,
   "reviewed_at": null,
   "registered_at": "2026-10-24",
-  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F1): the statement that metro division 31084 is 'used for LA County trade wages' is an ASSUMPTION. This release covers the Los Angeles-Long Beach-Anaheim MSA; the metropolitan-division table was not located or confirmed. Labor capture targets addressed to REG-MD-31084 must be confirmed against the OEWS area list before ingestion."
  },
  {
   "source_id": "SRC-BLS-OEWS-MAY2025",
@@ -558,7 +558,7 @@
   "reviewed_by": null,
   "reviewed_at": null,
   "registered_at": "2026-10-24",
-  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F1): the reuse statement refers to SRC-BLS-PUBLIC-DATA-API; the BLS copyright page itself was NOT seen by agent A3 (agent A1 reports seeing it in a search summary). Treat the public-domain status as search-summary level only."
  },
  {
   "source_id": "SRC-BLS-PUBLIC-DATA-API",
@@ -591,7 +591,7 @@
   "reviewed_by": null,
   "reviewed_at": null,
   "registered_at": "2026-10-24",
-  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+  "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F1): duplicate of SRC-BLS-API-V2 (same FAQ page, different reuse_status/tier). Treat unknown_needs_check as authoritative until the page is read."
  },
  {
   "source_id": "SRC-CADGS-STATEWIDE-PAINT-K1026",

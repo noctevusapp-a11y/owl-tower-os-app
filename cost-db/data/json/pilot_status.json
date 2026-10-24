@@ -18,11 +18,11 @@
  "runs_incomplete": 35,
  "runs_failed": 0,
  "build_timestamp": "2026-10-24T00:00:00+00:00",
- "calc_version": "costdb-calc/0.1.0",
+ "calc_version": "costdb-calc/0.2.0+756f851a",
  "validation_errors": 0,
  "validation_issues": 0,
  "promoted_to_validated": {},
  "region": "REG-CA-037",
  "as_of": "2026-10-24",
- "git_ref": "a265da2"
+ "git_ref": "dbfb63f+uncommitted"
 }

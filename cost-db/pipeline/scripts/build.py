@@ -29,8 +29,13 @@ REGION = "REG-CA-037"
 
 
 def git_ref() -> str | None:
+    """Short commit id of the code that produced the build; '+uncommitted' when pipeline/ or schema/ differ from it."""
     try:
-        return subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip() or None
+        sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
+        if not sha:
+            return None
+        dirty = subprocess.run(["git", "-C", str(ROOT), "status", "--porcelain", "--", "pipeline", "schema"], capture_output=True, text=True).stdout.strip()
+        return sha + ("+uncommitted" if dirty else "")
     except OSError:
         return None
 
@@ -43,7 +48,7 @@ def main() -> int:
     db.tables["validation_issues"] = []
 
     # ---- strict calculations for the whole pilot: expected to be INCOMPLETE until data exists; the runs document exactly why
-    eng = Engine(db, code_ref=None)
+    eng = Engine(db, code_ref=git_ref())
     params = RunParams(region_id=REGION, as_of=AS_OF, mode="strict", min_review="validated", labor_basis="stat_loaded",
                        project_type="private", run_at=BUILD_TS)
     seen: set[str] = set()

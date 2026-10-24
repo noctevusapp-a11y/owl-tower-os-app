@@ -158,6 +158,15 @@ FILL_HINT = {
     "QUANTITY_MISSING": "Derive the quantity from geometry or manufacturer data.",
     "LABOR_RATE_MISSING": "Ingest OEWS wages (connectors/oews_flatfile.py) or company payroll rates.",
     "EQUIPMENT_RATE_MISSING": "Capture an equipment rate with operator/fuel treatment.",
+    "DEFINITION_NOT_REVIEWED": "A person other than the author checks the work item's scope, specification and quantities and records the review (review_events); until then strict runs cannot complete.",
+    "CONSUMPTION_AMBIGUOUS": "Add a consumption_selector (film thickness / substrate / method / conditions) to the work-item component, or supersede the wrong coverage row.",
+    "BURDEN_AMBIGUOUS": "Two burden rows tie on region, trade and date: supersede one, or pass the workers' comp class code.",
+    "LABOR_RATE_AMBIGUOUS": "Several wage rows tie: name the classification (RunParams.classification) or supersede the wrong row.",
+    "PAYROLL_TAX_MISSING": "Capture the statutory employer payroll-tax rate (IRS / state agency) for the region.",
+    "BENEFITS_MISSING": "Capture an employer-benefit ratio (ECEC) or the company's actual benefit cost.",
+    "WORKERS_COMP_MISSING": "Enter the insurer-quoted workers' comp rate by class code (company specific).",
+    "FUEL_NOT_PRICED": "Capture fuel_cost_hr for the equipment rate (rate excludes fuel).",
+    "OPERATOR_NOT_PRICED": "Add an operator to the crew or choose an equipment rate that includes one.",
 }
 
 
@@ -181,9 +190,10 @@ def backlog(db: Database, agent_gaps: dict[str, list[str]]) -> str:
            "| # | action | why |", "|---|---|---|",
            "| A1 | **Open outbound network access** for the build environment to the hosts in `docs/network_allowlist.md` (or run the connectors on a machine with normal internet access). | Every primary source host was refused by the sandbox network policy on 2026-10-24; no primary document could be fetched, so nothing can be `validated`. |",
            "| A2 | Register a free **BLS API v2 key** (store as `BLS_API_KEY`; do not commit). | Index series and OEWS time series need the v2 limits (500 queries/day). Terms: cite source and access date. |",
-           "| A3 | A person reads the **live Terms of Use / robots.txt** of Home Depot, Lowe's, Grainger, Ferguson, Sherwin-Williams and Dunn-Edwards before any price capture; record the outcome in `sources.reuse_status`. | Retailer terms were only seen as search snippets; Lowe's, Ferguson and Sherwin-Williams snippets indicate automated access is prohibited. No scraping is implemented. |",
+           "| A3 | A person reads the **live Terms of Use / robots.txt** of Home Depot, Lowe's, Grainger, Ferguson, Sherwin-Williams and Dunn-Edwards before any price capture; record the outcome in `sources.reuse_status`. | Retailer terms were only seen as search snippets. Sources registered as `prohibited` (Lowe's, Ferguson snippets) are **refused by the importer whatever the capture method** until their live terms are read and the status is corrected; `restricted_no_automated_access` sources (Home Depot, Grainger, Sherwin-Williams) accept manual capture only. No scraping is implemented. |",
            "| A4 | Decide who captures retail prices **by hand** (office staff with a browser) and use `templates/price_capture_template.csv`. | The only compliant route for retailers without a licensed feed. |",
            "| A5 | Confirm whether the company will obtain **contractor (pro-account / supplier) quotes**; they are a separate price channel and the only valid contractor-cost evidence. | Retail prices must never be presented as contractor purchase cost. |",
+           "| A7 | Name a **reviewer for the 25 work-item and 10 assembly definitions** (scope, specification, quantities, exclusions) and record the review. | Strict runs refuse unreviewed definitions (`DEFINITION_NOT_REVIEWED`); the definitions were written by the system and have not been checked by a person. |",
            "| A6 | Provide company-specific burden inputs: **workers' comp rate by class, experience mod, UI rate notice, benefit costs**, and (optionally) actual payroll rates by trade. | These are company-specific and cannot be found in public sources. |", ""]
     open_t = [t for t in db["capture_targets"] if t["status"] == "open"]
     kinds = Counter((t["target_kind"], t["pilot_priority"]) for t in open_t)
@@ -214,8 +224,11 @@ def validation_report(db: Database, issues: list[Issue], test_summary: str, buil
           "Rules in `pipeline/costdb/validate.py`: foreign keys and duplicate ids; source terms and verification status; product spec completeness and "
           "`spec_key` consistency; pack/unit/date/duplicate/outlier checks on price observations; labor layering (statistical vs prevailing vs loaded, "
           "double-counted fringe/payroll/workers' comp, public-works scope); crew operator double counting and equipment fuel; productivity "
-          "reconciliation (reported vs crew×shift/output); work-item scope tokens; assembly scope overlap and unit consistency; stored calculation runs "
-          "(inputs exist, no flagged inputs, strict runs without assumptions, **re-computation reproduces stored totals**).", "",
+          "reconciliation (reported vs crew×shift/output); work-item scope tokens and cost tags; work-item components against the specification the work item "
+          "states; assembly inclusions/exclusions derived from the children, assembly specification against its component rows, scope overlap and unit "
+          "consistency; assumptions (four eyes, expiry, uniqueness); validated records without a reviewer; stored calculation runs "
+          "(inputs exist, no flagged inputs, strict runs without assumptions, retail basis only with opt-in, **re-computation reproduces stored totals**). "
+          "Screening thresholds are a documented policy (`validate.DEFAULT_POLICY`), each with its basis.", "",
           "## Result on the real data", "",
           f"- issues: **{len(issues)}** (errors {sev.get('error', 0)}, warnings {sev.get('warning', 0)}, info {sev.get('info', 0)})", ""]
     if issues:

@@ -8,16 +8,17 @@ Generated at build time from open `capture_targets`, the missing inputs reported
 |---|---|---|
 | A1 | **Open outbound network access** for the build environment to the hosts in `docs/network_allowlist.md` (or run the connectors on a machine with normal internet access). | Every primary source host was refused by the sandbox network policy on 2026-10-24; no primary document could be fetched, so nothing can be `validated`. |
 | A2 | Register a free **BLS API v2 key** (store as `BLS_API_KEY`; do not commit). | Index series and OEWS time series need the v2 limits (500 queries/day). Terms: cite source and access date. |
-| A3 | A person reads the **live Terms of Use / robots.txt** of Home Depot, Lowe's, Grainger, Ferguson, Sherwin-Williams and Dunn-Edwards before any price capture; record the outcome in `sources.reuse_status`. | Retailer terms were only seen as search snippets; Lowe's, Ferguson and Sherwin-Williams snippets indicate automated access is prohibited. No scraping is implemented. |
+| A3 | A person reads the **live Terms of Use / robots.txt** of Home Depot, Lowe's, Grainger, Ferguson, Sherwin-Williams and Dunn-Edwards before any price capture; record the outcome in `sources.reuse_status`. | Retailer terms were only seen as search snippets. Sources registered as `prohibited` (Lowe's, Ferguson snippets) are **refused by the importer whatever the capture method** until their live terms are read and the status is corrected; `restricted_no_automated_access` sources (Home Depot, Grainger, Sherwin-Williams) accept manual capture only. No scraping is implemented. |
 | A4 | Decide who captures retail prices **by hand** (office staff with a browser) and use `templates/price_capture_template.csv`. | The only compliant route for retailers without a licensed feed. |
 | A5 | Confirm whether the company will obtain **contractor (pro-account / supplier) quotes**; they are a separate price channel and the only valid contractor-cost evidence. | Retail prices must never be presented as contractor purchase cost. |
+| A7 | Name a **reviewer for the 25 work-item and 10 assembly definitions** (scope, specification, quantities, exclusions) and record the review. | Strict runs refuse unreviewed definitions (`DEFINITION_NOT_REVIEWED`); the definitions were written by the system and have not been checked by a person. |
 | A6 | Provide company-specific burden inputs: **workers' comp rate by class, experience mod, UI rate notice, benefit costs**, and (optionally) actual payroll rates by trade. | These are company-specific and cannot be found in public sources. |
 
 ## B. Open capture targets
 
 | kind | priority 1 | priority 2 | priority 3 |
 |---|---|---|---|
-| material | 43 | 86 | 0 |
+| material | 44 | 85 | 0 |
 | labor | 11 | 0 | 11 |
 | burden | 4 | 0 | 0 |
 | equipment | 0 | 3 | 0 |
@@ -29,49 +30,50 @@ The full list with required attributes, recommended sources and the work items t
 
 | target | category | description | needed by |
 |---|---|---|---|
-| `TGT-4f5c1d4a36` | CAT-CON-ACC | Concrete curing compound, 5 gal pail | WI-CON-005 |
-| `TGT-655102d19a` | CAT-CON-ACC | J anchor bolt 1/2 in x 10 in with nut and washer | WI-CON-004 |
-| `TGT-ee81be4fe0` | CAT-CON-ACC | Under-slab vapor retarder 10 mil, roll | WI-CON-001, WI-CON-002 |
-| `TGT-105e40e0b8` | CAT-CON-RMX | Ready-mix concrete 4000 psi, 3/4 in agg, 4 in slump, Type II | WI-CON-001, WI-CON-002, WI-CON-003 |
-| `TGT-4ca6cc4b6b` | CAT-DRY-BRD | Gypsum board 1/2 in x 4x8, regular core, tapered edge | WI-DRY-001, WI-DRY-004 |
-| `TGT-663e340e01` | CAT-DRY-BRD | Gypsum board 5/8 in x 4x8, Type X, tapered edge | WI-DRY-002, WI-DRY-003 |
-| `TGT-a3505dde69` | CAT-DRY-BRD | Moisture-/mold-resistant gypsum board 1/2 in x 4x8 | WI-DRY-006 |
-| `TGT-39a316a357` | CAT-DRY-JNT | All-purpose pre-mixed joint compound, 4.5 gal, standard weight | WI-DRY-005 |
-| `TGT-38410aaa34` | CAT-DRY-TAP | Paper joint tape 2-1/16 in x 500 ft | WI-DRY-005 |
-| `TGT-6afc9cdfa6` | CAT-FRM-CON | Face-mount joist hanger for 2x10, 18 ga, G90 | WI-FRM-003 |
-| `TGT-f99ac6a783` | CAT-FRM-FAS | 16d sinker nail 3-1/4 in x 0.148 in | WI-FRM-001, WI-FRM-002, WI-FRM-003, WI-FRM-006 |
-| `TGT-e28cc147c0` | CAT-FRM-FAS | 8d common nail 2-1/2 in x 0.131 in | WI-FRM-004 |
-| `TGT-7db82d16e1` | CAT-FRM-FAS | Drywall screw #6 x 1-1/4 in, coarse thread (wood) | WI-DRY-001, WI-DRY-004, WI-DRY-006 |
-| `TGT-2788451b64` | CAT-FRM-FAS | Drywall screw #6 x 1-1/4 in, fine thread (steel) | WI-DRY-003 |
-| `TGT-5bd9b54db1` | CAT-FRM-FAS | Drywall screw #6 x 1-5/8 in, coarse thread (wood) | WI-DRY-002 |
-| `TGT-c323b11f55` | CAT-FRM-FAS | Self-drilling pan-head screw #8 x 1/2 in (steel framing) | WI-FRM-005 |
-| `TGT-0d9e3a6511` | CAT-FRM-LBR | 2x10x12 ft DF-L #2 and better, kiln-dried | WI-FRM-003 |
-| `TGT-6b2fcbbb82` | CAT-FRM-LBR | 2x4 precut stud 92-5/8 in, DF-L, stud grade, kiln-dried | WI-FRM-001 |
-| `TGT-00370a17ce` | CAT-FRM-LBR | 2x4x8 ft DF-L #2 and better, kiln-dried | WI-FRM-001, WI-FRM-006 |
-| `TGT-afead35667` | CAT-FRM-LBR | 2x6 precut stud 92-5/8 in, DF-L, stud grade, kiln-dried | WI-FRM-002 |
-| `TGT-0cd345afeb` | CAT-FRM-LBR | 2x6x8 ft DF-L #2 and better, kiln-dried | WI-FRM-002 |
-| `TGT-d8dc0c5d46` | CAT-FRM-LGS | Steel stud 3-5/8 in x 1-5/8 in, 18 mil (25 ga), 10 ft, nonstructural | WI-FRM-005 |
-| `TGT-c340df14b6` | CAT-FRM-LGS | Steel track 3-5/8 in x 1-1/4 in, 18 mil (25 ga), 10 ft, nonstructural | WI-FRM-005 |
-| `TGT-6ce1e9aecc` | CAT-FRM-SHT | Plywood sheathing 15/32 in 4x8, Exposure 1, CD, span rating 32/16 | WI-FRM-004 |
-| `TGT-86e62f9f6c` | CAT-HVC-ACC | Condenser pad 36x36x3 in, composite | WI-HVC-001 |
-| `TGT-ffcb5fa76f` | CAT-HVC-CTL | AC disconnect 60 A, 240 V, non-fused pull-out | WI-HVC-001 |
-| `TGT-5abf0cc43c` | CAT-HVC-CTL | AC whip 60 A, 6 ft flexible conduit | WI-HVC-001 |
-| `TGT-e477e9ae79` | CAT-HVC-CTL | Programmable thermostat 24 V, 1H/1C | WI-HVC-002 |
-| `TGT-6a2ddce681` | CAT-HVC-DUC | Insulated flexible duct 8 in, R-6, 25 ft | WI-HVC-003 |
-| `TGT-ad332e7145` | CAT-HVC-EQP | AC condenser 3 ton, 14.3 SEER2, R-454B | WI-HVC-001 |
-| `TGT-8ed6c40190` | CAT-HVC-EQP | Cased evaporator coil 3 ton, R-454B | WI-HVC-002 |
-| `TGT-6c66e5825b` | CAT-HVC-EQP | Gas furnace 80,000 Btu/h input, 80% AFUE, upflow | WI-HVC-002 |
-| `TGT-09a8f134e1` | CAT-HVC-REF | Copper line set 3/8 x 7/8 in, 25 ft, insulated | WI-HVC-001 |
-| `TGT-bc4f44a7d2` | CAT-INS-BAT | Fiberglass batt R-13, 3-1/2 in, 15 in wide, kraft-faced (2x4) | WI-INS-001 |
-| `TGT-535779a26c` | CAT-PNT-PNT | Interior acrylic latex wall paint, eggshell, 5 gal | WI-PNT-002 |
-| `TGT-c0288adb6a` | CAT-PNT-PNT | Interior ceiling paint, flat, 5 gal | WI-PNT-003 |
-| `TGT-8a15322181` | CAT-PNT-PRM | PVA drywall primer, 5 gal | WI-PNT-001 |
-| `TGT-391785a94e` | CAT-PNT-SUP | Paintable siliconized acrylic latex caulk, 10.1 fl oz | WI-PNT-004 |
-| `TGT-b560789b1c` | CAT-REB-ACC | Bar support chair 3 in height, plastic | WI-CON-002 |
-| `TGT-da8d068949` | CAT-REB-ACC | Bar/mesh support chair 2 in height, plastic | WI-CON-001 |
-| `TGT-dc45595014` | CAT-REB-ACC | Rebar tie wire, 16 gauge annealed, coil | WI-CON-002 |
-| `TGT-f28b1cdfad` | CAT-REB-BAR | Rebar #4 Grade 60, 20 ft | WI-CON-002, WI-CON-003 |
-| `TGT-773b50a29f` | CAT-REB-BAR | Welded wire reinforcement 6x6-W1.4xW1.4, 5x10 ft sheet | WI-CON-001 |
+| `TGT-4f5c1d4a364c` | CAT-CON-ACC | Concrete curing compound, 5 gal pail | WI-CON-005 |
+| `TGT-655102d19aca` | CAT-CON-ACC | J anchor bolt 1/2 in x 10 in with nut and washer | WI-CON-004 |
+| `TGT-ee81be4fe0bc` | CAT-CON-ACC | Under-slab vapor retarder 10 mil, roll | WI-CON-001, WI-CON-002 |
+| `TGT-105e40e0b8e7` | CAT-CON-RMX | Ready-mix concrete 4000 psi, 3/4 in agg, 4 in slump, Type II | WI-CON-001, WI-CON-002, WI-CON-003 |
+| `TGT-4ca6cc4b6b90` | CAT-DRY-BRD | Gypsum board 1/2 in x 4x8, regular core, tapered edge | WI-DRY-001, WI-DRY-004 |
+| `TGT-2635e2f22a7b` | CAT-DRY-BRD | Gypsum board 5/8 in x 4x12, Type X, tapered edge | WI-DRY-003 |
+| `TGT-663e340e01fa` | CAT-DRY-BRD | Gypsum board 5/8 in x 4x8, Type X, tapered edge | WI-DRY-002 |
+| `TGT-a3505dde6938` | CAT-DRY-BRD | Moisture-/mold-resistant gypsum board 1/2 in x 4x8 | WI-DRY-006 |
+| `TGT-39a316a35700` | CAT-DRY-JNT | All-purpose pre-mixed joint compound, 4.5 gal, standard weight | WI-DRY-005 |
+| `TGT-38410aaa3499` | CAT-DRY-TAP | Paper joint tape 2-1/16 in x 500 ft | WI-DRY-005 |
+| `TGT-6afc9cdfa68d` | CAT-FRM-CON | Face-mount joist hanger for 2x10, 18 ga, G90 | WI-FRM-003 |
+| `TGT-f99ac6a783c2` | CAT-FRM-FAS | 16d sinker nail 3-1/4 in x 0.148 in | WI-FRM-001, WI-FRM-002, WI-FRM-003, WI-FRM-006 |
+| `TGT-e28cc147c0a3` | CAT-FRM-FAS | 8d common nail 2-1/2 in x 0.131 in | WI-FRM-004 |
+| `TGT-7db82d16e102` | CAT-FRM-FAS | Drywall screw #6 x 1-1/4 in, coarse thread (wood) | WI-DRY-001, WI-DRY-004, WI-DRY-006 |
+| `TGT-2788451b64a6` | CAT-FRM-FAS | Drywall screw #6 x 1-1/4 in, fine thread (steel) | WI-DRY-003 |
+| `TGT-5bd9b54db14b` | CAT-FRM-FAS | Drywall screw #6 x 1-5/8 in, coarse thread (wood) | WI-DRY-002 |
+| `TGT-c323b11f55fb` | CAT-FRM-FAS | Self-drilling pan-head screw #8 x 1/2 in (steel framing) | WI-FRM-005 |
+| `TGT-0d9e3a651164` | CAT-FRM-LBR | 2x10x12 ft DF-L #2 and better, kiln-dried | WI-FRM-003 |
+| `TGT-6b2fcbbb82ff` | CAT-FRM-LBR | 2x4 precut stud 92-5/8 in, DF-L, stud grade, kiln-dried | WI-FRM-001 |
+| `TGT-00370a17ce1d` | CAT-FRM-LBR | 2x4x8 ft DF-L #2 and better, kiln-dried | WI-FRM-001, WI-FRM-006 |
+| `TGT-afead3566766` | CAT-FRM-LBR | 2x6 precut stud 92-5/8 in, DF-L, stud grade, kiln-dried | WI-FRM-002 |
+| `TGT-0cd345afeb14` | CAT-FRM-LBR | 2x6x8 ft DF-L #2 and better, kiln-dried | WI-FRM-002 |
+| `TGT-d8dc0c5d4620` | CAT-FRM-LGS | Steel stud 3-5/8 in x 1-5/8 in, 18 mil (25 ga), 10 ft, nonstructural | WI-FRM-005 |
+| `TGT-c340df14b641` | CAT-FRM-LGS | Steel track 3-5/8 in x 1-1/4 in, 18 mil (25 ga), 10 ft, nonstructural | WI-FRM-005 |
+| `TGT-6ce1e9aecc4d` | CAT-FRM-SHT | Plywood sheathing 15/32 in 4x8, Exposure 1, CD, span rating 32/16 | WI-FRM-004 |
+| `TGT-86e62f9f6c20` | CAT-HVC-ACC | Condenser pad 36x36x3 in, composite | WI-HVC-001 |
+| `TGT-ffcb5fa76f33` | CAT-HVC-CTL | AC disconnect 60 A, 240 V, non-fused pull-out | WI-HVC-001 |
+| `TGT-5abf0cc43cda` | CAT-HVC-CTL | AC whip 60 A, 6 ft flexible conduit | WI-HVC-001 |
+| `TGT-e477e9ae79d9` | CAT-HVC-CTL | Programmable thermostat 24 V, 1H/1C | WI-HVC-002 |
+| `TGT-6a2ddce68198` | CAT-HVC-DUC | Insulated flexible duct 8 in, R-6, 25 ft | WI-HVC-003 |
+| `TGT-ad332e71457c` | CAT-HVC-EQP | AC condenser 3 ton, 14.3 SEER2, R-454B | WI-HVC-001 |
+| `TGT-8ed6c4019092` | CAT-HVC-EQP | Cased evaporator coil 3 ton, R-454B | WI-HVC-002 |
+| `TGT-6c66e5825bf1` | CAT-HVC-EQP | Gas furnace 80,000 Btu/h input, 80% AFUE, upflow | WI-HVC-002 |
+| `TGT-09a8f134e17b` | CAT-HVC-REF | Copper line set 3/8 x 7/8 in, 25 ft, insulated | WI-HVC-001 |
+| `TGT-bc4f44a7d23d` | CAT-INS-BAT | Fiberglass batt R-13, 3-1/2 in, 15 in wide, kraft-faced (2x4) | WI-INS-001 |
+| `TGT-535779a26c69` | CAT-PNT-PNT | Interior acrylic latex wall paint, eggshell, 5 gal | WI-PNT-002 |
+| `TGT-c0288adb6a7b` | CAT-PNT-PNT | Interior ceiling paint, flat, 5 gal | WI-PNT-003 |
+| `TGT-8a15322181ad` | CAT-PNT-PRM | PVA drywall primer, 5 gal | WI-PNT-001 |
+| `TGT-391785a94ecb` | CAT-PNT-SUP | Paintable siliconized acrylic latex caulk, 10.1 fl oz | WI-PNT-004 |
+| `TGT-b560789b1cc9` | CAT-REB-ACC | Bar support chair 3 in height, plastic | WI-CON-002 |
+| `TGT-da8d06894974` | CAT-REB-ACC | Bar/mesh support chair 2 in height, plastic | WI-CON-001 |
+| `TGT-dc4559501487` | CAT-REB-ACC | Rebar tie wire, 16 gauge annealed, coil | WI-CON-002 |
+| `TGT-f28b1cdfad95` | CAT-REB-BAR | Rebar #4 Grade 60, 20 ft | WI-CON-002, WI-CON-003 |
+| `TGT-773b50a29f87` | CAT-REB-BAR | Welded wire reinforcement 6x6-W1.4xW1.4, 5x10 ft sheet | WI-CON-001 |
 
 ## C. Missing inputs reported by strict calculation runs
 
@@ -79,10 +81,11 @@ Aggregated over all 25 work-item runs (LA County, as of the build date). Every r
 
 | code | occurrences | distinct inputs | how to fill |
 |---|---|---|---|
-| WASTE_MISSING | 55 | 47 | Source a waste/loss factor for the line with a stated basis, or add an approved assumption. |
-| PRICE_MISSING | 55 | 43 | Capture ≥1 real SKU matching the spec line (templates/price_capture_template.csv) in the target region. |
+| WASTE_MISSING | 55 | 48 | Source a waste/loss factor for the line with a stated basis, or add an approved assumption. |
+| PRICE_MISSING | 55 | 44 | Capture ≥1 real SKU matching the spec line (templates/price_capture_template.csv) in the target region. |
 | CREW_MISSING | 29 | 11 | Extract a crew composition (trades, quantities, shift) from a documented norm source. |
 | PRODUCTIVITY_MISSING | 29 | 25 | Extract a labor norm (document, edition, page, crew, daily output, conditions). |
+| DEFINITION_NOT_REVIEWED | 25 | 25 | A person other than the author checks the work item's scope, specification and quantities and records the review (review_events); until then strict runs cannot complete. |
 | CONSUMPTION_MISSING | 5 | 5 | Extract manufacturer coverage with film thickness, coats and conditions; bind to a SKU. |
 | QUANTITY_MISSING | 2 | 2 | Derive the quantity from geometry or manufacturer data. |
 
