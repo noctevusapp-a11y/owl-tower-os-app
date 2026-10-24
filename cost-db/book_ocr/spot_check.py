@@ -72,7 +72,7 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--status", default="verified")
     a = ap.parse_args()
-    rows = [r for r in csv.DictReader(open(a.lines_csv, encoding="utf-8")) if r["status"] == a.status and r["line"]]
+    rows = [r for r in csv.DictReader(open(a.lines_csv, encoding="utf-8")) if (a.status == "any" or r["status"] == a.status) and r["line"]]
     random.seed(a.seed)
     sample = random.sample(rows, min(a.n, len(rows)))
     out = Path(a.out_dir)
@@ -85,7 +85,13 @@ def main() -> int:
         p = int(r["pdf_page"])
         doc, idx = page_doc(pmap, p)
         pg = doc[idx]
-        yy = row_y(Path(a.ocr_dir), p, r["line"] if not r["flags"] or "LINE_NUMBER_RECONSTRUCTED" not in r["flags"] else r["line"][-3:], r["description"])
+        toks = [r["line"]] if not r["flags"] or ("LINE_NUMBER_RECONSTRUCTED" not in r["flags"] and "LINE_NUMBER_ASSUMED" not in r["flags"]) \
+            else [r["line"][-3:], r["line"][-2:]]              # a restored number is printed without its cut leading digit(s)
+        yy = None
+        for tok in toks:
+            yy = row_y(Path(a.ocr_dir), p, tok, r["description"])
+            if yy is not None:
+                break
         if yy is None:
             continue
         y0, y1, h = yy

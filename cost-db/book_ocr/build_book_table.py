@@ -34,8 +34,9 @@ DIVISION_NAMES = {
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
               "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING", "EQUIPMENT_DERIVED_FROM_SUM",
-              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN"}
+              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED", "HEADER_TEMPLATE",
+              "CREW_FROM_ARITHMETIC", "COLUMN_SLIP_MOVED",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
               "PERCENT_ADD", "TOTAL_OP_UNREADABLE", "EQUIP_CREW_DIFFERS"}
@@ -214,6 +215,13 @@ def main() -> int:
                 it["line_no"] = f"{cands[0]:04d}"
                 it["reconstructed"] = True
                 last_ok[sec] = cands[0]
+            elif len(cands) > 1 and len(tail) == 3 and prev is not None:
+                # only the thousands digit is cut and no later full number brackets it: the smallest value continuing the
+                # numbering is taken under the assumption that the section skips no whole thousand — an assumption, so the
+                # line is flagged (LINE_NUMBER_ASSUMED), not verified
+                it["line_no"] = f"{cands[0]:04d}"
+                it["assumed"] = True
+                last_ok[sec] = cands[0]
             else:
                 it["line_no"] = None
         elif it["line_no"] and not it["order_bad"]:
@@ -227,6 +235,8 @@ def main() -> int:
         flags = [f for f in ln["flags"] if f != "LINE_ORDER"]
         if it.get("reconstructed"):
             flags.append("LINE_NUMBER_RECONSTRUCTED")
+        if it.get("assumed"):
+            flags.append("LINE_NUMBER_ASSUMED")
         if ln.get("line_partial") and line_no is None:
             flags.append("LINE_NUMBER_MISSING")
         if it["order_bad"]:

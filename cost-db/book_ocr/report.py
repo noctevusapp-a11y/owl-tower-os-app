@@ -30,6 +30,8 @@ MEANING = {"MONEY_UNSETTLED": "material/labor/equipment/total do not add up for 
            "EQUIPMENT_DERIVED_FROM_SUM": "equipment computed as total − material − labor (no crew confirmation)",
            "EQUIP_WITHOUT_CREW_EQUIP": "an equipment cost on a crew that owns no equipment — the signature of the total slipping one column left",
            "SECTION_UNKNOWN": "no section id read on the page and none could be carried from the previous page: the line has no cost code",
+           "LINE_NUMBER_ASSUMED": "thousands digit cut at the page edge and no later full number brackets it: the smallest value continuing the "
+                                  "numbering was taken (assumes the section skips no whole thousand)",
            "WEAK_READING": "a money cell kept on one reading only (prefix; the cells are named after the colon)"}
 
 
@@ -92,10 +94,16 @@ def main() -> int:
              "derivation, spot check). Data: `cost-db/data/books/rsmeans_bcc_2022/`.", "",
              "## 1. What was read", "",
              f"* Scan: 964 PDF pages (sha256 `9c5aee73…c075bc`), unit-price section PDF pages 24–750, split into 6 parts and transferred from the owner's Mac.",
-             f"* OCR: tesseract 5.3 at 360 dpi (own run) **and** the scan's own text layer (a second engine) **and** a geometric reading of every number "
-             "(digit-glyph count and decimal-point position on the page image). A value is kept only when the readings agree or the table's arithmetic "
-             "selects it: `total = material + labor + equipment`; `labor-hours = crew labor-hours / daily output`; `labor = crew daily labor cost / output`; "
-             "`total incl. O&P = 1.10 × material + crew O&P labor / output + 1.10 × equipment`.",
+             f"* Readings of every cell: tesseract 5.3 on the 360-dpi page (T, weight 1) **and** the scan's own text layer, a second engine (I, weight 1) "
+             "**and** tesseract on the 600-dpi page, a second pass (H, weight 1) **and** a geometric reading of every number (G, weight 3: digit-glyph "
+             "count and decimal-point position on the page image; it fixes the point of an OCR digit string, it does not invent digits). A value is kept "
+             "only when the readings agree or the table's arithmetic selects it: `total = material + labor + equipment`; `labor-hours = crew labor-hours / "
+             "daily output`; `labor = crew daily labor cost / output`; `total incl. O&P = 1.10 × material + crew O&P labor / output + 1.10 × equipment`.",
+             f"* Second pass over the open lines (`second_pass.py`): a line whose crew cell is unreadable gets the crew only when exactly one crew of the "
+             f"crew table satisfies all identities of the line at once (labor-hours per day, bare daily labor cost, equipment printed iff the crew owns "
+             f"equipment, total incl. O&P where printed) — `CREW_FROM_ARITHMETIC`, {flags.get('CREW_FROM_ARITHMETIC', 0)} lines; a reading under Equipment "
+             f"on a crew without equipment and nothing under Total is the total that slipped a column (`COLUMN_SLIP_MOVED`, {flags.get('COLUMN_SLIP_MOVED', 0)} "
+             "lines, the sum check decides); then every line is re-settled with the four readings.",
              f"* Table pages parsed: **{rep['pages']}** (every unit-price table page of the scan; on {rep.get('pages_template', 0)} of them the column header "
              "was unreadable and the columns were fitted to the page's own number clusters, labelled by the anchors of the neighbouring same-side page: "
              f"`HEADER_TEMPLATE`); pages without a table skipped: {rep.get('pages_skipped', '?')} (division intro, Division Notes, reference); sections: **{rep['sections']}**; "
@@ -108,8 +116,8 @@ def main() -> int:
              f"lines stay without a section (`SECTION_UNKNOWN`, {flags.get('SECTION_UNKNOWN', 0)} lines) and without a cost code.", "",
              "## 2. Status of the priced lines (the rule)", "",
              "A line is **verified** only when all of the following hold. Nothing else is called verified; no tolerance is attached to any number.", "",
-             "1. every printed money cell (material, labor, equipment, total) is confirmed by all three readings — both OCR engines and the geometric "
-             "reading of the digits and the decimal point (evidence weight ≥ 4) — or is computed from the other cells by the book's arithmetic;",
+             "1. every printed money cell (material, labor, equipment, total) carries evidence weight ≥ 4 for one value — the geometric reading (3) plus at "
+             "least one OCR reading (1 each: 360-dpi tesseract, text layer, 600-dpi tesseract) — or is computed from the other cells by the book's arithmetic;",
              "2. daily output and labor-hours are confirmed by at least two readings or by the crew rule (crew labor-hours / output);",
              "3. no check is open: the money cells add up, labor agrees with the crew's daily cost, output × hours is a crew-day, the line number is in "
              "the section's numbering order, the section id is known, the crew is read, total incl. O&P (where printed) agrees with the components;",

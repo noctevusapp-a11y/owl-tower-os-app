@@ -66,9 +66,11 @@ def main() -> int:
           f"* {drep['priced_latest']} lines carry a derived Los Angeles {latest.replace('M', '-')} value ({drep['verified_latest']} of them on verified lines).",
           f"* Crews: {len(crews)} (incl. {sum(1 for c in crews if c['crew_id'][0].isdigit() or c['crew_id'][0] == '.')} single-trade crews built from the trade-rate table); "
           f"trades: {len(trades)}.",
-          "* **verified** means: every printed money cell confirmed by all three readings (two OCR engines + the geometric reading of digits and decimal "
-          "point) or computed by the book's arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; "
-          "section id known. The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. "
+          "* **verified** means: every printed money cell carries evidence weight ≥ 4 for one value (the geometric reading of digits and decimal point, 3, "
+          "plus at least one of the three OCR readings: 360-dpi tesseract, the scan's text layer, 600-dpi tesseract) or is computed by the book's "
+          "arithmetic; output/hours confirmed by two readings or the crew rule; no check open; money columns tied; section id known. An unreadable crew "
+          "cell is filled only when exactly one crew of the crew table satisfies the line's labor-hours, daily labor cost, equipment presence and O&P at "
+          "once (`CREW_FROM_ARITHMETIC`). The spot-check results (rows read by eye against the page image) are in `extraction_report.md`, section 3. "
           "No tolerance is attached to any number: a number is verified or it is not.", "",
           "| division | verified | machine_read | flagged |", "|---|---|---|---|"]
     for d in sorted(by_div):

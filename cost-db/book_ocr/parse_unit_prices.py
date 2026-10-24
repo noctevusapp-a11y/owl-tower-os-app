@@ -519,8 +519,11 @@ def book_round(v: Decimal) -> Decimal:
 
 
 # ----------------------------------------------------------------------------------------------- settle one row
-WEIGHT = {("G", "as_read"): 3.0, ("T", "as_read"): 1.0, ("I", "as_read"): 1.0, ("T", "point_restored"): 0.25, ("I", "point_restored"): 0.25,
-          ("T", "count_mismatch"): 0.5, ("I", "count_mismatch"): 0.5}
+WEIGHT = {("G", "as_read"): 3.0, ("T", "as_read"): 1.0, ("I", "as_read"): 1.0, ("H", "as_read"): 1.0,
+          ("T", "point_restored"): 0.25, ("I", "point_restored"): 0.25, ("H", "point_restored"): 0.25,
+          ("T", "count_mismatch"): 0.5, ("I", "count_mismatch"): 0.5, ("H", "count_mismatch"): 0.5}
+# T = tesseract on the 360-dpi page, I = the scan's own text layer, H = tesseract on the 600-dpi page (second pass),
+# G = geometric reading of the digit glyphs and the decimal point on the page image
 
 
 def weights(cands: list[tuple[Decimal, str, str]]) -> dict[Decimal, float]:
@@ -539,6 +542,14 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     def opts(k):
         return sorted(W[k]) if W[k] else [None]
 
+    def dominated(k, v):
+        """A value the arithmetic would like but the readings reject: another value of the same cell has strong evidence
+        (weight >= 3, i.e. the geometry or three readings) and this one has less than half of it."""
+        if v is None or not W[k]:
+            return False
+        top = max(W[k].values())
+        return top >= 3.0 and W[k].get(v, 0.0) < 0.5 * top
+
     # ---- money: the printed total is the exact sum of the printed components
     best, best_score, ties = None, None, 0
     if not any(W[k] for k in ("material", "labor", "equipment")) and W["total"]:
@@ -555,6 +566,8 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 for t in opts("total"):
                     parts = [x for x in (m, l, e) if x is not None]
                     if t is None or not parts or abs(sum(parts) - t) > Decimal("0.011"):
+                        continue
+                    if any(dominated(k, v) for k, v in (("material", m), ("labor", l), ("equipment", e), ("total", t))):
                         continue
                     score = sum(W[k].get(v, 0.0) for k, v in (("material", m), ("labor", l), ("equipment", e), ("total", t)) if v is not None)
                     if best_score is None or score > best_score + 1e-9:
@@ -619,7 +632,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     best, best_score, ties = None, None, 0
     for o in opts("output"):
         for h in opts("hours"):
-            if o is None or h is None or o <= 0 or h <= 0:
+            if o is None or h is None or o <= 0 or h <= 0 or dominated("output", o) or dominated("hours", h):
                 continue
             prod = o * h
             if lh_known is not None:
@@ -951,15 +964,24 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     if hdr is None:
         # a table page whose header band OCR lost: at least three rows start with a line number in the left margin
         def line_row(r):
-            return (LINE_RE.fullmatch(r[0]["t"]) and r[0]["x0"] < 230) or (re.fullmatch(r"\d{2,3}", r[0]["t"]) and r[0]["x0"] < 60)
+            # a line number at the left margin and at least one number in the table area (crew/output/costs): division
+            # intro pages ("Estimating Tips") have numbered paragraphs but no table numbers
+            numbered = (LINE_RE.fullmatch(r[0]["t"]) and r[0]["x0"] < 230) or (re.fullmatch(r"\d{2,3}", r[0]["t"]) and r[0]["x0"] < 60)
+            return numbered and any(z["x0"] > 1150 and re.search(r"\d", z["t"]) for z in r[1:])
         n_line_rows = sum(1 for r in trows if line_row(r)) + sum(1 for r in irows if line_row(r))
         if n_line_rows >= 3:
             hdr = template_header(pdf_page, book)
             template = hdr is not None
     out = {"pdf_page": pdf_page, "book_page": pdf_page - 14, "header_found": hdr is not None, "lines": [], "sections": [], "divisions": [],
-           "header_source": (f"template:{hdr['template_from']}" if template else "read") if hdr else None}
+           "header_source": (f"template:{hdr['template_from']}" if template else "read") if hdr else None, "other_rows": []}
     if hdr is None:
         return out
+
+    def keep_other(r):
+        # rows that became neither a line nor a section: kept with their geometry for the second pass (section header recovery)
+        if r[0]["x0"] < 230 and len(r) >= 2:
+            out["other_rows"].append({"y0": min(z["y0"] for z in r), "y1": max(z["y1"] for z in r), "x0": r[0]["x0"],
+                                      "x1": max(z["x1"] for z in r), "text": " ".join(z["t"] for z in r)[:120]})
     img = parts.image(pdf_page)
     if img is not None and img.shape[1] != w:
         img = None                                             # OCR was run at another size; no geometry then
@@ -968,6 +990,11 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         out["template_columns"] = {"matched": bounds["_matched"], "shift": round(bounds["_shift"])}
     else:
         bounds, desc_end = (calibrate_bounds(hdr, trows, w) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
+    out["bounds"] = {k: [round(v[0], 1), round(min(v[1], w + 50), 1)] for k, v in bounds.items() if not k.startswith("_")}
+    out["anchors"] = {k: round(v, 1) for k, v in (bounds.get("_anchors") or {}).items()}
+    out["desc_end"] = round(desc_end, 1)
+    out["header_y"] = round(hdr["y"], 1)
+    out["page_size"] = [w, h]
     irow_by_y = [(r[0]["_yc"], r) for r in irows]
     known = set(crews)
 
@@ -990,7 +1017,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     last_crew = None
     last_line: Optional[int] = None
 
-    SEC_RE = re.compile(r"^(\d{1,2})\s*(\d{2})\s*(\d{2})\s*[.,]\s*(\d{2})(?!\d)")
+    SEC_RE = re.compile(r"^(\d{1,2})[\s.]*(\d{2})[\s.]*(\d{2})\s*[.,]\s*(\d{2})(?!\d)")     # "33 52 16.23", also "33.52 16.23" as OCR prints bold ids
 
     def section_from(tokens_row: list[dict]) -> Optional[dict]:
         if not tokens_row or tokens_row[0]["x0"] > 230:
@@ -1021,9 +1048,14 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         txt = " ".join(z["t"] for z in r)
         if hdr["row"] >= 0 and r is trows[hdr["row"]]:
             sec = section_from(r)
+            if sec is None:
+                ia_r = ia_row_near(r[0]["_yc"])
+                sec = section_from(ia_r) if ia_r else None    # the bold id in the header band: the text layer may have read it
             if sec:
                 section = sec
                 out["sections"].append(sec)
+            else:
+                keep_other(r)                                  # the page's first section id sits in the header band; unread here
             continue
         if r[0]["_yc"] < hdr["y"]:
             if template:
@@ -1039,6 +1071,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
                 else:
                     div2 = dv[1:]
                 out["divisions"].append(dv)
+            else:
+                keep_other(r)
             continue
         if r[0]["x0"] > desc_end * 0.25:
             continue
@@ -1080,6 +1114,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
                 else:
                     div2 = dv[1:]
                 out["divisions"].append(dv)
+            else:
+                keep_other(r)
             continue
         order_flag = None
         if line_no is not None and not partial:
@@ -1141,7 +1177,8 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
             flags.append("HEADER_TEMPLATE")                    # columns from a neighbouring page's header, re-fitted to this page's numbers
         out["lines"].append({
             "line": line_no, "line_partial": partial, "section_id": section["section_id"] if section else None, "pdf_page": pdf_page,
-            "book_page": pdf_page - 14, "description": desc_t, "description_alt": desc_i if desc_i != desc_t else None, "indent_px": indent,
+            "book_page": pdf_page - 14, "y0": min(z["y0"] for z in r), "y1": max(z["y1"] for z in r), "line_x": [r[0]["x0"], r[0]["x1"]],
+            "description": desc_t, "description_alt": desc_i if desc_i != desc_t else None, "indent_px": indent,
             "ref_note": ref[0] if ref else None, "crew": crew_id, "crew_source": crew_src, "crew_raw": crew_raw or crew_raw_i or None,
             "unit": unit, "unit_source": unit_src, "unit_raw": unit_raw or unit_raw_i or None,
             **{k: (str(vals[k]) if vals[k] is not None else None) for k in NUM_COLS},

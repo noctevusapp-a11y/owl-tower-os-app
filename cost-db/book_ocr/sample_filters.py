@@ -31,7 +31,7 @@ def main() -> int:
             if ln.get("line_partial") and ln.get("line") and len(ln["line"]) == 2:
                 short.add((str(d["pdf_page"]), i))
     by_page_idx: dict[str, int] = {}
-    sel = {"template_verified": [], "whole_hours_verified": [], "short_tail_lines": []}
+    sel = {"template_verified": [], "whole_hours_verified": [], "short_tail_lines": [], "crew_arithmetic_verified": [], "slip_moved": []}
     for r in rows:
         idx = by_page_idx.get(r["pdf_page"], 0)
         by_page_idx[r["pdf_page"]] = idx + 1
@@ -42,6 +42,10 @@ def main() -> int:
             sel["whole_hours_verified"].append(r)
         if (r["pdf_page"], idx) in short and "LINE_NUMBER_RECONSTRUCTED" in flags:
             sel["short_tail_lines"].append(r)
+        if r["status"] == "verified" and "CREW_FROM_ARITHMETIC" in flags:
+            sel["crew_arithmetic_verified"].append(r)
+        if "COLUMN_SLIP_MOVED" in flags:
+            sel["slip_moved"].append(r)
     for name, rs in sel.items():
         with (out / f"{name}.csv").open("w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=cols)
