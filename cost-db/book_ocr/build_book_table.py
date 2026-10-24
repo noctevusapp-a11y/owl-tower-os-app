@@ -33,11 +33,11 @@ DIVISION_NAMES = {
     "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
 VALID_DIVS = set(DIVISION_NAMES)
 OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
-              "EQUIP_CREW_MISMATCH", "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH"}
+              "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH"}
 INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "EQUIPMENT_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM",
               "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
               "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
-              "PERCENT_ADD", "TOTAL_OP_UNREADABLE"}
+              "PERCENT_ADD", "TOTAL_OP_UNREADABLE", "EQUIP_CREW_DIFFERS"}
 DESC_FIXES = [(r"\b1b\.", "lb."), (r"\bIb\.", "lb."), (r"\b1bs\.", "lbs."), (r"(\d)\s*0C\b", r"\1 OC"), (r"\b0\.C\.", "O.C."), ("’", "'"), ("‘", "'"),
               ("”", '"'), ("“", '"'), ("″", '"'), ("—", "-"), ("–", "-"), (r"\s+,", ","), (r"\s{2,}", " "), (r"^[\s\-=~_.|:;'\"]+", ""), (r"[\s\-=~_|:;'\"]+$", "")]
 

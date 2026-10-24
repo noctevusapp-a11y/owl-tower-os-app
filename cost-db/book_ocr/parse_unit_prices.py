@@ -209,6 +209,49 @@ def find_header(rows: list[list[dict]]) -> Optional[dict]:
     return {"row": i, "centres": c, "bounds": bounds, "desc_end": order[0] - 95, "y": rows[i][0]["_yc"]}
 
 
+def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
+    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column. Re-fit the
+    column boundaries to those clusters (the header words alone are off by a few mm on skewed or cut pages)."""
+    bounds = dict(hdr["bounds"])
+    centres = hdr["centres"]
+    keys = ["output", "hours", "material", "labor", "equipment", "total", "total_op"]
+    xs = []
+    for r in rows:
+        if r[0]["_yc"] <= hdr["y"] + 10:
+            continue
+        for z in r:
+            if z["x0"] > bounds["output"][0] - 30 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
+                xs.append(z["x1"])
+    if len(xs) < 12:
+        return bounds
+    xs.sort()
+    clusters, cur = [], [xs[0]]
+    for x in xs[1:]:
+        if x - cur[-1] > 45:
+            clusters.append(cur)
+            cur = [x]
+        else:
+            cur.append(x)
+    clusters.append(cur)
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    names = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment", "total": "Total", "total_op": "Incl"}
+    assigned: dict[str, float] = {}
+    for m in meds:
+        k = min(keys, key=lambda kk: abs(centres[names[kk]] + 45 - m))
+        if abs(centres[names[k]] + 45 - m) <= 110 and (k not in assigned or abs(centres[names[k]] + 45 - m) < abs(centres[names[k]] + 45 - assigned[k])):
+            assigned[k] = m
+    if len(assigned) < 3:
+        return bounds
+    # boundary between two neighbouring columns = midpoint of their number right edges (numbers never cross it)
+    for i in range(len(keys) - 1):
+        a, b = keys[i], keys[i + 1]
+        if a in assigned and b in assigned:
+            mid = (assigned[a] + assigned[b]) / 2
+            bounds[a] = (bounds[a][0], mid)
+            bounds[b] = (mid, bounds[b][1])
+    return bounds
+
+
 def col_of(xc: float, bounds: dict) -> Optional[str]:
     for k, (l, r) in bounds.items():
         if l <= xc < r:
@@ -497,7 +540,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
     if crew and vals["output"] and vals["output"] > 0 and vals["equipment"] is not None and crew.get("bare_equip_daily") is not None:
         exp = book_round(Decimal(str(crew["bare_equip_daily"])) / vals["output"])
         if abs(exp - vals["equipment"]) > rstep(exp):
-            flags.append("EQUIP_CREW_MISMATCH")
+            flags.append("EQUIP_CREW_DIFFERS")                 # informational: the book's own example line (C-14A) differs too
     # ---- total incl O&P: often cut by the scan edge on right-hand pages; keep a strong reading only, plausibility-checked
     good = sorted(((w, v) for v, w in W["total_op"].items()), reverse=True)
     if good and good[0][0] >= 2.0 and (len(good) == 1 or good[0][0] > good[1][0]):
@@ -523,7 +566,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
             and (vals["labor"] is not None or vals["material"] is not None) and "LABOR_CREW_MISMATCH" not in flags:
         o = vals["output"]
         l_op = Decimal(str(crew["op_labor_daily"])) / o if vals["labor"] is not None else Decimal(0)
-        e_op = Decimal(str(crew.get("op_equip_daily") or 0)) / o if vals["equipment"] is not None else Decimal(0)
+        e_op = Decimal("1.10") * (vals["equipment"] or Decimal(0))        # "the cost of equipment plus 10% profit" (book p.5)
         m = vals["material"] or Decimal(0)
         exp = Decimal("1.10") * m + l_op + e_op
         tol = (Decimal("0.55") * rstep(m) if m else Decimal(0)) + (rstep(vals["labor"]) / 2 if vals["labor"] is not None else Decimal(0)) \
@@ -616,7 +659,17 @@ MERGED_OH = re.compile(r"^(\d{1,4})[.,]?(\d{3})[.:]?$")
 def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
     cells: dict[str, list[dict]] = {k: [] for k in bounds}
     desc = []
+    row = list(row)
+    for i, z in enumerate(row[:-1]):
+        nxt = row[i + 1]
+        if re.fullmatch(r"[1-9]", z["t"]) and re.fullmatch(r"[A-Za-z]{3,5}", nxt["t"]) and bounds["crew"][0] - 60 <= z["x0"] < bounds["output"][0] + 40 \
+                and col_of((nxt["x0"] + nxt["x1"]) / 2, bounds) in ("crew", "output"):
+            z["_crew_count"] = True                            # "1 Elec" read as two tokens: the count must not become the output
+            nxt["_crew_count"] = True
     for z in row:
+        if z.get("_crew_count"):
+            cells["crew"].append(z)
+            continue
         xc = (z["x0"] + z["x1"]) / 2
         if z["x1"] <= desc_end + 20 and xc < desc_end:
             desc.append(z)
@@ -705,7 +758,7 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
     img = parts.image(pdf_page)
     if img is not None and img.shape[1] != w:
         img = None                                             # OCR was run at another size; no geometry then
-    bounds, desc_end = hdr["bounds"], hdr["desc_end"]
+    bounds, desc_end = calibrate_bounds(hdr, trows), hdr["desc_end"]
     irow_by_y = [(r[0]["_yc"], r) for r in irows]
     known = set(crews)
 
