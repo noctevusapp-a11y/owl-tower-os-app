@@ -260,6 +260,15 @@ class SourceRulesTest(unittest.TestCase):
         self.assertIn("SRC_VALIDATED_WITHOUT_FETCH", rule_codes(db))
 
 
+class NoStorageSourceRuleTest(unittest.TestCase):
+    def test_records_from_restricted_no_storage_source_are_errors(self):
+        db = S.priced_drywall_db()
+        for s in db["sources"]:
+            if s["source_id"] == S.SRC:
+                s["reuse_status"] = "restricted_no_storage"
+        self.assertIn("SRC_PROHIBITED_IN_USE", rule_codes(db))
+
+
 class PromotionGateTest(unittest.TestCase):
     def test_only_fetched_primary_evidence_can_be_validated(self):
         db = S.priced_drywall_db()

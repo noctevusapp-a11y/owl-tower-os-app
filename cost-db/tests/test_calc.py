@@ -127,6 +127,12 @@ class UnitCostTest(unittest.TestCase):
                 s["reuse_status"] = "prohibited"
         self.assertEqual(self.eng.unit_cost(WI, 1, S.params()).status, "incomplete")
 
+    def test_source_whose_values_may_not_be_stored_is_never_used(self):
+        for s in self.db["sources"]:
+            if s["source_id"] == S.SRC:
+                s["reuse_status"] = "restricted_no_storage"        # e.g. FRED
+        self.assertEqual(self.eng.unit_cost(WI, 1, S.params()).status, "incomplete")
+
     def test_promo_and_wrong_channel_excluded(self):
         o = next(x for x in self.db["price_observations"] if x["observation_id"] == "TEST-OBS-BOARDA")
         o["promo_flag"] = True

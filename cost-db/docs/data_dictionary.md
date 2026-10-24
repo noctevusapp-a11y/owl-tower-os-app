@@ -114,7 +114,7 @@ Source register: every dataset, document or page the database relies on, with ac
 | `requires_registration` | boolean | True when a (free) registration or key is needed. |
 | `requires_payment` | boolean | True when access costs money (such sources are not used). |
 | `access_notes` | text | How to obtain the data and obstacles met. |
-| `reuse_status` | text | public_domain / open_license / permitted_with_attribution / restricted_no_automated_access / prohibited / unknown_needs_check. |
+| `reuse_status` | text | public_domain / open_license / permitted_with_attribution / restricted_no_automated_access (manual capture only) / restricted_no_storage (values must not be stored, e.g. FRED) / licence_required (licence needed for derivative use, e.g. CSI classifiers) / prohibited / unknown_needs_check. |
 | `reuse_terms` | text | Terms of reuse as found (quote or paraphrase). |
 | `reuse_terms_url` | text | Where the terms are published. |
 | `limitations` | text | Known limits of the source. |

@@ -79,7 +79,7 @@ TABLES: dict[str, tuple[str, dict[str, str]]] = {
         "requires_registration": "True when a (free) registration or key is needed.",
         "requires_payment": "True when access costs money (such sources are not used).",
         "access_notes": "How to obtain the data and obstacles met.",
-        "reuse_status": "public_domain / open_license / permitted_with_attribution / restricted_no_automated_access / prohibited / unknown_needs_check.",
+        "reuse_status": "public_domain / open_license / permitted_with_attribution / restricted_no_automated_access (manual capture only) / restricted_no_storage (values must not be stored, e.g. FRED) / licence_required (licence needed for derivative use, e.g. CSI classifiers) / prohibited / unknown_needs_check.",
         "reuse_terms": "Terms of reuse as found (quote or paraphrase).",
         "reuse_terms_url": "Where the terms are published.",
         "limitations": "Known limits of the source.",

@@ -66,6 +66,11 @@ class RetailImportTest(unittest.TestCase):
         self.assertEqual(len(rep.accepted_observations), 0)
         self.assertIn("manual_browser", rep.rejected[0][1][0])
 
+    def test_source_with_no_storage_terms_is_refused(self):
+        rep = self.run_rows(row(retailer_source_id="SRC-FRED-API"))
+        self.assertEqual(len(rep.accepted_observations), 0)
+        self.assertTrue(any("restricted_no_storage" in e for e in rep.rejected[0][1]))
+
     def test_unqualified_ton_and_gal_are_refused(self):
         for u in ("TON", "GAL"):
             rep = self.run_rows(row(pack_content_unit_id=u))

@@ -1,0 +1,410 @@
+[
+  {
+    "claim": "[1] BLS data are public domain / free to reuse with citation",
+    "source_id": "SRC-BLS-OEWS-MAY2025",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The official BLS copyright page (bls.gov/opub/copyright-information.htm) says the agency treats its published material as public domain, with one exception: previously copyrighted photographs and illustrations. ... Reuse is permitted without asking for permission, with a courtesy request for attribution. ... Separately, the BLS emblem is a registered trademark, and unauthorized use of the BLS emblem is prohibited.",
+    "evidence_url": "https://www.bls.gov/opub/copyright-information.htm",
+    "recommended_change": "Keep reuse_status=public_domain. Add to reuse_terms: exceptions are photographs/illustrations and the BLS emblem (trademark). Now corroborated by a second search; verification_method can be raised from search_snippet_only to search_snippet_corroborated (still not 'validated' until a human reads the page)."
+  },
+  {
+    "claim": "[1] BLS data are public domain / free to reuse with citation",
+    "source_id": "SRC-BLS-OE-FLATFILES",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The official BLS copyright page (bls.gov/opub/copyright-information.htm) says the agency treats its published material as public domain, with one exception: previously copyrighted photographs and illustrations. ... Reuse is permitted without asking for permission, with a courtesy request for attribution. ... Separately, the BLS emblem is a registered trademark, and unauthorized use of the BLS emblem is prohibited. (Note: the statement covers all BLS publications; I did not separately test the download.bls.gov/pub/time.series/oe/ directory or whether it holds May 2025 data.)",
+    "evidence_url": "https://www.bls.gov/opub/copyright-information.htm",
+    "recommended_change": "Keep reuse_status=public_domain. Currency of the oe time-series (May 2025 loaded or not) remains NOT VERIFIED; leave period_covered as unknown."
+  },
+  {
+    "claim": "[1] BLS data are public domain / free to reuse with citation",
+    "source_id": "SRC-BLS-PPI",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The official BLS copyright page (bls.gov/opub/copyright-information.htm) says the agency treats its published material as public domain, with one exception: previously copyrighted photographs and illustrations. ... Reuse is permitted without asking for permission, with a courtesy request for attribution. ... Separately, the BLS emblem is a registered trademark, and unauthorized use of the BLS emblem is prohibited.",
+    "evidence_url": "https://www.bls.gov/opub/copyright-information.htm",
+    "recommended_change": "Keep public_domain for values obtained from BLS. Keep the note that values pulled via FRED fall under FRED terms (see claim 3). Refresh the stale evidence: the register quotes WPUID612 at Feb 2026; FRED pages in my results show data through Aug/Sep 2026."
+  },
+  {
+    "claim": "[1] BLS data are public domain / free to reuse with citation",
+    "source_id": "SRC-BLS-ECEC",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The official BLS copyright page (bls.gov/opub/copyright-information.htm) says the agency treats its published material as public domain, with one exception: previously copyrighted photographs and illustrations. ... Reuse is permitted without asking for permission, with a courtesy request for attribution. ... Separately, the BLS emblem is a registered trademark, and unauthorized use of the BLS emblem is prohibited.",
+    "evidence_url": "https://www.bls.gov/opub/copyright-information.htm",
+    "recommended_change": "No change to reuse_status. ECEC series-ID layout still not read (human task)."
+  },
+  {
+    "claim": "[1] BLS data are public domain / free to reuse with citation",
+    "source_id": "SRC-BLS-ECI",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The official BLS copyright page (bls.gov/opub/copyright-information.htm) says the agency treats its published material as public domain, with one exception: previously copyrighted photographs and illustrations. ... Reuse is permitted without asking for permission, with a courtesy request for attribution. ... Separately, the BLS emblem is a registered trademark, and unauthorized use of the BLS emblem is prohibited.",
+    "evidence_url": "https://www.bls.gov/opub/copyright-information.htm",
+    "recommended_change": "No change to reuse_status. Refresh 'latest values seen': FRED now shows Q1 2026 (and in one snapshot Q2 2026) for ECICONWAG, not Q4 2025."
+  },
+  {
+    "claim": "[2] BLS API v2 limits: 500 queries/day, 50 series/query, 20 years/query; v1: 25/25/10; free registration key",
+    "source_id": "SRC-BLS-API-V2",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "Registered Version 2.0 users get a 500 daily query limit, 50 series per query, and 20 years per query, versus 25, 25, and 10 unregistered. Both versions share a rate limit of 50 requests per 10 seconds. ... Registration is mandatory for Version 2.0. You submit an email address and organization name on the BLS registration page, complete a CAPTCHA, and the key arrives by email from labstat@bls.gov. (Second search, whose query did not contain the numbers.) Also: 'The official BLS FAQ says registration is required for Version 2.0 and must be renewed yearly. Users must renew registration with the BLS Public Data API at least once a year.' and 'The v2 timeseries endpoint is https://api.bls.gov/publicAPI/v2/timeseries/data/, and the key goes in the registrationkey field of the JSON payload or as a query parameter.'",
+    "evidence_url": "https://www.bls.gov/developers/api_faqs.htm",
+    "recommended_change": "Limits, annual renewal and endpoint URL are now seen in search results: remove 'prior_knowledge_unverified' from the endpoint note and add data_url https://api.bls.gov/publicAPI/v2/timeseries/data/. The 'must cite the date you accessed data through the API' ToS clause was NOT re-tested by me (human must read https://www.bls.gov/developers/termsOfService.htm). Caveat: my first search query contained the figures, so its 'confirms your figures' wording is weak evidence; the second search is the independent one."
+  },
+  {
+    "claim": "[2] BLS API v2 limits and registration key",
+    "source_id": "SRC-BLS-PUBLIC-DATA-API",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "Registered Version 2.0 users get a 500 daily query limit, 50 series per query, and 20 years per query, versus 25, 25, and 10 unregistered. Both versions share a rate limit of 50 requests per 10 seconds.",
+    "evidence_url": "https://www.bls.gov/developers/api_faqs.htm",
+    "recommended_change": "Limits supported. Inconsistency inside the register: this entry has reuse_status=unknown_needs_check although the BLS copyright page IS now seen (SRC-BLS-API-V2 says permitted_with_attribution). Align to 'public_domain (data); API Terms of Service apply'. Consider merging this entry into SRC-BLS-API-V2 (duplicate)."
+  },
+  {
+    "claim": "[2] Latest OEWS reference period is May 2025, released 2026-05-15",
+    "source_id": "SRC-BLS-OEWS-MAY2025",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "For release 10:00 a.m. (ET) Friday, May 15, 2026 USDL-26-0725 (result title) ... 'The BLS release for May 2025 puts the annual mean wage for construction and extraction occupations at $65,360, which is below the all-occupation average of $69,770 ... The release was published May 15, 2026.' Metro releases (e.g. Janesville, Bremerton) dated 2026-06-30 to 2026-07-31 cite a national mean hourly wage of $33.54.",
+    "evidence_url": "https://www.bls.gov/news.release/archives/ocwage_05152026.pdf",
+    "recommended_change": "Release date and USDL-26-0725 number confirmed; no later OEWS reference period appeared in any result. Keep. Per-release ZIP names (oesm25nat.zip etc.) are still NOT confirmed (my search could not see them): keep them labelled prior_knowledge_unverified."
+  },
+  {
+    "claim": "[3] FRED API/legal terms prohibit caching/storing FRED content and AI/ML use",
+    "source_id": "SRC-FRED-API",
+    "verdict": "PARTLY",
+    "evidence_quote": "From FRED's own June 2024 announcement (as summarised in results): 'The API may not be used for storing, caching, or archiving any portion of FRED(R) Services or FRED(R) Content, and stored copies may not be passed to third parties.' ... 'FRED content and services may not be used to develop or train software, machine learning, or AI systems. The notice lists large language models, deep learning, generative artificial intelligence among the covered uses.' Limit of my evidence: 'I could not retrieve the full text of that page, so I couldn't confirm the caching and AI clauses directly from it.' Applicability to BLS-origin series: no result carved out public-domain-origin series; the FRED Add-In licence says data series 'may be owned by third parties and subject to copyright restrictions'. The FRED terms govern the FRED service/content, so values fetched through FRED are covered even if BLS republishes the same numbers freely.",
+    "evidence_url": "https://news.research.stlouisfed.org/2024/06/weve-updated-our-terms-of-use-action-requested/",
+    "recommended_change": "Claim is real (announced June 2024; repeated on fred.stlouisfed.org/legal) but quote text comes from the announcement and legal-notice summaries, not the API terms page itself. Set reuse_status to 'restricted_no_storage' for FRED-fetched values; keep the project rule 'use FRED only to discover series IDs, ingest values from BLS'. Add the Nov 2025 API v2 announcement (https://news.research.stlouisfed.org/2025/11/fred-launches-new-version-of-api/) as seen. Human must read https://fred.stlouisfed.org/docs/api/terms_of_use.html in full."
+  },
+  {
+    "claim": "[4] Series identifier WPUID612 is real",
+    "source_id": "SRC-BLS-PPI",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "WPUID612 is a U.S. Bureau of Labor Statistics Producer Price Index series. It tracks prices for Intermediate Demand by Commodity Type: Materials and Components for Construction, published monthly, not seasonally adjusted, on a 1982=100 base. ... The series replaced an older one. BLS discontinued the Stage of Processing version (WPUSOP2200), and the replacement is WPUID612.",
+    "evidence_url": "https://fred.stlouisfed.org/series/WPUID612",
+    "recommended_change": "indices.csv row correct (name, NSA, 1982=100, monthly). Add note: predecessor WPUSOP2200 discontinued. Latest data now through Aug 2026 on FRED (Sep 2026 on ALFRED), not Feb 2026."
+  },
+  {
+    "claim": "[4] Series identifier WPU1017 is real (steel mill products)",
+    "source_id": "SRC-BLS-PPI",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "Table Data - Producer Price Index by Commodity: Metals and Metal Products: Steel Mill Products (title). 'It shows a September 2026 value of 388.580 (index 1982=100, not seasonally adjusted, monthly), with the next release scheduled for November 13, 2026.'",
+    "evidence_url": "https://fred.stlouisfed.org/data/WPU1017",
+    "recommended_change": "indices.csv row correct. Note WPU101704 (hot-rolled bars, plates, structural shapes) also exists and may suit rebar/structural steel escalation better."
+  },
+  {
+    "claim": "[4] Series identifier ECICONWAG is real (ECI wages & salaries, private industry, construction)",
+    "source_id": "SRC-BLS-ECI",
+    "verdict": "PARTLY",
+    "evidence_quote": "ECICONWAG is the Bureau of Labor Statistics' Employment Cost Index for wages and salaries of private industry workers in construction, quarterly, seasonally adjusted, indexed to Dec 2005=100. ... 'The FRED series page lists Q2 2026 at 174.274, with Q1 2026 at 171.769'. 'The not-seasonally-adjusted counterpart is CIU2022300000000I'.",
+    "evidence_url": "https://fred.stlouisfed.org/series/ECICONWAG",
+    "recommended_change": "The identifier is real but it is a FRED-style alias, not a BLS-format series ID (BLS IDs look like CIU2022300000000I / CIS...). indices.csv lists publisher=BLS with series_code ECICONWAG while its own note says 'ingest values from BLS directly' - that will fail unless the BLS-native ID is recorded. The BLS-native ID of the SA series was NOT seen: add a column or note, and have a human read https://www.bls.gov/eci/factsheets/eci-series-id-guide.htm. Also update stale 'latest value Q4 2025'."
+  },
+  {
+    "claim": "[4] Series identifier CIU2012300000000I is real (ECI total compensation, private industry, construction)",
+    "source_id": "SRC-BLS-ECI",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "The FRED series CIU2012300000000I is the BLS Employment Cost Index for total compensation of private industry workers in construction. The index is set to Dec 2005=100, not seasonally adjusted, and published quarterly. Q1 2026: 168.966 ... A seasonally adjusted version, ECICONCOM, shows 168.818 for Q1 2026.",
+    "evidence_url": "https://fred.stlouisfed.org/series/CIU2012300000000I",
+    "recommended_change": "indices.csv row correct (NSA, Dec 2005=100). Optionally record ECICONCOM as the SA total-compensation alias (also FRED-style)."
+  },
+  {
+    "claim": "[4] Ready-mix concrete PPI: which of WPS1333 / WPS133301 / WPU1333 / PCU327320327320 are real and what each is",
+    "source_id": "SRC-FRED-PPI-READYMIX-CONCRETE",
+    "verdict": "PARTLY",
+    "evidence_quote": "'WPU1333 and WPU133301 appear to be the same series' (commodity, NSA, 1982=100; Feb 2026: 390.590). 'WPS1333 (seasonally adjusted) ... the latest value at 386.461 for September 2025 ... Updated: Nov 25, 2025.' 'WPS133301: This ID did not appear in the results.' 'PCU327320327320 tracks the overall ready-mix concrete manufacturing PPI. Its latest reading ... is 398.048 for February 2026, on a June 1981=100 base, not seasonally adjusted' ; PCU327320327320P = primary products (393.731), ...S = secondary products. Regional commodity series WPU13330101A/B/C/D use Dec 2012=100 (D = West per the summary).",
+    "evidence_url": "https://fred.stlouisfed.org/series/WPU1333",
+    "recommended_change": "Resolution of the agent dispute: (1) WPU1333 = ready-mix concrete commodity index, NSA, monthly, 1982=100 (same data under WPU133301) - use as the primary escalation series. (2) WPS1333 = SA counterpart; real, but its last value seen is Sep 2025, so it looks stale/discontinued: do not use. (3) WPS133301: NOT VERIFIABLE (not found). (4) PCU327320327320 / ...P = industry-based (NAICS 327320) series, a different concept (producer output, June 1981 base); acceptable as a cross-check. (5) The register title lists 'PCU3273232732', which did not appear in any result and looks like a typo for PCU327320327320: fix or remove. Candidate to add for LA: WPU13330101D (West region, Dec 2012=100) - confirm it really is the West series before use. Rename the source entry's title/URL from WPS1333 to WPU1333."
+  },
+  {
+    "claim": "[4] Agent A1 claim: WPS133301 is a seasonally adjusted ready-mix PPI (page shows Apr 2026: 391.392)",
+    "source_id": "SRC-BLS-PPI",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "Dedicated search: 'The search didn't find the FRED series. None of the results mention WPS133301, the FRED site, or a seasonally adjusted ready-mix concrete price index.'",
+    "evidence_url": "https://fred.stlouisfed.org/series/WPU133301",
+    "recommended_change": "Remove WPS133301 from source_findings.md and any candidate list until a human opens it on FRED/BLS. Note that WPU133301 (not WPS) is what FRED returned as an identical-title series."
+  },
+  {
+    "claim": "[5] Lowe's Terms: robots/spiders prohibited",
+    "source_id": "SRC-LOWES-TERMS-OF-USE",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "Use any robot, spider, site search/retrieval application or other manual or automatic device or process to retrieve, index, data mine or in any way reproduce or circumvent the navigational structure or presentation of the Site or its contents. ... reseller activity includes 'extracting, scraping, mining, copying or otherwise gathering information from the Site in connection with your sale or another party's sale of products'.",
+    "evidence_url": "https://www.lowes.com/l/about/terms-and-conditions-of-use",
+    "recommended_change": "Keep reuse_status=prohibited (rename to restricted_no_automated_access for consistency with Sherwin). Live-page effective date still unverified; my results did not show a date."
+  },
+  {
+    "claim": "[5] Ferguson terms: scraping prohibited",
+    "source_id": "SRC-FERGUSON-TERMS-OF-SITE-USE",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The license excludes collecting and using product listings, descriptions, or prices, and it excludes data mining, scraping, spiders, robots, and similar extraction tools (section 2).' 'Users may not use any spider, web crawler, or robot to navigate, search, or extract information from the site. The only exceptions are the site's own search tools and generally available web browsers.' (Result noted the cached pages were roughly 800 to 966 days old.)",
+    "evidence_url": "https://www.ferguson.com/content/customer-support/website-information/terms-of-site-use/",
+    "recommended_change": "Replace the register url (a product page) with the real ToS page https://www.ferguson.com/content/customer-support/website-information/terms-of-site-use/ (also https://www.corporate.ferguson.com/terms-of-use/). Mark reuse_status restricted_no_automated_access. Terms-of-sale page https://www.ferguson.com/content/customer-support/website-information/terms-of-sale/ is separate."
+  },
+  {
+    "claim": "[5] Sherwin-Williams terms: automated means prohibited",
+    "source_id": "SRC-SHERWIN-TERMS-OF-USE",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'It appears in a list of prohibited conduct, which bars using automated tools to access or collect content from the sites. The same list also bars framing or mirroring the sites and publicly displaying their content elsewhere.' 'Company grants to you a personal, revocable, non-exclusive, non-transferable license to use the Websites to view the Content, print the Content, and download the Content where permitted, all for personal and noncommercial use only, with an exception for the Project Bids tool and other commercial tools.' (The literal words 'robot, scraper, spider, or other automated means' did not appear in the result text; only the paraphrase did. Cached copy ~557 days old.)",
+    "evidence_url": "https://www.sherwin-williams.com/terms-of-use",
+    "recommended_change": "Substance supported. Add the 'personal and noncommercial use only' licence and the Project Bids / commercial-tools exception (a possible legitimate commercial route to ask about). Guidelines page URL in results is https://www.sherwin-williams.com/terms-of-use/guidelines (register has /terms/guidelines). Human should re-read the live clause to capture the literal wording."
+  },
+  {
+    "claim": "[5] Home Depot: register says unknown - find the actual Terms of Use clause on automated access",
+    "source_id": "SRC-HOMEDEPOT-TERMS-AMPSERVICES",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "Main US terms NOT found: 'The main homedepot.com footer says use of the site is subject to Terms of Use, but the search didn't return that document's text.' Related Home Depot sites DO show it: Repair Parts site terms - 'Use of manual or automated software, device, scripts, robots, spiders or other means or processes to access, \"scrape\", \"monitor\", \"mine\", \"copy\", \"crawl\", retrieve, index or \"mirror\" any portion of the Site or its Content is on the prohibited list' and use is limited to 'lawful, personal, informational, and other non-commercial use'. Canada terms list users may not 'modify, copy, distribute, scrape, create derivative works from, or sell site material'. The ampservices.homedepot.com page cited in the register did not appear in my results.",
+    "evidence_url": "https://www.appliancerepair.homedepot.com/Terms/",
+    "recommended_change": "Do not claim the homedepot.com clause is known. Keep unknown_needs_check but set a provisional operational rule 'restricted_no_automated_access' (three Home Depot properties prohibit scraping). Record https://www.homedepot.com/c/faqs/legal-and-ethical-policies/ as a page to read. A human must read the live homedepot.com Terms of Use and paste the clause."
+  },
+  {
+    "claim": "[5] Grainger: register says no robots.txt found; terms unknown",
+    "source_id": "SRC-GRAINGER-TERMS-OF-ACCESS",
+    "verdict": "CONTRADICTED",
+    "evidence_quote": "Grainger robots.txt exists: 'The file disallows the whole site for a long list of named bots, including AhrefsBot, GPTBot, Google-Extended, Amazonbot, Bytespider, and ClaudeBot.' with the lines 'User-agent: GPTBot Disallow: /' and 'Disallow: /search?'. Terms of Access text: 'I didn't find the text of Grainger's Terms of Access page in these results'.",
+    "evidence_url": "https://www.grainger.com/robots.txt",
+    "recommended_change": "Fix access_notes: robots.txt DOES exist at https://www.grainger.com/robots.txt and blocks named AI/SEO crawlers site-wide, so 'No robots.txt found' is wrong. Terms of Access clause remains NOT VERIFIABLE (human must read). Treat as restricted_no_automated_access pending reading."
+  },
+  {
+    "claim": "[5] Dunn-Edwards: ToS not found; reuse unknown",
+    "source_id": "SRC-DUNNEDWARDS-PDS-LIBRARY",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The search didn't turn up any robots, scraping, or crawling clause in Dunn-Edwards' terms.' Terms define all site content as protected; 'Outside of what the terms expressly authorize, users may not copy, modify, distribute, or reuse Content'; 'The one grant is a personal-use license to view and print individual pages'. 'The version at dunnedwards.com/about/terms-of-use is dated February 1, 2023.' Governed by California law with arbitration in Los Angeles County. 'The two terms-of-use URLs also returned slightly different text.'",
+    "evidence_url": "https://www.dunnedwards.com/terms-of-use/",
+    "recommended_change": "Register says 'Dunn-Edwards ToS/robots not found': ToS exists at https://www.dunnedwards.com/terms-of-use/ and https://dunnedwards.com/about/terms-of-use (Terms of Sale PDFs also exist). Set reuse_status to 'personal_use_licence_only; no automation clause seen'. Recording individual spec values (coverage, VOC) as cited facts looks low risk but copying PDS documents is not licensed. Human to confirm the current ToS text and robots.txt."
+  },
+  {
+    "claim": "[6] DIR general determinations issued Feb 22 and Aug 22, effective 10 days later",
+    "source_id": "SRC-DIR-PWD-GENERAL-2026-2",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The effective date of each determination is ten days after the issue date; the general determinations are issued twice a year (February 22nd and August 22nd).' For August 22 issues the effective date is September 1; the 2026-1 'superseded' page says 'for projects advertised for bids on or after September 1, 2026, please refer to the current prevailing wage determinations.' Index pages exist at https://dir.ca.gov/oprl/2026-2/PWD/index.htm and https://dir.ca.gov/OPRL/2026-2/PWD/C-Driver-List.htm.",
+    "evidence_url": "https://dir.ca.gov/oprl/2026-2/PWD/index.htm",
+    "recommended_change": "Keep. Add: 2026-2 edition effective 2026-09-01 (issued 2026-08-22). Also SRC-DIR-PWD-FAQ-RULES: the Feb 22/Aug 22 statement appears on the 2026 index and the LACCD guide, so the FAQ citation is corroborated."
+  },
+  {
+    "claim": "[6] DIR determinations are PDF format with no API",
+    "source_id": "SRC-DIR-PWD-GENERAL-2026-2",
+    "verdict": "PARTLY",
+    "evidence_quote": "'A DIR statewide determination page says the rates are viewed through Adobe Acrobat PDFs.' BUT 'The 2026-1 index says you need a copy of Adobe Acrobat and a copy of Microsoft Excel 2003 to see all current determinations and provisions.' 'The search didn't turn up any official DIR bulk download, CSV, Excel, or API for prevailing wage determinations.'",
+    "evidence_url": "https://www.dir.ca.gov/oprl/2026-1/PWD/index.htm",
+    "recommended_change": "Soften 'PDF only': the index itself mentions Excel, so some current files (possibly shift-differential or subtrade lists) may be .xls. Keep access_format=mixed, add 'Excel referenced on index (2003-era wording)'. 'No API' is consistent with all results but absence cannot be proven from search; mark 'none found'. A human must open the 2026-2 index and list file extensions."
+  },
+  {
+    "claim": "[6] Southern California Area naming",
+    "source_id": "SRC-DIR-PWD-GENERAL-2026-2",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "Result titles: 'Southern California provision selection page' (https://www.dir.ca.gov/oprl/2025-1/PWD/SC-4-List.htm); determination PDFs live under .../PWD/Determinations/Southern/SC-023-31-2.pdf. 'Area 1 covers Imperial, Los Angeles, Orange, Riverside, San Bernardino, San Luis Obispo, Santa Barbara and Ventura counties. Area 2 covers Inyo, Kern and Mono' (stated as from the 2020 version for the carpenter determination).",
+    "evidence_url": "https://www.dir.ca.gov/oprl/2024-1/PWD/Determinations/Southern/SC-023-31-2.pdf",
+    "recommended_change": "Add: Los Angeles County falls in 'Southern California' Area 1 for the carpenter determination (2020-version summary; county grouping can differ by craft and edition - verify per craft). Determination numbering: SC-23-31-2-<year>-<1|2>. The register's derived 2026-2 carpenter URL is still unseen."
+  },
+  {
+    "claim": "[6] Any bulk / machine-readable DIR data offered",
+    "source_id": "SRC-DIR-PWD-GENERAL-2026-2",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "'The search didn't turn up any official DIR bulk download, CSV, Excel, or API for prevailing wage determinations, so I can't confirm whether one exists.'",
+    "evidence_url": "https://dir.ca.gov/OPRL/2026-2/PWD/C-Driver-List.htm",
+    "recommended_change": "Leave 'no API or bulk download found' wording; do not state 'none exists'. Ask DIR Research Unit ((415) 703-4774 per DIR pages) whether a data feed exists."
+  },
+  {
+    "claim": "[7] SAM.gov wage determinations: no documented API",
+    "source_id": "SRC-SAM-DBA-WAGE-DETS",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The GSA API directory at open.gsa.gov lists these SAM.gov APIs: Contract Awards, Entity Management, Exclusions, Federal Hierarchy (FOUO and Public), and Get Opportunities. I found no dedicated Wage Determinations API in these results.' Third party: its wage tools call 'sam.gov's own internal frontend search endpoint' that is 'not a published/versioned public API and can change without notice'.",
+    "evidence_url": "https://open.gsa.gov/api/",
+    "recommended_change": "Keep 'no documented API found' (now corroborated by the GSA API directory). Note SAM.gov has a 'Wage Determinations Contract Data Report' (a report, not an API). Do not build on the internal endpoint."
+  },
+  {
+    "claim": "[7] SAM.gov wage determination formats",
+    "source_id": "SRC-SAM-DBA-WAGE-DETS",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'A Colorado state guide says a wage determination can be either downloaded as a .txt file or printed as a pdf.' SAM.gov wage-determinations page: 'the formatting of wage determinations on sam.gov has recently changed' and 'some SCA Wage Determinations published on 4/29/2026 may have incomplete information about applicable locations.'",
+    "evidence_url": "https://osa.colorado.gov/sites/osa/files/documents/How%20to%20obtain%20the%20latest%20Davis-Bacon%20Act%20Wage%20Determinations.pdf",
+    "recommended_change": "Keep formats .txt and PDF. Add the 2026 'formatting recently changed' warning (parsers may break). Human should open sam.gov/content/wage-determinations."
+  },
+  {
+    "claim": "[7] Davis-Bacon construction types (building, residential, highway, heavy)",
+    "source_id": "SRC-SAM-DBA-WAGE-DETS",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'Wage Determinations are issued for four types of construction categories: building, residential, highway, and heavy.' Residential = 'single family houses or apartment buildings of no more than four stories in height'; Heavy = 'projects that are not properly classified as either building, highway, or residential'; 'WDs are published based on the state and county (i.e., locality)'.",
+    "evidence_url": "https://www.dol.gov/agencies/whd/government-contracts/construction/surveys",
+    "recommended_change": "Add the four types and definitions to limitations. The '2,000 USD contract threshold' in the register was not tested by me: leave flagged for DOL verification."
+  },
+  {
+    "claim": "[8] 2026 Social Security wage base $184,500; rates 6.2% / 1.45%",
+    "source_id": "SRC-IRS-PUB15-2026",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The official Publication 15 (2026) page gives the 2026 limit as $184,500, and says Medicare has no wage cap. (The social security wage base limit is $184,500. The Medicare tax rate is 1.45% each for the employee and employer, unchanged from 2025.)' 'Employer and employee each pay 6.2% Social Security, 12.4% combined, and 1.45% Medicare each, 2.9% combined.' Also 'The FUTA wage base is $7,000 at a 6.0% rate' appears in the same guide.",
+    "evidence_url": "https://www.irs.gov/publications/p15",
+    "recommended_change": "Values correct. Fix data_url: use https://www.irs.gov/publications/p15 (HTML) and https://www.irs.gov/pub/irs-pdf/p15.pdf; the register's https://www.eitc.irs.gov/pub/irs-prior/p15--2026.pdf did not appear in my results and looks wrong (irs-prior path on an EITC host). The register note that FUTA 6.0%/$7,000 was seen only on a secondary site is now outdated: IRS Pub 15 states it. A draft 2027 Pub 15 (wage base $192,300) exists: never use it for 2026."
+  },
+  {
+    "claim": "[8] California ETT 0.1% and UI taxable wage base $7,000",
+    "source_id": "SRC-EDD-PAYROLL-RATES-2026",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The ETT rate for 2026 is 0.1 percent. The ETT taxable wage limit is $7,000 per employee, per calendar year.' 'The 2026 taxable wage limit is $7,000 per employee.' 'Schedule F+ provides for UI contribution rates from 1.5 percent to 6.2 percent.' New-employer UI rate 3.4% also reported in an EDD-sourced result.",
+    "evidence_url": "https://edd.ca.gov/en/payroll_taxes/rates_and_withholding",
+    "recommended_change": "Values correct. The new-employer 3.4% figure (register notes it only from a payroll blog) also appeared in the EDD-page result: can be promoted, but a human should confirm on the EDD page or DE 44 (https://www.edd.ca.gov/siteassets/files/pdf_pub_ctr/de44.pdf)."
+  },
+  {
+    "claim": "[8] California SDI is employee-paid",
+    "source_id": "SRC-EDD-PAYROLL-RATES-2026",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The 2026 SDI withholding rate is 1.3 percent (.013), which provides for both State Disability Insurance (SDI) and Paid Family Leave (PFL) benefits.' 'Since January 1, 2024, there is no wage cap.' 'SDI is withheld from employees' pay.' (Last sentence is the search tool's summary, based on EDD wording 'withholding rate'.)",
+    "evidence_url": "https://edd.ca.gov/en/payroll_taxes/rates_and_withholding",
+    "recommended_change": "Keep not_applicable:employee_side for SDI. Reasoning rests on EDD's 'withholding rate' wording; a human may want the DE 44 sentence stating employees pay SDI."
+  },
+  {
+    "claim": "[8] WCIRB / California advisory pure premium figure",
+    "source_id": "SRC-CDI-WC-ADVISORY-2026-09",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'Commissioner Ricardo Lara issued the decision on July 10, 2026, adopting an average advisory pure premium rate of $1.65 per $100 of payroll. That is a 6.6% increase from the 2025 approved rate.' 'The WCIRB's May filing proposed rates averaging 10.4% higher.' 'Insurers do not have to use the adopted benchmark.' Source conflict: 'Insurance Journal's July 13 headline and lead say rates were approved at a 10.4% increase. That contradicts the Department's own release and most other coverage.'",
+    "evidence_url": "https://www.insurance.ca.gov/0400-news/0100-press-releases/2026/upload/Workers-Comp-Decision-and-Order-7-10-26.pdf",
+    "recommended_change": "Register figure ($1.65 per $100, +6.6%, effective 2026-09-01) is correct. Add warning: Insurance Journal headline (10.4%) is wrong/misleading - cite CDI only. Figure is an all-class average advisory benchmark, not a construction class rate and not an insurer price; class-level 9/1/2026 pure premiums still not seen (human via WCIRB Classification Search)."
+  },
+  {
+    "claim": "[9] Caltrans Labor Surcharge and Equipment Rental Rates: edition currently in force",
+    "source_id": "SRC-CALTRANS-EQRR-2026-27",
+    "verdict": "PARTLY",
+    "evidence_quote": "'A separate file (book_26_27_intv2) covers September 1, 2026 through March 31, 2027. Its stated reason is that it was published to update equipment rates based on current fuel costs following the increase in fuel prices.' 'One file (book_26_27) lists the period as April 1, 2026 through March 31, 2027. Another file (book_26v3) lists it as Effective April 1, 2026 through August 31, 2026.' 'The FAQ says the book will be published earlier if the price (one-year average) exceeds a 15% increase/decrease from the current book average.'",
+    "evidence_url": "https://dot.ca.gov/-/media/dot-media/programs/construction/documents/equipment-rental-rates-and-labor-surcharge/book_26_27_intv2.pdf",
+    "recommended_change": "The coherent reading (v3 = Apr-Aug 2026, intv2 = Sep 2026-Mar 2027) supports the register's guess that intv2 is in force on 2026-10-24, but no result states which is official. Keep UNCONFIRMED; record the 15% fuel-price re-publication trigger. A human must open the Caltrans page and the PDF cover."
+  },
+  {
+    "claim": "[9] Caltrans rates exclude/include operator",
+    "source_id": "SRC-CALTRANS-EQRR-2026-27",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "'I did not find any source on the \"operator not included\" question, so I can't confirm from these results whether operator wages are excluded from the rental rates.' (Two searches.) What was seen: 'the rates assume the contractor has ownership of the equipment being used' and the labor surcharge covers 'worker's compensation, social security, Medicare, Federal unemployment insurance, State unemployment insurance, and State training taxes'.",
+    "evidence_url": "https://dot.ca.gov/programs/construction/equipment-rental-rates-and-labor-surcharge/equipment-rental-rates-faq",
+    "recommended_change": "Leave 'operator treatment unknown'. Do not assume rates are bare (operator-excluded) when building crew costs until the User's Guide in the rate book is read."
+  },
+  {
+    "claim": "[9] Caltrans publishes a download (PDF plus CSV)",
+    "source_id": "SRC-CALTRANS-EQRR-2026-27",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The search didn't turn up a CSV or Excel version of the Caltrans equipment rental rates. The published books are PDFs.' 'A 2014 note says Books are no longer available in hard copy and should be downloaded from the internet.' FAQ links a 'Dummy Rate Calculator' at mets.dot.ca.gov (non-official estimates).",
+    "evidence_url": "https://dot.ca.gov/programs/construction/equipment-rental-rates-and-labor-surcharge/equipment-rental-rates-faq",
+    "recommended_change": "Change access_notes 'PDF plus CSV' to 'PDF confirmed; CSV not confirmed (a 'miscellaneous rates' listing may be separate)'. Human to check for a CSV link on the live page."
+  },
+  {
+    "claim": "[9] Caltrans Contract Cost Data availability / terms",
+    "source_id": "SRC-CALTRANS-CONTRACTCOST",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The current homepage lists 3,412,387 records in database with a latest bid-open-date imported: 03-04-2026.' 'Nothing I found describes a download or export function.' 'The site says that use of this site constitutes acceptance of the conditions of use, but the search results don't include the terms.'",
+    "evidence_url": "https://sv08data.dot.ca.gov/contractcost/",
+    "recommended_change": "Existence/size confirmed; no export described; conditions text still unseen (NOT VERIFIABLE). Keep reuse_status unknown_needs_check; do not scrape. Human must read the conditions of use."
+  },
+  {
+    "claim": "[9] USACE EP 1110-1-8 current edition",
+    "source_id": "SRC-USACE-EP1110-1-8-RV1-12",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The current-edition pamphlet (dated 12 August 2021) says the equipment ownership and operating expense rates for construction equipment are published for 12 geographic regions.' Regional volumes seen are November 2016 and 2018; 'rates based on 2013 or 2015 price levels'. The USACE Cost Engineering page https://www.usace.army.mil/Missions/Cost-Engineering/EP1110-1-8/ lists regions 1 through 12. 'Local area factors ... can be found at the EP website.'",
+    "evidence_url": "https://www.publications.usace.army.mil/Portals/76/Users/182/86/2486/EP%201110-1-8_RV1-12.pdf",
+    "recommended_change": "Methodology edition = 12 Aug 2021 is now supported (previously 'inferred'); regional rate volumes in results are Nov 2016/2018. Add https://www.usace.army.mil/Missions/Cost-Engineering/EP1110-1-8/ as the place for current rates; confirm there whether newer rate volumes exist."
+  },
+  {
+    "claim": "[9] USACE regional volume covering California",
+    "source_id": "SRC-USACE-EP1110-1-8-VOL07-2016",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "Three searches: 'The results don't map California or either district to a region. Based on these results alone, I can't say whether California falls under Region 8, 9, or 10.' Figure 1.1 (region map) of the 2021 pamphlet is where states are assigned.",
+    "evidence_url": "https://www.publications.usace.army.mil/Portals/76/Users/182/86/2486/EP%201110-1-8_RV1-12.pdf",
+    "recommended_change": "Vol. 7 (Region VII) must NOT be treated as the California volume: the register never established that. Human to read Figure 1.1 and Appendix B (area factors)."
+  },
+  {
+    "claim": "[10] NAVFAC P-405 (1996) exists, is downloadable, contains labor-hour tables for construction operations",
+    "source_id": "SRC-NAVFAC-P405-1996",
+    "verdict": "PARTLY",
+    "evidence_quote": "'Tables for estimating labor have been provided to show the number of man-hours required for each work function.' (appeared in three results, as a summary of the document intro.) 'The page offers it as a download ... The page did not show a distribution statement or copyright line in the retrieved text.' 'I did not find the specific man-hour values for framing, drywall, painting, or concrete.'",
+    "evidence_url": "https://everyspec.com/USN/NAVY-General/NAVFAC_P-405_OCT1996_5425/",
+    "recommended_change": "Existence, EverySpec download and 'man-hours per work function' tables are supported; trade-specific coverage (framing, drywall, painting, concrete) and licence/distribution status are NOT VERIFIABLE. Keep reference_only; flag 'military (Seabee) crews, 1996'. Human must open the PDF table of contents."
+  },
+  {
+    "claim": "[10] TM 3-34.41 (2021) exists, is public, contains labor-hour tables",
+    "source_id": "SRC-JOINT-TM3-34-41-2021",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The joint manual is the October 2021 edition of Construction Estimating, released under three service numbers: NTRP 4-04.2.3 (Navy), TM 3-34.41 (Army), and MCRP 3-40D.12 (Marine Corps). The Marine Corps copy is on marines.mil.' 'A change dated October 2022 applies to the Navy version. It replaces the front-cover distribution statement.' 'I did not find the production-rate or crew-table content in these results.'",
+    "evidence_url": "https://www.marines.mil/Portals/1/Publications/MCRP%203-40D.12.pdf",
+    "recommended_change": "Existence, edition (Oct 2021, Change 1 Oct 2022) and public Marine Corps PDF are supported. Whether it holds labor-hour/production tables per unit for the target trades is NOT VERIFIABLE; the register's 'Army and Navy versions should match' is unverified (Change 1 confirmed for the Navy version only). Keep reference_only until a human reads the appendices."
+  },
+  {
+    "claim": "[11] CSI MasterFormat / UniFormat / OmniClass numbers and titles cannot be reused without a licence",
+    "source_id": "SRC-CSI-MASTERFORMAT-TERMS",
+    "verdict": "PARTLY",
+    "evidence_quote": "'Use is governed by the MasterFormat End User License Agreement ... For derivative products or resources that use the numbers or titles, the FAQ directs readers to contact CSI at csi@csinet.org.' Community (unofficial, conflicting): 'one poster says CSI's position is that using numbers and titles from CSI-copyrighted works within your own work products to document and deliver construction projects is considered normal project use and not subject to licensing. Another forum post quotes a CSI reply saying firms using MasterFormat numbers and titles in specifications and deliverables need a license.' 'Not found in the results: the EULA's actual text on commercial use, royalty or fee terms, and whether specific numbers versus whole titles are treated differently.'",
+    "evidence_url": "https://www.csiresources.org/standards/mf-faqs",
+    "recommended_change": "The 'licence needed for a commercial derivative product that employs numbers/titles' part is supported by CSI's own FAQ wording; the register's reuse_status='prohibited' overstates it (CSI says 'contact us'; project-documentation use may be allowed). Change reuse_status to 'licence_required_for_commercial_derivative (terms not read)'. Keep the safe operating rule: internal taxonomy, empty CSI crosswalk field. UniFormat/OmniClass not re-tested by me. Human: read EULA text and email CSI."
+  },
+  {
+    "claim": "[12] USG joint compound coverage: two 4.5-gal pails finish 1,000 sq ft (digest row A3-14)",
+    "source_id": "SRC-USG-JOINT-COMPOUND-FAQ",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'USG's own FAQ says about two 4.5-gallon pails of Sheetrock UltraLightweight All Purpose Joint Compound are needed to finish 1,000 sq. ft. of gypsum wallboard.' 'The FAQ ... anticipates approximately two 4.5 gallon pails to finish 1000 sq. ft. of gypsum wallboard.' Retailer cross-checks: 'Ferguson's listing for a Light Weight All Purpose Compound in 4.5 gal says it covers approximately 500 sq ft.' (register's Do it Best listing says 450).",
+    "evidence_url": "https://assemblies-tools.usg.com/content/usgcom/en/resource-center/faqs/1977.html",
+    "recommended_change": "Figure supported (about 2 pails per 1,000 sq ft of board, all joints finished). The digest's literal_check_pass=NO is a quoting defect (the stored quote 'gives the same two-pail, 1,000 sq ft estimate' lacks the numbers), not a data defect: replace the stored quote with the FAQ sentence. Retailer figures (450-500 sq ft per pail) imply 900-1,000 sq ft per two pails: minor spread, record as a range with USG as primary. Product is the UltraLightweight All Purpose compound only; do not generalise to other compounds."
+  },
+  {
+    "claim": "[12] Dunn-Edwards EVEREST Flat/Eggshell VOC = 2 g/L (digest row A3-18)",
+    "source_id": "SRC-DUNNEDWARDS-PDS-LIBRARY",
+    "verdict": "CONTRADICTED",
+    "evidence_quote": "'Two EVER10 data sheets disagree. The 1024 version lists <5 g/L by ASTM D 6886 and a RAVOC under 3 g/L, while the older version lists a maximum of 2 g/L and a RAVOC of 1 g/L. ... I could not confirm which is current.' Newer sheet: https://www.dunnedwards.com/wp-content/uploads/2015/01/EVER10-EN-PDS-1024.pdf; older (the register's URL): https://www.dunnedwards.com/wp-content/uploads/2015/01/EN-EVER10-PDS.pdf.",
+    "evidence_url": "https://www.dunnedwards.com/wp-content/uploads/2015/01/EVER10-EN-PDS-1024.pdf",
+    "recommended_change": "The 2 g/L figure comes from an older, superseded-looking sheet; the Oct 2024 (1024) sheet says <5 g/L (RAVOC <3 g/L). Change the digest value to '<5 g/L (PDS 10/2024); older PDS said 2 g/L' and store the PDS revision date with every manufacturer value. Also fix the register note claiming EVER10 uses only the 'EN-<CODE>-PDS.pdf' pattern: EVER10 also exists as EVER10-EN-PDS-1024.pdf."
+  },
+  {
+    "claim": "[12] Dunn-Edwards EVEREST recommended 1.5 mils DFT and practical coverage 375-425 sq ft/gal (digest rows A3-16/17)",
+    "source_id": "SRC-DUNNEDWARDS-PDS-LIBRARY",
+    "verdict": "PARTLY",
+    "evidence_quote": "'The only figure I found is from the 2020 EPD, which lists EVEREST - Flat 11.7 400, where the columns are density (lb/gal) and coverage (ft2/gal). That is a declared value in an environmental declaration, not a coverage rate from the product data sheet.' 'The 1024 data sheet gives SOLIDS BY VOLUME (ASTM D 2697) 40.0% +/- 2% and WEIGHT PER GALLON (ASTM D 1475): 11.70 lbs.' 'Dry film thickness: Not found in any result.'",
+    "evidence_url": "https://www.dunnedwards.com/wp-content/uploads/2015/01/SCS-EPD-05978_DunnEdwards_072920.pdf",
+    "recommended_change": "Coverage 375-425 sq ft/gal is not contradicted (EPD declares 400; theoretical at 40% solids and 1.5 mil DFT is about 428) but the 1.5 mil DFT and the range itself were not confirmed on a PDS in my searches: mark 'unverified vs current PDS'. Note solids by volume differ between the digest source (EVERSHIELD 37.9% is another product) and EVEREST 40.0%; never mix products."
+  },
+  {
+    "claim": "[12] QUIKRETE Concrete Mix 1101 yields (40 lb 0.30, 50 lb 0.375, 60 lb 0.45, 80 lb 0.60 cu ft)",
+    "source_id": "SRC-QUIKRETE-DATASHEET-1101",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The official QUIKRETE data sheet gives yields of about 0.30 cu ft for a 40 lb bag, 0.45 cu ft for 60 lb, and 0.60 cu ft for 80 lb.' 'The Quikrete PDF covers product numbers 1101-40, -50, -60, -80, and -90. It lists yields of roughly 0.30 cu ft (40 lb), 0.375 cu ft (50 lb), 0.45 cu ft (60 lb), 0.60 cu ft (80 lb), and 0.675 cu ft (90 lb).' Retail listings match for 60 and 80 lb.",
+    "evidence_url": "https://www.Quikrete.com/PDFs/DATA_SHEET-Concrete Mix 1101.pdf",
+    "recommended_change": "All four digest values supported. Optionally add the 90 lb size (0.675 cu ft, regional) and unit weight ~140 lb/ft3. No contradiction."
+  },
+  {
+    "claim": "[12] JM fiberglass batt R-13 15x93 coverage 106.56 sq ft per bag",
+    "source_id": "SRC-JM-FIBERGLASS-FACT-SHEET",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'The Johns Manville fact sheet lists the R-13 unfaced batt at 15 in x 93 in, order number U1330, at 11 pieces per bag and 106.56 sq. ft. per bag.' 'The same sheet notes that R-19 installed in a 2x6 framed wall (5 1/2\" cavity) is compressed ... giving R-17 to R-18.' (Arithmetic: 11 x 15 x 93 / 144 = 106.56.)",
+    "evidence_url": "https://JM.COM/content/dam/jm/global/en/building-insulation/Files/BI%20Toolbox/JM%20Fiberglass%20Manufacturers%20Fact%20Sheet.pdf",
+    "recommended_change": "R-13 value and the R-17/R-18 compression note supported. No change."
+  },
+  {
+    "claim": "[12] JM fiberglass batt R-19 15x93 coverage 87.18 sq ft per bag (9 pieces, 6.5 in.)",
+    "source_id": "SRC-JM-FIBERGLASS-FACT-SHEET",
+    "verdict": "PARTLY",
+    "evidence_quote": "'For R-19 at 15 x 93 in, I could not find the figure in the fact sheet excerpt. Retailer and distributor listings give 87.18 sq-ft Coverage Area for a 6-1/2 in thick, 15 x 93 in unfaced R-19 batt.' (Arithmetic: 9 x 15 x 93 / 144 = 87.19.)",
+    "evidence_url": "https://shop.distributioninternational.com/insulation/fiberglass/residential/batt-insulation/031979109715",
+    "recommended_change": "Number is consistent with distributor listings and with 9 pieces x 9.69 sq ft, but in my results it was not visible on the JM fact sheet itself: keep value, mark 'confirmed via distributor listing; fact-sheet row not re-seen'. R-30 rows (88.00 / 58.66 sq ft) not tested."
+  },
+  {
+    "claim": "[X1] Register lists ready-mix PPI id 'PCU3273232732' (in SRC-FRED-PPI-READYMIX-CONCRETE title and access_notes)",
+    "source_id": "SRC-FRED-PPI-READYMIX-CONCRETE",
+    "verdict": "NOT VERIFIABLE",
+    "evidence_quote": "Search for the real industry series returned PCU327320327320, PCU327320327320P, ...M, ...MM, ...S and regional A/B/C/D variants; no result named PCU3273232732.",
+    "evidence_url": "https://fred.stlouisfed.org/series/PCU327320327320",
+    "recommended_change": "Correct or delete the identifier; a mistyped series ID will fail at ingestion."
+  },
+  {
+    "claim": "[X2] Staleness: 'latest values seen' in BLS/FRED entries (WPUID612 Feb 2026, ECICONWAG Q4 2025, WPS1333 Sep 2025)",
+    "source_id": "SRC-BLS-PPI",
+    "verdict": "PARTLY",
+    "evidence_quote": "FRED page lists WPUID612 'data through August 2026' (ALFRED September 2026); WPU1017 Sep 2026 = 388.580; ECICONWAG Q1 2026 = 171.769 (Q2 2026 174.274 in one snapshot).",
+    "evidence_url": "https://fred.stlouisfed.org/series/WPUID612",
+    "recommended_change": "Do not store these 'latest values' as current; values are not to be cached from FRED anyway. Re-pull from BLS at ingest time."
+  },
+  {
+    "claim": "[X3] OEWS Los Angeles area naming: Glendale division table not located",
+    "source_id": "SRC-BLS-OEWS-LA-MAY2025-NR",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'BLS now labels the area Los Angeles-Long Beach-Anaheim, not Los Angeles-Long Beach-Glendale. The search didn't show a separate Metropolitan Division breakdown.' Area construction and extraction mean hourly wage $37.07 vs $31.42 nationally; 'The page's headline figure of $37.15 covers all occupations'.",
+    "evidence_url": "https://www.bls.gov/regions/west/news-release/occupationalemploymentandwages_losangeles.htm",
+    "recommended_change": "Register limitation stands. Record the MSA-level construction-and-extraction mean ($37.07/h, May 2025) only as context, not as a trade rate. Human to check whether the LA-Long Beach-Glendale division file exists on bls.gov/oes/tables.htm."
+  },
+  {
+    "claim": "[X4] FRED API v2 announced Nov 2025 (bulk observations by release; key required)",
+    "source_id": "SRC-FRED-API",
+    "verdict": "SUPPORTED",
+    "evidence_quote": "'A November 2025 FRED announcement said API Version 2 lets account holders retrieve observations for all series in a release in bulk, which still requires an API key.'",
+    "evidence_url": "https://news.research.stlouisfed.org/2025/11/fred-launches-new-version-of-api/",
+    "recommended_change": "Announcement confirmed. The Bearer-token detail in the register was not re-seen: leave as 'reported'."
+  }
+]

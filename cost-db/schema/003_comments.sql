@@ -65,7 +65,7 @@ COMMENT ON COLUMN costdb.sources.access_format IS 'API / CSV / XLSX / PDF / HTML
 COMMENT ON COLUMN costdb.sources.requires_registration IS 'True when a (free) registration or key is needed.';
 COMMENT ON COLUMN costdb.sources.requires_payment IS 'True when access costs money (such sources are not used).';
 COMMENT ON COLUMN costdb.sources.access_notes IS 'How to obtain the data and obstacles met.';
-COMMENT ON COLUMN costdb.sources.reuse_status IS 'public_domain / open_license / permitted_with_attribution / restricted_no_automated_access / prohibited / unknown_needs_check.';
+COMMENT ON COLUMN costdb.sources.reuse_status IS 'public_domain / open_license / permitted_with_attribution / restricted_no_automated_access (manual capture only) / restricted_no_storage (values must not be stored, e.g. FRED) / licence_required (licence needed for derivative use, e.g. CSI classifiers) / prohibited / unknown_needs_check.';
 COMMENT ON COLUMN costdb.sources.reuse_terms IS 'Terms of reuse as found (quote or paraphrase).';
 COMMENT ON COLUMN costdb.sources.reuse_terms_url IS 'Where the terms are published.';
 COMMENT ON COLUMN costdb.sources.limitations IS 'Known limits of the source.';

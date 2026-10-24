@@ -143,8 +143,8 @@ class Validator:
                 if not sid or sid not in self.sources:
                     continue
                 src = self.sources[sid]
-                if src["reuse_status"] == "prohibited":
-                    self.add(t, r, "SRC_PROHIBITED_IN_USE", "error", f"record uses prohibited source {sid}")
+                if src["reuse_status"] in ("prohibited", "restricted_no_storage"):
+                    self.add(t, r, "SRC_PROHIBITED_IN_USE", "error", f"record uses source {sid} whose terms are '{src['reuse_status']}'")
                 if src["verification_method"] == "synthetic_test_fixture" and self.production:
                     self.add(t, r, "SRC_SYNTHETIC_IN_PRODUCTION", "error", f"record uses synthetic fixture source {sid}")
                 if r.get("review_status") == "validated" and src["verification_method"] not in ("fetched_primary", "synthetic_test_fixture") \

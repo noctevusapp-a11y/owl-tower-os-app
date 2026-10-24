@@ -64,9 +64,10 @@ class PostgresTest(unittest.TestCase):
         pg.run_psql(["-d", "postgres", "-c", "DROP DATABASE IF EXISTS costdb_unittest_real"])
 
     def test_python_generated_runs_and_json_columns_round_trip(self):
-        total = psql("select direct_cost_total from costdb.calculation_runs").stdout.strip()
+        run = "select run_id from costdb.calculation_runs where status = 'complete'"       # the one synthetic complete run
+        total = psql(f"select direct_cost_total from costdb.calculation_runs where run_id = ({run})").stdout.strip()
         self.assertEqual(total, str(self.expected_total))
-        self.assertEqual(psql("select count(*) from costdb.calculation_run_lines where jsonb_array_length(inputs) > 0").stdout.strip(), "3")
+        self.assertEqual(psql(f"select count(*) from costdb.calculation_run_lines where run_id = ({run}) and jsonb_array_length(inputs) > 0").stdout.strip(), "3")
 
     def test_generated_columns_match_python(self):
         v = psql("select price_per_content_unit from costdb.price_observations where observation_id='TEST-OBS-BOARDA'").stdout.strip()

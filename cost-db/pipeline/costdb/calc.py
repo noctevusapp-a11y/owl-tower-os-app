@@ -27,6 +27,7 @@ D = Decimal
 Q10 = D("0.0000000001")
 Q6 = D("0.000001")
 
+NO_DATA_USE = ("prohibited", "restricted_no_storage")   # values from such sources are never calculation inputs
 RETAIL_CHANNELS = {"retail_public", "retail_promo"}
 DEFAULT_CHANNELS = ("retail_public", "public_price_list", "supplier_quote", "pro_account_quote", "distributor_quote")
 BURDEN_PAYROLL_TAX_TYPES = ("fica_social_security", "fica_medicare", "futa", "state_ui", "state_ett")
@@ -193,7 +194,7 @@ class Engine:
         sid = row.get("source_id")
         if sid and sid in self._sources:
             src = self._sources[sid]
-            if src["reuse_status"] == "prohibited":
+            if src["reuse_status"] in NO_DATA_USE:
                 return False
             if src["verification_method"] == "synthetic_test_fixture" and not p.allow_synthetic:
                 return False

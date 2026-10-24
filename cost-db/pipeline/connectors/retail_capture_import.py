@@ -153,6 +153,8 @@ def import_capture(rows: list[dict], db: Database, today: Optional[date] = None,
                 errs.append(f"unknown region_id {region_id}")
             if g["zip"] and not re.fullmatch(r"\d{5}", g["zip"]):
                 errs.append("zip must be 5 digits")
+            if src and src["reuse_status"] == "restricted_no_storage":
+                errs.append(f"source terms are 'restricted_no_storage': values from {src['source_id']} must not be stored")
             if src and src["reuse_status"] in ("prohibited", "restricted_no_automated_access"):
                 if g["capture_method"] != "manual_browser":
                     errs.append(f"source terms are '{src['reuse_status']}': only capture_method=manual_browser is acceptable")

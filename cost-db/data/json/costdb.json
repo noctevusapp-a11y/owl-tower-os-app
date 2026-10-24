@@ -1654,11 +1654,11 @@
    "evidence_quote": "ECICONWAG is the wages-and-salaries series for private industry construction. It is seasonally adjusted, indexed to Dec 2005=100, and quarterly. Its latest value in these results is 171.690 for Q4 2025, updated Feb 10, 2026.",
    "evidence_url": "https://fred.stlouisfed.org/series/ECICONWAG",
    "origin": "observed",
-   "review_status": "unreviewed",
-   "reviewed_by": null,
-   "reviewed_at": null,
+   "review_status": "flagged",
+   "reviewed_by": "agent-F2",
+   "reviewed_at": "2026-10-24T00:00:00+00:00",
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): 'ECICONWAG' is a FRED-style alias; BLS-native ECI series ids look like CIU.../CIS.... The BLS-native id of the construction wages-and-salaries series was NOT seen. Read https://www.bls.gov/eci/factsheets/eci-series-id-guide.htm before API ingestion; the stored series_code will fail against the BLS API as it stands."
   },
   {
    "source_id": "SRC-BLS-OE-FLATFILES",
@@ -1856,7 +1856,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): Agent A1's 'WPS133301' (SA ready-mix PPI, 'Apr 2026: 391.392') could not be found - do not use it. 'Latest values seen' in agent text (e.g. WPUID612 Feb 2026) are stale snapshots and are not stored; re-pull from bls.gov at ingestion time."
   },
   {
    "source_id": "SRC-BLS-PPI-CONSTRUCTION-INPUTS",
@@ -2021,7 +2021,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): existence and size confirmed; no export described; conditions of use text unseen - do not scrape; a person must read the conditions."
   },
   {
    "source_id": "SRC-CALTRANS-COSTEST-GUIDANCE-2014",
@@ -2087,7 +2087,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): 'PDF plus CSV' is unsupported - PDF confirmed, CSV not confirmed. Edition in force on 2026-10-24 is probably the Sep 2026-Mar 2027 interim (v3 = Apr-Aug 2026) but no result states which is official; a 15% fuel-price re-publication trigger was noted. Operator treatment is UNKNOWN - do not assume rates are operator-excluded until the User's Guide in the rate book is read."
   },
   {
    "source_id": "SRC-CALTRANS-TERMS-OF-USE",
@@ -2203,7 +2203,7 @@
    "requires_registration": null,
    "requires_payment": null,
    "access_notes": "FAQ: https://www.csiresources.org/MF-FAQs. Vermont reproduction with CSI notice: https://bgs.vermont.gov/sites/bgs/files/masterformat-2016.pdf. Community discussion (https://forum.4specs.com/t/are-you-licensing-masterformat-2004/1390) is opinion; one poster reports a $500 application fee and $1,100 minimum annual fee (anecdotal, possibly outdated). License terms are obtained by contacting CSI; full EULA text not seen.",
-   "reuse_status": "prohibited",
+   "reuse_status": "licence_required",
    "reuse_terms": "Per search snippet: MasterFormat content is protected by copyright and used under the MasterFormat End User License Agreement; for any commercial use in a derivative product or resource that employs MasterFormat numbers or titles, contact CSI (csi@csinet.org). 'Prohibited' here means: do NOT embed MasterFormat numbers/titles in the database without a written CSI license.",
    "reuse_terms_url": "https://www.csiresources.org/standards/masterformat/terms-of-use",
    "limitations": "Exact EULA scope not retrieved; whether bare section numbers alone are copyrightable is disputed in forums (opinion only). Use an internal taxonomy and leave any CSI crosswalk field empty until licensed.",
@@ -2219,7 +2219,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists."
   },
   {
    "source_id": "SRC-CSI-OMNICLASS-LICENSE",
@@ -2236,7 +2236,7 @@
    "requires_registration": null,
    "requires_payment": true,
    "access_notes": "Multi-user organizational licenses priced by quote (omniclass@csinet.org). NBIMS-US IP agreement: https://nationalbimstandard.org/node/3. NBIMS-US publishes selected OmniClass tables (e.g., Table 41 Materials: https://www.nibs.org/files/pdfs/nbimsv3/NBIMS-US_V3_2.4.4.12_OmniClass_Table_41_Materials.pdf) under that limited grant.",
-   "reuse_status": "prohibited",
+   "reuse_status": "licence_required",
    "reuse_terms": "Per search snippet: three licensing options; NBIMS grant is limited to NBIMS-US publications and select tables and does not extend to general use. 'Prohibited' = no unlicensed embedding in the database.",
    "reuse_terms_url": "https://www.csiresources.org/omniclass",
    "limitations": "Full license text not seen.",
@@ -2252,7 +2252,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists."
   },
   {
    "source_id": "SRC-CSI-UNIFORMAT-EULA",
@@ -2269,7 +2269,7 @@
    "requires_registration": null,
    "requires_payment": null,
    "access_notes": "Secondary claim (https://wearenima.im/the-importance-of-building-open-foundations/): in February 2026 CSI announced a digital-only platform ('The Construction Standard', CSI Dynamic Standards) to control licensing of MasterFormat, OmniClass and UniFormat, with new fees and industry pushback. Unverified.",
-   "reuse_status": "prohibited",
+   "reuse_status": "licence_required",
    "reuse_terms": "Per search snippet: single-user license is non-exclusive, non-transferable and permits online access to the CSI product; libraries, multiple users, or anyone wanting to download a copy need a different license; certain actions barred without CSI written permission (list not seen). 'Prohibited' = no unlicensed embedding/redistribution.",
    "reuse_terms_url": "https://www.csiresources.org/uf-eula",
    "limitations": "2020 EULA may be superseded by 2026 platform terms (secondary claim).",
@@ -2285,7 +2285,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists."
   },
   {
    "source_id": "SRC-DIR-PWD-FAQ-RULES",
@@ -2331,7 +2331,7 @@
    "geography": "California, organized by region: statewide, Northern, Southern (incl. Los Angeles County; Area groupings by county), San Diego County, county subtrades",
    "period_covered": "2026-2 edition current as of 2026-10 (inferred from 2026-2 index/notice pages existing); each determination has its own expiration date",
    "edition": "2026-2 (prior editions 2026-1, 2025-2, 2025-1 ... 2016-1 remain online under the same pattern)",
-   "access_format": "mixed",
+   "access_format": "PDF (Excel referenced on index page; unconfirmed)",
    "requires_registration": false,
    "requires_payment": false,
    "access_notes": "HTML index pages by region plus one PDF per craft/area, e.g. https://www.dir.ca.gov/oprl/2025-2/PWD/Determinations/Southern/SC-023-31-2.pdf (Carpenter and related trades, Southern). Predetermined wage-increase PDFs/HTML live under .../PWD/Increases/Southern/SC-023-31-2-Pre.pdf and .../Increases/Subtrades/LOS-Pre.html. Full determination number pattern seen: SC-23-31-2-2025-2 (region-craft-?-?-edition); San Diego pattern SD-23-102-4-2026-1. A statewide craft listing page pattern is .../PWD/C-Driver-List.htm. The 2026-2 carpenter PDF was NOT returned by search, only the 2025-2 version; its URL is a derived pattern. No API or bulk/CSV/Excel download was found in results. One 2023 PDF snippet showed headers but no rate table in the indexed text (possible text-extraction problem to plan for); the document told users to request rates from the Research Unit at (415) 703-4774.",
@@ -2351,7 +2351,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): 'PDF only / no API' is softened: the DIR index page mentions Excel (2003-era wording), so some files may be .xls. 'No API or bulk download found' does not mean none exists - ask the DIR Research Unit."
   },
   {
    "source_id": "SRC-DIR-PWD-NOTICES-2026",
@@ -2512,11 +2512,11 @@
    "evidence_quote": "The EVEREST Flat (EVER10) and Eggshell (EVER30) sheets both list a recommended dry film thickness of 1.5 mils per coat, with practical coverage of approximately 375–425 sq. ft. per gallon, depending on surface conditions and application techniques.",
    "evidence_url": "https://www.dunnedwards.com/wp-content/uploads/2015/01/EN-EVER10-PDS.pdf",
    "origin": "observed",
-   "review_status": "unreviewed",
-   "reviewed_by": null,
-   "reviewed_at": null,
+   "review_status": "flagged",
+   "reviewed_by": "agent-F2",
+   "reviewed_at": "2026-10-24T00:00:00+00:00",
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): Dunn-Edwards terms exist at https://www.dunnedwards.com/terms-of-use/ (not read; no automation clause seen). Copying data sheets is not licensed; recording individual values as cited facts looks low risk. EVEREST VOC '2 g/L' came from an older sheet: the Oct 2024 PDS (EVER10-EN-PDS-1024) says <5 g/L (RAVOC <3 g/L). EVER10 also exists as EVER10-EN-PDS-1024.pdf. RULE: store the data-sheet revision date with every manufacturer value. 1.5 mil DFT and 375-425 sq ft/gal are not contradicted but not confirmed on a current sheet."
   },
   {
    "source_id": "SRC-EDD-OEWS-LMI",
@@ -2698,7 +2698,7 @@
    "requires_registration": true,
    "requires_payment": false,
    "access_notes": "Key obtained from a FRED user account; v2 passes key as a Bearer token in an Authorization header; older style used a 32-character lowercase alphanumeric api_key parameter; rate limiting exists but numeric limits not seen. API terms: https://fred.stlouisfed.org/docs/api/terms_of_use.html; legal notice: https://fred.stlouisfed.org/legal.",
-   "reuse_status": "unknown_needs_check",
+   "reuse_status": "restricted_no_storage",
    "reuse_terms": "Per search snippet: FRED API terms bar storing, caching or archiving any portion of FRED Services or FRED Content or giving stored material to a third party; bar use for developing or training AI/ML systems incl. LLMs (2024 update); third-party series may carry the owner's copyright and the user must comply; commercial redistribution of third-party proprietary content needs the data provider's written permission. BLS-origin series are public domain at BLS, but the FRED service terms still apply to data pulled through FRED.",
    "reuse_terms_url": "https://fred.stlouisfed.org/docs/api/terms_of_use.html",
    "limitations": "Redistribution/caching limits make FRED a poor primary feed for a stored cost database; prefer BLS directly and use FRED only to discover series IDs or for ad hoc checks. Terms need legal review before any storage.",
@@ -2714,11 +2714,11 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): FRED restrictions on storing/caching FRED content and AI/ML use are supported by FRED's announcement and legal-notice text, but the API Terms of Use page was not read. Human must read https://fred.stlouisfed.org/docs/api/terms_of_use.html. Project rule unchanged: use FRED only to discover series ids; ingest values from bls.gov."
   },
   {
    "source_id": "SRC-FRED-PPI-READYMIX-CONCRETE",
-   "title": "FRED: PPI Ready-Mix Concrete series (WPS1333, PCU3273232732, PCU327320327320P)",
+   "title": "FRED: PPI ready-mix concrete series (WPU1333 NSA primary; WPS1333 SA stale; PCU327320327320 industry cross-check) - ids to verify",
    "owner": "Federal Reserve Bank of St. Louis (data source: U.S. Bureau of Labor Statistics)",
    "source_kind": "index_publisher",
    "url": "https://fred.stlouisfed.org/series/WPS1333",
@@ -2731,7 +2731,7 @@
    "requires_registration": null,
    "requires_payment": false,
    "access_notes": "Series pages: https://fred.stlouisfed.org/series/PCU3273232732 and https://fred.stlouisfed.org/series/PCU327320327320P. FRED API/CSV terms not seen. Lumber and gypsum FRED series IDs not found in results.",
-   "reuse_status": "unknown_needs_check",
+   "reuse_status": "restricted_no_storage",
    "reuse_terms": "FRED terms not seen. Pages show a suggested citation naming BLS as data source.",
    "reuse_terms_url": "https://fred.stlouisfed.org/series/WPS1333",
    "limitations": "Cached values are stale relative to 2026-10-24; index not dollar price.",
@@ -2743,11 +2743,11 @@
    "evidence_quote": "U.S. Bureau of Labor Statistics, Producer Price Index by Commodity: Nonmetallic Mineral Products: Ready-Mix Concrete [WPS1333], retrieved from FRED, Federal Reserve Bank of St. Louis.",
    "evidence_url": "https://fred.stlouisfed.org/series/WPS1333",
    "origin": "observed",
-   "review_status": "unreviewed",
-   "reviewed_by": null,
-   "reviewed_at": null,
+   "review_status": "flagged",
+   "reviewed_by": "agent-F2",
+   "reviewed_at": "2026-10-24T00:00:00+00:00",
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): primary escalation series is WPU1333 (NSA, monthly, 1982=100; same data as WPU133301). WPS1333 (SA twin) last value seen Sep 2025 - looks stale, do not use. WPS133301 NOT FOUND. Register title's 'PCU3273232732' not seen in any result (probable typo for PCU327320327320 = industry-based NAICS 327320 series, a cross-check only). WPU13330101D (West region) is an UNVERIFIED candidate for Los Angeles. A human must open the series pages before any ingestion. Values must not be stored from FRED."
   },
   {
    "source_id": "SRC-GARDENA-BIDTABS",
@@ -2830,7 +2830,7 @@
    "requires_registration": false,
    "requires_payment": false,
    "access_notes": "Terms of Access link is listed in the grainger.com footer (per snippet of an older homepage snapshot). Registration pages (https://m.grainger.com/mobile/content/user_registration) state that registering means agreeing to Terms of Sale and Terms of Access. No robots.txt found. Datadog case study https://www.datadoghq.com/blog/grainger-rum-costs-from-bot-traffic/ shows Grainger actively removes unwanted bot traffic.",
-   "reuse_status": "unknown_needs_check",
+   "reuse_status": "restricted_no_automated_access",
    "reuse_terms": "NOT SHOWN in search results. Per search snippet only the existence of 'Terms of Access' and 'Terms of Sale' is confirmed; registering for an account binds the user to both.",
    "reuse_terms_url": "https://www.grainger.com/",
    "limitations": "Clause text, robots.txt and any pricing-reuse language must be read by a human on the live site. Given active bot filtering, treat automated access as unwelcome.",
@@ -2842,11 +2842,11 @@
    "evidence_quote": "Grainger's homepage footer lists \"Terms of Access\" alongside Terms of Sale, Privacy Policy, and Accessibility Statement.",
    "evidence_url": "https://www.grainger.com/",
    "origin": "observed",
-   "review_status": "unreviewed",
-   "reviewed_by": null,
-   "reviewed_at": null,
+   "review_status": "flagged",
+   "reviewed_by": "agent-F2",
+   "reviewed_at": "2026-10-24T00:00:00+00:00",
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): the statement that no robots.txt was found is WRONG. https://www.grainger.com/robots.txt exists and blocks named AI/SEO crawlers (including GPTBot and ClaudeBot) site-wide. The Terms of Access clause is still not verified; provisional operating rule = manual capture only."
   },
   {
    "source_id": "SRC-GSA-ADVANTAGE-PRICELISTS",
@@ -2962,7 +2962,7 @@
    "requires_registration": false,
    "requires_payment": false,
    "access_notes": "The exact homedepot.com/c/Terms_of_Use page never appeared in results (two searches). Other pages seen: https://bstock.com/homedepot/terms-of-use/ (B-Stock marketplace terms, different entity), https://ampservices.homedepot.com/en/home/customer-support/rr-terms-of-use.html (ratings and reviews terms), https://www.homedepot.com.mx/hdm-b2c-store/condiciones-uso (Mexico). homedepot.com footer says use of the site is subject to certain Terms of Use (per summary).",
-   "reuse_status": "unknown_needs_check",
+   "reuse_status": "restricted_no_automated_access",
    "reuse_terms": "Per search snippet (ampservices page, not confirmed to be the store-site terms): personal, non-commercial viewing and printing of individual pages is allowed; copying, modifying, distributing, reselling, or creating derivative works from site content is prohibited without permission; screen scraping and similar data collection are expressly prohibited.",
    "reuse_terms_url": "https://ampservices.homedepot.com/en/home/customer-support/terms-of-use.html",
    "limitations": "This is a related Home Depot page, not proven to be the clause governing homedepot.com product/price pages. Treat Home Depot as restricted until a human reads the live main-site Terms of Use and records the clause text.",
@@ -2978,7 +2978,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): the clause on homedepot.com itself is NOT known. Provisional operating rule = no automated access (manual capture only) until a person reads the live Terms of Use and https://www.homedepot.com/c/faqs/legal-and-ethical-policies/ and pastes the clause here."
   },
   {
    "source_id": "SRC-HOMEDEPOT-TOOLRENTAL",
@@ -3209,7 +3209,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): R-19 15x93 coverage 87.18 sq ft/bag is consistent with distributor listings (9 pieces x 9.69 sq ft) but the fact-sheet row itself was not re-seen."
   },
   {
    "source_id": "SRC-JOINT-TM3-34-41-2021",
@@ -3242,7 +3242,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): existence, Oct 2021 edition (Change 1 Oct 2022) and public Marine Corps PDF supported; labor-hour/production tables per unit for the target trades NOT verified."
   },
   {
    "source_id": "SRC-LACDPW-BID-SUMMARIES",
@@ -3407,7 +3407,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): existence, public download and 'man-hours per work function' tables supported; coverage of framing/drywall/painting/concrete and distribution status NOT verified."
   },
   {
    "source_id": "SRC-NDOT-BIDTABS-PORTAL",
@@ -4133,7 +4133,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): methodology edition 12 Aug 2021 is supported; regional rate volumes seen are Nov 2016 / 2018."
   },
   {
    "source_id": "SRC-USACE-EP1110-1-8-VOL07-2016",
@@ -4166,7 +4166,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "registered_at": "2026-10-24",
-   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read."
+   "notes": "Obtained through a web-search result summary; the primary page could not be fetched from the build environment (network policy). Not eligible for 'validated' until the primary document is read.\nCORRECTION (reviewer F2): Region VII must NOT be treated as the California volume; that was never established. A person must read Figure 1.1 and Appendix B (area factors). Current rates page: https://www.usace.army.mil/Missions/Cost-Engineering/EP1110-1-8/."
   },
   {
    "source_id": "SRC-USG-JOINT-COMPOUND-FAQ",
@@ -17413,10 +17413,10 @@
    "applies_to": "labor",
    "source_id": "SRC-BLS-ECI",
    "origin": "observed",
-   "review_status": "unreviewed",
-   "reviewed_by": null,
-   "reviewed_at": null,
-   "notes": "SA; identifier seen on a FRED page (Dec 2005=100), verify at bls.gov. No index VALUES stored: FRED terms prohibit caching; ingest values from BLS directly."
+   "review_status": "flagged",
+   "reviewed_by": "agent-F2",
+   "reviewed_at": "2026-10-24T00:00:00+00:00",
+   "notes": "SA; identifier seen on a FRED page (Dec 2005=100), verify at bls.gov. No index VALUES stored: FRED terms prohibit caching; ingest values from BLS directly. REVIEWER F2: series_code is a FRED alias, not a BLS-native id; confirm the BLS id before API ingestion."
   },
   {
    "index_id": "IDX-5e65ff20d9",

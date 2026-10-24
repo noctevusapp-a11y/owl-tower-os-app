@@ -131,6 +131,20 @@ def main() -> int:
         }
         db.add("sources", row)
 
+    # --------------------------------------------- independent-review corrections (agent F2)
+    corr_path = ROOT / "data" / "register_corrections.json"
+    corrections = json.loads(corr_path.read_text(encoding="utf-8")) if corr_path.exists() else {}
+    by_id = {r["source_id"]: r for r in db["sources"]}
+    for c in corrections.get("source_corrections", []):
+        row = by_id[c["source_id"]]                       # KeyError = a correction points at a source that does not exist
+        for k, v in c["set"].items():
+            row[k] = v
+        if c.get("append_notes"):
+            row["notes"] = (row["notes"] + "\n" if row["notes"] else "") + c["append_notes"]
+        if "review_status" in c["set"] or c["set"].get("review_status") == "flagged":
+            row["reviewed_by"] = corrections.get("reviewer", "reviewer")
+            row["reviewed_at"] = RETRIEVED
+
     # ------------------------------------------------- selected data rows
     a1 = next(r for r in returns if r["agent"] == "A1")
     dps = a1["data_points"]
@@ -194,6 +208,13 @@ def main() -> int:
             "origin": "observed", "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
             "notes": note + ". No index VALUES stored: FRED terms prohibit caching; ingest values from BLS directly."})
 
+    for ic in corrections.get("index_corrections", []):
+        for row in db["indices"]:
+            if row["series_code"] == ic["series_code"]:
+                row["review_status"] = ic["review_status"]
+                row["reviewed_by"] = corrections.get("reviewer", "reviewer"); row["reviewed_at"] = RETRIEVED
+                row["notes"] = row["notes"] + " " + ic["note"]
+
     # --------------------------------------------- write CSVs (only the tables this script owns)
     owned = ("sources", "labor_rates", "burden_rates", "indices")
     CSV_DIR.mkdir(parents=True, exist_ok=True)
@@ -210,7 +231,8 @@ def main() -> int:
     with open(ROOT / "data" / "evidence_digest.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh, lineterminator="\n")
         w.writerow(["agent", "idx", "topic", "geography", "period", "value_literal", "unit", "source_id", "evidence_url",
-                    "evidence_quote", "literal_check_pass", "disposition", "disposition_reason"])
+                    "evidence_quote", "literal_check_pass", "disposition", "disposition_reason", "reviewer_note"])
+        rnotes = corrections.get("digest_notes", {})
         counts: dict[str, int] = {}
         for r in returns:
             for i, dp in enumerate(r["data_points"]):
@@ -218,7 +240,7 @@ def main() -> int:
                 counts[disp] = counts.get(disp, 0) + 1
                 w.writerow([r["agent"], i, dp["topic"], dp["geography"], dp["period"], dp["value_literal"], dp["unit"],
                             dp["source_id"], dp["evidence_url"], dp["evidence_quote"], "yes" if literal_ok(dp) else "NO",
-                            disp, reason])
+                            disp, reason, rnotes.get(r["agent"], {}).get(str(i), "")])
 
     # --------------------------------------------------------------- findings digest
     lines = ["# Source research findings (search-summary level)", "",

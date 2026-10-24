@@ -68,6 +68,33 @@ class DataGatesTest(unittest.TestCase):
         for i in self.db["indices"]:
             self.assertIn("FRED", i["notes"])
 
+    def test_review_corrections_are_consistent_with_the_register(self):
+        import json
+        corr = json.loads((ROOT / "data" / "register_corrections.json").read_text(encoding="utf-8"))
+        src = self.db.index("sources", "source_id")
+        for c in corr["source_corrections"]:
+            self.assertIn(c["source_id"], src, "correction points at an unknown source")
+            row = src[c["source_id"]]
+            for k, v in c["set"].items():
+                self.assertEqual(row[k], v, f"{c['source_id']}.{k} was not corrected")
+            self.assertIn("CORRECTION (reviewer", row["notes"])
+            if c["set"].get("review_status") == "flagged":
+                self.assertTrue(row["reviewed_by"])
+        for s in src.values():
+            if s["review_status"] == "flagged":
+                self.assertTrue(s["reviewed_by"] and "CORRECTION" in s["notes"], s["source_id"])
+        # values from FRED-type sources can never be data: no record may reference them
+        banned = {sid for sid, s in src.items() if s["reuse_status"] in ("prohibited", "restricted_no_storage")}
+        for t in ("labor_rates", "burden_rates", "equipment_rates", "productivity_observations", "price_observations", "products"):
+            for r in self.db[t]:
+                self.assertNotIn(r.get("source_id"), banned, t)
+        with open(ROOT / "data" / "evidence_digest.csv", newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        self.assertIn("reviewer_note", rows[0])
+        self.assertEqual(sum(1 for r in rows if r["reviewer_note"]), sum(len(v) for v in corr["digest_notes"].values()))
+        voc = [r for r in rows if "EVEREST VOC" in r["topic"]]
+        self.assertTrue(voc and "CONTRADICTED" in voc[0]["reviewer_note"])
+
     def test_no_numbers_were_invented_for_missing_inputs(self):
         for p in self.db["productivity_observations"]:
             self.assertEqual(p["origin"], "missing")

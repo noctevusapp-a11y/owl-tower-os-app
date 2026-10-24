@@ -162,7 +162,8 @@ CREATE TABLE sources (
   access_notes     text,
   reuse_status     text NOT NULL DEFAULT 'unknown_needs_check' CHECK (reuse_status IN
                     ('public_domain','open_license','permitted_with_attribution',
-                     'restricted_no_automated_access','prohibited','unknown_needs_check')),
+                     'restricted_no_automated_access','restricted_no_storage','licence_required',
+                     'prohibited','unknown_needs_check')),
   reuse_terms      text,
   reuse_terms_url  text,
   limitations      text,
