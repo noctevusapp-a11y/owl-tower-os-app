@@ -184,7 +184,7 @@ def main() -> int:
                 st.pop()
             path = [d for _, d in st]
             st.append((indent, desc))
-        open_flags = [f for f in flags if f in OPEN_FLAGS]
+        open_flags = [f for f in flags if f in OPEN_FLAGS or f.startswith("WEAK_READING")]
         has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
         pct = ln.get("percent") or {}
         status = "percent_add" if pct else ("header" if not has_cost and ln["output"] is None else ("flagged" if open_flags else "verified"))

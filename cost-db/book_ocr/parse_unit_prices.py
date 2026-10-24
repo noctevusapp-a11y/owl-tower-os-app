@@ -243,6 +243,7 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
             assigned[k] = m
     if len(assigned) < 3:
         return bounds
+    bounds["_anchors"] = dict(assigned)                       # right-edge anchors (used for numeric tokens in cell_tokens)
     # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
     # the Unit column sits between Hours and Material and keeps its header-based bounds
     for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):      # not output|hours: header bounds do better there
@@ -254,7 +255,10 @@ def calibrate_bounds(hdr: dict, rows: list[list[dict]]) -> dict:
 
 
 def col_of(xc: float, bounds: dict) -> Optional[str]:
-    for k, (l, r) in bounds.items():
+    for k, v in bounds.items():
+        if k.startswith("_"):
+            continue
+        l, r = v
         if l <= xc < r:
             return k
     return None
@@ -455,6 +459,7 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 best, best_score, ties = (o, h), score, 0
             elif abs(score - best_score) <= 1e-9 and (o, h) != best:
                 ties += 1
+    oh_settled = bool(best) and ties == 0
     if best and ties == 0:
         vals["output"], vals["hours"] = best
         conf["output"], conf["hours"] = W["output"].get(best[0]), W["hours"].get(best[1])
@@ -504,8 +509,12 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 step = rstep(vals["labor"])
                 lo, hi = daily / (vals["labor"] + step / 2), daily / (vals["labor"] - step / 2)
                 ints = [i for i in range(int(lo) + 1, int(hi) + 1) if lo <= i <= hi] if hi >= 20 else []
-                if len(ints) == 1 and (conf.get("labor") or 0) >= 2.0 and (lh_known is None or vals["hours"] is None
-                                                                             or abs(ints[0] * vals["hours"] - lh_known) <= Decimal("0.1") or "HOURS_DERIVED_FROM_CREW" in flags):
+                strong_out = [v for v, wgt in W["output"].items() if wgt >= 2.0]
+                if oh_settled and lh_known is not None and vals["output"] is not None and Decimal(ints[0]) != vals["output"] if len(ints) == 1 else False:
+                    ints = []                                  # output x hours already match this crew's day: the labor, not the output, disagrees
+                if len(ints) == 1 and (conf.get("labor") or 0) >= 2.0 and not (strong_out and Decimal(ints[0]) not in strong_out) \
+                        and (lh_known is None or vals["hours"] is None
+                             or abs(ints[0] * vals["hours"] - lh_known) <= Decimal("0.1") or "HOURS_DERIVED_FROM_CREW" in flags):
                     vals["output"], conf["output"] = Decimal(ints[0]), None
                     if lh_known is not None:
                         vals["hours"] = (lh_known / vals["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
@@ -583,6 +592,9 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 flags.append("MATERIAL_FROM_OP_CHECK")
             else:
                 flags.append("OP_MISMATCH")
+    weak = [k for k in ("material", "labor", "equipment", "total") if vals[k] is not None and conf.get(k) is not None and conf[k] < 2.0]
+    if weak:
+        flags.append("WEAK_READING:" + ",".join(weak))
     flags[:] = list(dict.fromkeys(flags))
     return vals, conf, flags
 
@@ -610,8 +622,8 @@ def normalise_crew(s: str, known: set[str]) -> Optional[str]:
     m = re.match(r"^([A-Za-z])-?(\d{1,2})([A-Za-z]?)$", t)
     if m and m.group(1).upper() in "ABCDEFGHJKLMNPQR":
         return f"{m.group(1).upper()}-{int(m.group(2))}{m.group(3).upper()}"
-    # fuzzy against the known crew list (e.g. 'lloth' -> '1 Lath', 'C14A' -> 'C-14A')
-    if known:
+    # fuzzy against the known crew list (e.g. 'lloth' -> '1 Lath', 'C14A' -> 'C-14A'); never from 1-2 characters (ditto marks read as 'il', 'll')
+    if known and len(re.sub(r"[^A-Za-z0-9]", "", t)) >= 4:
         key = t.lower().replace("-", "")
         cand = [c for c in known if _close(key, c.lower().replace(" ", "").replace("-", ""))]
         if len(cand) == 1:
@@ -658,7 +670,7 @@ MERGED_OH = re.compile(r"^(\d{1,4})[.,]?(\d{3})[.:]?$")
 
 
 def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
-    cells: dict[str, list[dict]] = {k: [] for k in bounds}
+    cells: dict[str, list[dict]] = {k: [] for k in bounds if not k.startswith("_")}
     desc = []
     row = list(row)
     for i, z in enumerate(row[:-1]):
@@ -667,6 +679,7 @@ def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
                 and col_of((nxt["x0"] + nxt["x1"]) / 2, bounds) in ("crew", "output"):
             z["_crew_count"] = True                            # "1 Elec" read as two tokens: the count must not become the output
             nxt["_crew_count"] = True
+    anchors = bounds.get("_anchors") or {}
     for z in row:
         if z.get("_crew_count"):
             cells["crew"].append(z)
@@ -676,6 +689,11 @@ def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
             desc.append(z)
             continue
         k = col_of(xc, bounds)
+        if anchors and k in MONEY and re.search(r"\d", z["t"]) and "%" not in z["t"]:
+            # right-aligned numbers: the right edge, not the centre, says which column a wide number belongs to
+            near = min(anchors.items(), key=lambda kv: abs(kv[1] - z["x1"]))
+            if near[0] in MONEY and abs(near[1] - z["x1"]) <= 70 and near[0] != k:
+                k = near[0]
         if k in ("output", "hours") and z["x0"] < bounds["output"][1] - 10 and z["x1"] > bounds["hours"][0] + 10:
             # one OCR token spanning the Daily Output and Labor-Hours columns ("500.016", "313.026"): split it
             m = MERGED_OH.fullmatch(z["t"].replace(" ", ""))
@@ -891,7 +909,9 @@ def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
         cands = {k: ([] if k in pct else numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w)) for k in NUM_COLS}
         crew_id = normalise_crew(crew_raw, known) or normalise_crew(crew_raw_i, known)
         crew_src = "printed" if crew_id else None
-        cell_has_text = bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) or bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or ""))
+        ditto = re.compile(r"^[\s|'\"‘’“”″lI1!]{0,3}$")           # the book's ditto mark (″) and what OCR makes of it
+        cell_has_text = (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) and not ditto.match(crew_raw or "")) \
+            or (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or "")) and not ditto.match(crew_raw_i or ""))
         crew_unread = crew_id is None and cell_has_text
         if crew_id is None and not cell_has_text and (cands["hours"] or cands["output"]) and last_crew:
             crew_id, crew_src = last_crew, "carried"             # the book prints the crew once and leaves the cell blank below
