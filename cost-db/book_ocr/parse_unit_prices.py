@@ -487,6 +487,9 @@ def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, li
                 if free == "total":
                     parts = [v for v in others.values() if v is not None]
                     val = sum(parts) if parts else None
+                    # a weak reading of the total that is close to the sum but not equal means a component was not read at all
+                    if val is not None and any(v != val and abs(v - val) <= max(Decimal("0.5"), val * Decimal("0.2")) for v in W["total"]):
+                        val = None
                 elif others["total"] is not None:
                     val = others["total"] - sum(v for k, v in others.items() if k != "total" and v is not None)
                     if val < 0:
