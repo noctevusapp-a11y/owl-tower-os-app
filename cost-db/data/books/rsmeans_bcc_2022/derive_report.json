@@ -1,0 +1,115 @@
+{
+ "priced_2022": 22393,
+ "priced_latest": 22252,
+ "verified_latest": 11045,
+ "latest_period": "2026-Q02",
+ "labor_series": "CIU2012300000000I",
+ "equipment_series": "WPU114",
+ "material_classes": [
+  [
+   "^03 (30|31|35|37|39)",
+   null,
+   "WPU1333"
+  ],
+  [
+   "^03 (11|15)",
+   null,
+   "WPU081"
+  ],
+  [
+   "^03 (21|22|23|24)",
+   null,
+   "WPU1017"
+  ],
+  [
+   "^03 (41|45|47|48)",
+   null,
+   "WPU133"
+  ],
+  [
+   "^04",
+   null,
+   "WPU133"
+  ],
+  [
+   "^05",
+   null,
+   "WPU1017"
+  ],
+  [
+   "^06 (11|13|15|17|18)",
+   null,
+   "WPU0811"
+  ],
+  [
+   "^06 16",
+   null,
+   "WPU081"
+  ],
+  [
+   "^08 (41|43|44|51|63)",
+   null,
+   "WPU1025"
+  ],
+  [
+   "^09 (21|22|23|24|26|28|29)",
+   null,
+   "WPU137"
+  ],
+  [
+   "^09 9",
+   null,
+   "WPU0622"
+  ],
+  [
+   "^22",
+   "copper|brass|bronze",
+   "WPU1025"
+  ],
+  [
+   "^22",
+   "cast iron|steel|black iron|galvanized",
+   "WPU1017"
+  ],
+  [
+   "^23",
+   "duct|sheet metal|galvanized",
+   "WPU1017"
+  ],
+  [
+   "^23",
+   "copper",
+   "WPU1025"
+  ],
+  [
+   "^26",
+   "copper|aluminum|wire|cable|bus",
+   "WPU1025"
+  ],
+  [
+   "^26",
+   "conduit|emt|rigid|steel|strut|channel",
+   "WPU1017"
+  ],
+  [
+   "^33",
+   "concrete pipe|rcp",
+   "WPU1332"
+  ],
+  [
+   "^33",
+   "concrete",
+   "WPU133"
+  ],
+  [
+   "^(31|32|33)",
+   "steel|rebar|pipe pile|sheet pil",
+   "WPU1017"
+  ],
+  [
+   ".",
+   null,
+   "WPUIP2300001"
+  ]
+ ]
+}

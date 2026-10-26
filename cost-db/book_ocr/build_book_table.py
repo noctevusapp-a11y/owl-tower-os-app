@@ -1,0 +1,412 @@
+#!/usr/bin/env python3
+"""Merge the per-page parse results into one line-item table with the description hierarchy, our own cost codes and a
+verification status per row.
+
+  python3 -I build_book_table.py <parsed_dir> <out_dir> [--crews crews_2022_totals.csv]
+
+Steps
+  1. pages in order; sections whose division digit was cut at the page edge get the division of the surrounding sections
+  2. partial line numbers (left edge cut) get their thousands digit from the numbering order inside the section
+  3. description hierarchy: "read up through the indents" (the book's own rule) -> description_path
+  4. cost code  OT-<section digits>-<line>  (ours; the book's line id stays in ref_line for traceability)
+  5. status: verified (every number settled by at least two readings or the table arithmetic, no open flag) / flagged
+Outputs: book_lines.csv, book_lines.json, book_sections.csv, build_report.json
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import re
+import sys
+from collections import Counter
+from decimal import Decimal
+from pathlib import Path
+
+DIVISION_NAMES = {
+    "01": "General Requirements", "02": "Existing Conditions", "03": "Concrete", "04": "Masonry", "05": "Metals",
+    "06": "Wood, Plastics & Composites", "07": "Thermal & Moisture Protection", "08": "Openings", "09": "Finishes", "10": "Specialties",
+    "11": "Equipment", "12": "Furnishings", "13": "Special Construction", "14": "Conveying Equipment", "21": "Fire Suppression",
+    "22": "Plumbing", "23": "Heating, Ventilating & Air Conditioning", "25": "Integrated Automation", "26": "Electrical",
+    "27": "Communications", "28": "Electronic Safety & Security", "31": "Earthwork", "32": "Exterior Improvements", "33": "Utilities",
+    "34": "Transportation", "35": "Waterway & Marine Construction", "41": "Material Processing & Handling Equipment",
+    "44": "Pollution Control Equipment", "46": "Water & Wastewater Equipment", "48": "Electrical Power Generation"}
+VALID_DIVS = set(DIVISION_NAMES)
+OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
+              "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING", "EQUIPMENT_DERIVED_FROM_SUM",
+              "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_ASSUMED", "COLUMN_SLIP_MOVED", "UNIT_UNREAD", "LINE_NUMBER_DUPLICATE"}
+INFO_FLAGS = {"MATERIAL_DERIVED_FROM_SUM", "LABOR_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM", "SECTION_CARRIED", "HEADER_TEMPLATE",
+              "CREW_FROM_ARITHMETIC", "OUTPUT_HOURS_CREW_CHECK", "OUTPUT_FROM_CREW_CHECK", "LABOR_CREW_OK", "OP_CHECK_OK",
+              "HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_LABOR_CHECK", "MATERIAL_DERIVED_FROM_CREW_SUM",
+              "OUTPUT_DERIVED_FROM_LABOR", "LABOR_DERIVED_FROM_CREW_SUM", "LINE_NUMBER_PARTIAL", "LINE_NUMBER_RECONSTRUCTED", "MATERIAL_FROM_OP_CHECK",
+              "PERCENT_ADD", "TOTAL_OP_UNREADABLE", "EQUIP_CREW_DIFFERS"}
+DESC_FIXES = [(r"\b1b\.", "lb."), (r"\bIb\.", "lb."), (r"\b1bs\.", "lbs."), (r"(\d)\s*0C\b", r"\1 OC"), (r"\b0\.C\.", "O.C."), ("’", "'"), ("‘", "'"),
+              ("”", '"'), ("“", '"'), ("″", '"'), ("—", "-"), ("–", "-"), (r"\s+,", ","), (r"\s{2,}", " "), (r"^[\s\-=~_.|:;'\"]+", ""), (r"[\s\-=~_|:;'\"]+$", "")]
+
+
+def fix_desc(s: str) -> str:
+    for pat, rep in DESC_FIXES:
+        s = re.sub(pat, rep, s)
+    return s.strip()
+
+
+def better_desc(a: str, b: str | None) -> str:
+    """Prefer the reading with more letters and fewer stray symbols."""
+    if not b:
+        return a
+    def score(s):
+        letters = sum(ch.isalpha() for ch in s)
+        junk = sum(ch in "|~_=`^{}[]<>" for ch in s)
+        return letters - 3 * junk
+    return a if score(a) >= score(b) else b
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("parsed_dir")
+    ap.add_argument("out_dir")
+    ap.add_argument("--crews", default=None)
+    a = ap.parse_args()
+    pages = []
+    skipped = []
+    for p in sorted(Path(a.parsed_dir).glob("p*.json")):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        if d.get("header_found"):
+            pages.append(d)
+        else:
+            skipped.append(d["pdf_page"])
+    n_template = sum(1 for d in pages if str(d.get("header_source", "")).startswith("template"))
+    crews = {}
+    if a.crews and Path(a.crews).exists():
+        with open(a.crews, encoding="utf-8") as f:
+            crews = {r["crew_id"]: r for r in csv.DictReader(f)}
+
+    # ---- 1. sections: fix uncertain divisions from the surrounding certain ones with the same second pair
+    all_sections = [s for pg in pages for s in pg["sections"]]
+    for i, s in enumerate(all_sections):
+        if s.get("division_uncertain"):
+            pair = s["section_id"][3:5]
+            cands = []
+            for j in list(range(i - 1, max(-1, i - 12), -1)) + list(range(i + 1, min(len(all_sections), i + 12))):
+                t = all_sections[j]
+                if not t.get("division_uncertain") and t["section_id"][3:5] == pair and t["section_id"][:2] in VALID_DIVS:
+                    cands.append(t["section_id"][:2])
+                    break
+            if cands:
+                s["section_id_fixed"] = cands[0] + s["section_id"][2:]
+            elif s["section_id"][:2] in VALID_DIVS:
+                s["section_id_fixed"] = s["section_id"]
+            else:
+                s["section_id_fixed"] = None
+        else:
+            s["section_id_fixed"] = s["section_id"] if s["section_id"][:2] in VALID_DIVS else None
+    fix_map = {(s["pdf_page"], s["section_id"]): s["section_id_fixed"] for s in all_sections}
+    titles = {}
+    for s in all_sections:
+        if s["section_id_fixed"]:
+            titles.setdefault(s["section_id_fixed"], s["title"])
+
+    # ---- 2. lines in order: robust numbering check (longest increasing run per section; the rest are misreads), partial numbers
+    items = []
+    carried_pages: list[list[dict]] = []
+    prev_pg = None
+    for pg in pages:
+        # a page that starts in the middle of a section (lines above its first section header) continues the last section of the
+        # previous page; the carry is accepted below only when the line numbers continue that section's numbering in order
+        first_idx = next((i for i, ln in enumerate(pg["lines"]) if ln["section_id"]), len(pg["lines"]))
+        carry = None
+        if prev_pg is not None and prev_pg["pdf_page"] == pg["pdf_page"] - 1 and first_idx > 0:
+            carry = next((it["sec"] for it in reversed(items) if it["ln"]["pdf_page"] == prev_pg["pdf_page"] and it["sec"]), None)
+            if carry and first_idx < len(pg["lines"]):
+                # sections run in ascending order through the book: the page's first printed section must come after the carried one
+                first_sec = fix_map.get((pg["pdf_page"], pg["lines"][first_idx]["section_id"]))
+                if first_sec is not None and not carry < first_sec:
+                    carry = None
+        page_carried = []
+        for i, ln in enumerate(pg["lines"]):
+            sec = fix_map.get((pg["pdf_page"], ln["section_id"])) if ln["section_id"] else None
+            if sec is None and ln["section_id"]:
+                sec = next((s["section_id_fixed"] for s in all_sections if s["section_id"] == ln["section_id"] and s["section_id_fixed"]), None)
+            carried = False
+            if not ln["section_id"] and i < first_idx and carry:
+                sec, carried = carry, True
+            it = {"ln": ln, "sec": sec, "line_no": ln["line"], "order_bad": False, "carried": carried}
+            items.append(it)
+            if carried:
+                page_carried.append(it)
+        if page_carried:
+            carried_pages.append(page_carried)
+        prev_pg = pg
+
+    def check_order(items: list[dict]) -> None:
+        """Mark misread line numbers: outside the longest increasing run of their section (sections continue over pages, never interleave)."""
+        import bisect
+        for it in items:
+            it["order_bad"] = False
+            it.pop("restart", None)
+            it["run"] = 0
+        groups: dict[str, list[int]] = {}
+        run_of: dict[str, int] = {}
+        last_in_sec: dict[str, int] = {}
+        full_idx = [i for i, it in enumerate(items) if it["sec"] and it["line_no"] and not it["ln"].get("line_partial")]
+        for k, i in enumerate(full_idx):
+            it = items[i]
+            v = int(it["line_no"])
+            prev = last_in_sec.get(it["sec"])
+            if prev is not None and v <= 300 and prev - v >= 1000:
+                # the numbering fell back to the start of a section: either one misread number or a new section whose header line
+                # (its id) was unreadable, so that its lines inherited the previous id. It is a restart only when the numbering goes
+                # on from the low value: at least two of the next three fully read numbers under this id (all of them when fewer
+                # exist) stay below the value reached before; a single low number among continuing high ones is a misread (LIS below)
+                nxt = [int(items[j]["line_no"]) for j in full_idx[k + 1:k + 4] if items[j]["sec"] == it["sec"]]
+                low = sum(1 for n in nxt if n < prev)
+                if (len(nxt) >= 2 and low >= 2) or (0 < len(nxt) < 2 and low == len(nxt)):
+                    run_of[it["sec"]] = run_of.get(it["sec"], 0) + 1          # numbering restarts: a new section whose id was misread as this one
+                    it["restart"] = True
+            last_in_sec[it["sec"]] = v
+            groups.setdefault(f"{it['sec']}#{run_of.get(it['sec'], 0)}", []).append(i)
+        # every line after a restart, under the same id, belongs to the restarted run (its section id is not the one it carries)
+        cur_run: dict[str, int] = {}
+        for it in items:
+            if it["sec"]:
+                if it.get("restart"):
+                    cur_run[it["sec"]] = cur_run.get(it["sec"], 0) + 1
+                it["run"] = cur_run.get(it["sec"], 0)
+        for sec, idxs in groups.items():
+            vals = [int(items[i]["line_no"]) for i in idxs]
+            # longest strictly increasing subsequence (O(n log n)) - everything outside it is a misread number
+            tails, tails_idx, prev = [], [], [-1] * len(vals)
+            for k, v in enumerate(vals):
+                pos = bisect.bisect_left(tails, v)
+                if pos == len(tails):
+                    tails.append(v)
+                    tails_idx.append(k)
+                else:
+                    tails[pos] = v
+                    tails_idx[pos] = k
+                prev[k] = tails_idx[pos - 1] if pos else -1
+            keep = set()
+            k = tails_idx[-1] if tails_idx else -1
+            while k != -1:
+                keep.add(k)
+                k = prev[k]
+            for k, i in enumerate(idxs):
+                if k not in keep:
+                    items[i]["order_bad"] = True
+
+    check_order(items)
+    # a carried section stands only when every fully read line number of the carried lines sits in the section's increasing run
+    # (no misread, no numbering restart) and at least one line number was fully read; otherwise the section stays unknown
+    for grp in carried_pages:
+        full = [it for it in grp if it["line_no"] and not it["ln"].get("line_partial")]
+        if not full or any(it["order_bad"] or it.get("restart") for it in full):
+            for it in grp:
+                it["sec"], it["carried"] = None, False
+    check_order(items)
+    # partial numbers (left edge of the scan cut one or two leading digits): the number is restored only when exactly one
+    # value with that tail lies strictly between the previous and the next fully read, in-order line numbers of the section
+    # (the book numbers lines in increasing order inside a section); otherwise the line keeps no number
+    next_ok: list[Optional[int]] = [None] * len(items)
+    seen: dict[str, int] = {}
+    for i in range(len(items) - 1, -1, -1):
+        it = items[i]
+        if it["sec"]:
+            next_ok[i] = seen.get(it["sec"])
+            if it["line_no"] and not it["ln"].get("line_partial") and not it["order_bad"]:
+                seen[it["sec"]] = int(it["line_no"])
+    last_ok: dict[str, int] = {}
+    for i, it in enumerate(items):
+        sec, ln = it["sec"], it["ln"]
+        if not sec:
+            continue
+        if ln.get("line_partial") and it["line_no"]:
+            prev = last_ok.get(sec)
+            nxt = next_ok[i]
+            tail = it["line_no"]
+            step = 10 ** len(tail)
+            lo = prev if prev is not None else -1
+            hi = nxt if nxt is not None else 10000
+            cands = [v for v in range(int(tail), 10000, step) if lo < v < hi]
+            if len(cands) == 1 and len(tail) == 3:
+                it["line_no"] = f"{cands[0]:04d}"
+                it["reconstructed"] = True
+                last_ok[sec] = cands[0]
+            elif len(cands) == 1:
+                # a two-digit tail may be a cut number or a number that lost a digit in OCR: the restored value is an assumption
+                it["line_no"] = f"{cands[0]:04d}"
+                it["assumed"] = True
+                last_ok[sec] = cands[0]
+            elif len(cands) > 1 and len(tail) == 3 and prev is not None:
+                # only the thousands digit is cut and no later full number brackets it: the smallest value continuing the
+                # numbering is taken under the assumption that the section skips no whole thousand — an assumption, so the
+                # line is flagged (LINE_NUMBER_ASSUMED), not verified
+                it["line_no"] = f"{cands[0]:04d}"
+                it["assumed"] = True
+                last_ok[sec] = cands[0]
+            else:
+                it["line_no"] = None
+        elif it["line_no"] and not it["order_bad"]:
+            last_ok[sec] = int(it["line_no"])
+
+    rows = []
+    stack_by_section: dict[str, list[tuple[int, str]]] = {}
+    report = Counter()
+    for it in items:
+        ln, sec, line_no = it["ln"], it["sec"], it["line_no"]
+        flags = [f for f in ln["flags"] if f != "LINE_ORDER"]
+        if it.get("reconstructed"):
+            flags.append("LINE_NUMBER_RECONSTRUCTED")
+        if it.get("assumed"):
+            flags.append("LINE_NUMBER_ASSUMED")
+        if ln.get("line_partial") and line_no is None:
+            flags.append("LINE_NUMBER_MISSING")
+        if it["order_bad"]:
+            flags.append("LINE_ORDER")
+        if it.get("run", 0) >= 1:
+            # the numbering restarted under this section id: a new section began whose header line (id) was unreadable, and every
+            # line from the restart on inherited the previous id. The id is not theirs: no section, no cost code, line flagged
+            flags.append("SECTION_ID_DOUBTFUL")
+            sec = None
+        if it.get("carried"):
+            flags.append("SECTION_CARRIED")                     # page starts mid-section: id taken from the previous page, confirmed by the numbering
+        if sec is None and line_no and it.get("run", 0) < 1:
+            flags.append("SECTION_UNKNOWN")                     # no section id could be read or carried: the line has no cost code
+        desc = fix_desc(better_desc(ln["description"] or "", ln.get("description_alt")))
+        indent = ln.get("indent_px")
+        path = []
+        stack_key = sec if sec is not None else (f"{it['sec']}#run{it['run']}" if it["sec"] and it.get("run", 0) >= 1 else None)
+        if stack_key is not None and indent is not None:
+            st = stack_by_section.setdefault(stack_key, [])
+            while st and st[-1][0] >= indent - 25:
+                st.pop()
+            path = [d for _, d in st]
+            st.append((indent, desc))
+        has_cost = any(ln[k] is not None for k in ("material", "labor", "equipment", "total"))
+        if not has_cost and ln["output"] is not None and not ln.get("percent"):
+            flags.append("COST_MISSING")                       # a crew-day was printed but no cost was read
+        if has_cost and ln["labor"] is not None and ln["output"] is None and ln["hours"] is None:
+            flags.append("OUTPUT_HOURS_MISSING")               # a labor cost implies a crew-day that no reading caught
+        crew = crews.get(ln["crew"]) if ln["crew"] else None
+        crew_equip = float(crew["bare_equip_daily"]) if crew and crew.get("bare_equip_daily") not in (None, "") else None
+        if ln["equipment"] is not None and crew_equip == 0.0 and not ln.get("percent"):
+            flags.append("EQUIP_WITHOUT_CREW_EQUIP")           # an equipment cost on a crew that owns no equipment: the signature of a column slip
+        open_flags = [f for f in flags if f in OPEN_FLAGS or f.startswith("WEAK_READING")]
+        pct = ln.get("percent") or {}
+        conf = ln.get("conf", {})
+        # strict tier. A printed number is CONFIRMED when two different engines read exactly the same value (the scan's text
+        # layer and tesseract — tesseract at 360 and at 600 dpi is one engine; the geometric reading fixes the decimal point,
+        # it does not read digits), or when an identity of the book determines it from confirmed cells:
+        #   crew day      output x hours = crew labor-hours           (crew known; one cell confirms the other)
+        #   crew labor    labor = crew daily labor cost / output       (LABOR_CREW_OK; one confirms the other)
+        #   O&P           total incl. O&P = 1.10 M + crew O&P labor / output + 1.10 E   (OP_CHECK_OK; all but one confirm the last)
+        #   sum           total = material + labor + equipment        (money settled; all but one confirm the last)
+        # A cell computed by the settle step (…_DERIVED…) has no reading and is confirmed only through these identities.
+        raw = ln.get("raw", {})
+        fl = set(flags)
+        numeric = ("output", "hours", "material", "labor", "equipment", "total", "total_op")
+        present = [c for c in numeric if ln[c] is not None]
+
+        def engines(c):
+            srcs = {src for val, how, src in raw.get(c, []) if how == "as_read" and str(val) == str(ln[c])}
+            return ({"I"} if "I" in srcs else set()) | ({"T"} if srcs & {"T", "H"} else set())
+
+        covered = {c for c in present if len(engines(c)) >= 2}
+        money_settled = not (fl & {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS"})
+        for _ in range(4):
+            before = len(covered)
+            if crew is not None and "OUTPUT_HOURS_CREW_CHECK" in fl or any(f in fl for f in ("HOURS_DERIVED_FROM_CREW", "OUTPUT_DERIVED_FROM_CREW", "OUTPUT_FROM_CREW_CHECK")):
+                if ln["output"] is not None and ln["hours"] is not None and ({"output", "hours"} & covered):
+                    covered |= {"output", "hours"}
+            if "LABOR_CREW_OK" in fl and ln["labor"] is not None and ln["output"] is not None and ({"labor", "output"} & covered):
+                covered |= {"labor", "output"}
+            if "OUTPUT_FROM_LABOR_CHECK" in fl or "OUTPUT_DERIVED_FROM_LABOR" in fl:
+                if "labor" in covered and ln["output"] is not None:
+                    covered.add("output")
+            for ok_flag, cells in (("OP_CHECK_OK", ("material", "labor", "equipment", "total_op")), (None, ("material", "labor", "equipment", "total"))):
+                if ok_flag and ok_flag not in fl:
+                    continue
+                if ok_flag is None and not (money_settled and ln["total"] is not None):
+                    continue
+                members = [c for c in cells if ln[c] is not None]
+                missing = [c for c in members if c not in covered]
+                if len(members) >= 2 and len(missing) == 1:
+                    covered.add(missing[0])
+            if len(covered) == before:
+                break
+        cells_ok = all(c in covered for c in present)
+        # column tie: when the total was not printed/read (derived) and no O&P value cross-checks the row, nothing ties the money
+        # cells to their columns; an equipment value is then accepted only when the crew's own equipment cost confirms it
+        columns_tied = ("TOTAL_DERIVED_FROM_SUM" not in flags) or ln["total_op"] is not None or ln["equipment"] is None \
+            or (crew is not None and "EQUIP_CREW_DIFFERS" not in flags)
+        strict = cells_ok and columns_tied
+        status = "percent_add" if pct else ("header" if not has_cost and ln["output"] is None else
+                                           ("flagged" if open_flags else ("verified" if strict else "machine_read")))
+        cost_code = f"OT-{sec.replace(' ', '').replace('.', '')}-{line_no}" if sec and line_no else None
+        pg_no = ln["pdf_page"]
+        rows.append({
+            "cost_code": cost_code, "division": sec[:2] if sec else None, "division_name": DIVISION_NAMES.get(sec[:2]) if sec else None,
+            "section_id": sec, "section_title": titles.get(sec) if sec else None, "line": line_no, "ref_line": (sec + " " + line_no) if sec and line_no else None,
+            "description": desc, "description_path": " | ".join(path + [desc]) if path else desc, "level": len(path),
+            "crew": ln["crew"], "crew_source": ln["crew_source"], "daily_output": ln["output"], "labor_hours": ln["hours"], "unit": ln["unit"],
+            "unit_source": ln["unit_source"], "material_2022": ln["material"], "labor_2022": ln["labor"], "equipment_2022": ln["equipment"],
+            "total_2022": ln["total"], "total_incl_op_2022": ln["total_op"],
+            "material_add_pct": pct.get("material"), "labor_add_pct": pct.get("labor"), "equipment_add_pct": pct.get("equipment"),
+            "total_add_pct": pct.get("total"), "ref_note": ln.get("ref_note"),
+            "book_page": pg_no - 14, "pdf_page": pg_no, "status": status, "flags": ";".join(flags),
+            "conf": json.dumps(ln.get("conf", {})),
+            "crew_labor_hours_per_day": crew["labor_hours_per_day"] if crew else None})
+
+    # ---- 2b. the cost code must name one printed line. When two or more lines ended up with the same code, the line whose number
+    # and section carry no doubt (no numbering or section flag) keeps it if it is the only such line; every other line loses the
+    # code and is flagged LINE_NUMBER_DUPLICATE (open): a verified or machine_read line becomes flagged
+    NUMBERING_DOUBT = {"LINE_ORDER", "LINE_NUMBER_ASSUMED", "LINE_NUMBER_RECONSTRUCTED", "LINE_NUMBER_PARTIAL", "SECTION_ID_DOUBTFUL", "SECTION_CARRIED"}
+    by_code: dict[str, list[dict]] = {}
+    for r in rows:
+        if r["cost_code"]:
+            by_code.setdefault(r["cost_code"], []).append(r)
+    for code, group in by_code.items():
+        if len(group) < 2:
+            continue
+        clean = [r for r in group if not (set(r["flags"].split(";")) & NUMBERING_DOUBT)]
+        keep = clean[0] if len(clean) == 1 else None
+        for r in group:
+            if r is keep:
+                continue
+            r["cost_code"] = None
+            r["flags"] = ";".join([f for f in r["flags"].split(";") if f] + ["LINE_NUMBER_DUPLICATE"])
+            if r["status"] in ("verified", "machine_read"):
+                r["status"] = "flagged"
+    for r in rows:
+        report[r["status"]] += 1
+        for f in r["flags"].split(";"):
+            if f:
+                report["flag:" + f] += 1
+
+    # ---- 3. write
+    out = Path(a.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    cols = list(rows[0].keys()) if rows else []
+    with (out / "book_lines.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerows(rows)
+    (out / "book_lines.json").write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+    with (out / "book_sections.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["section_id", "title", "division", "division_name", "first_pdf_page", "division_uncertain_raw"])
+        seen = set()
+        for s in all_sections:
+            if s["section_id_fixed"] and s["section_id_fixed"] not in seen:
+                seen.add(s["section_id_fixed"])
+                w.writerow([s["section_id_fixed"], s["title"], s["section_id_fixed"][:2], DIVISION_NAMES.get(s["section_id_fixed"][:2]), s["pdf_page"],
+                            s.get("division_raw") if s.get("division_uncertain") else ""])
+    rep = {"pages": len(pages), "pages_template": n_template, "pages_skipped": len(skipped), "skipped_pdf_pages": skipped,
+           "lines": len(rows), "sections": len(seen), **{k: v for k, v in sorted(report.items())}}
+    (out / "build_report.json").write_text(json.dumps(rep, indent=1), encoding="utf-8")
+    print(json.dumps({k: v for k, v in rep.items() if not k.startswith("flag:")}, indent=1))
+    print({k: v for k, v in rep.items() if k.startswith("flag:")})
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

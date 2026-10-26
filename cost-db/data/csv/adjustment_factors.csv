@@ -1,0 +1,1 @@
+factor_id,factor_type,applies_to,from_region_id,to_region_id,factor_value,qty_min,qty_max,condition_desc,valid_from,valid_to,index_id,derivation_formula,input_refs,source_id,assumption_basis,calc_run_id,origin,review_status,reviewed_by,reviewed_at,created_at,notes

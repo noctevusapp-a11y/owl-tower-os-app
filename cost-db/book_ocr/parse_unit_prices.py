@@ -1,0 +1,1282 @@
+#!/usr/bin/env python3
+"""Parse the unit-price pages of the OCR'd 2022 cost book into rows, using THREE independent readings of every number and the
+table's own arithmetic to settle doubtful cells:
+
+  T  tesseract word boxes (ocr/pNNNN.tsv)            digits + punctuation as recognised
+  I  the scan's own text layer (ia/pNNNN.json)       a second OCR engine's reading
+  G  geometry of the cell on the page image          number of digit glyphs and the position of the decimal point / commas
+                                                     (OCR engines drop a leading point far more often than they misread a digit)
+
+  python3 -I parse_unit_prices.py <book_dir> <out_dir> <first_pdf_page> <last_pdf_page> [--crews crews_2022_totals.csv]
+
+<book_dir> holds parts/ (the PDF parts, named rsmeans_partNN_pAAAA-BBBB.pdf), ocr/ and ia/.
+Per page: header row -> column centres -> every row is a section title, a division header or a data line.
+Per data line: line number, description (with its indentation for the hierarchy), crew, daily output, labor-hours, unit,
+material, labor, equipment, total, total incl. O&P. For each numeric cell the candidate values of the three readings are
+combined and the combination that satisfies  total = material + labor + equipment  and  output x labor-hours = crew
+labor-hours per day (a multiple of 8, or the crew's known value)  is kept. What no combination settles stays None and is
+flagged. Nothing is typed in by hand.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import csv
+import json
+import re
+import sys
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from typing import Optional
+
+import numpy as np
+import pymupdf
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cellgeom import analyse  # noqa: E402
+
+HEADERS = ("Crew", "Output", "Hours", "Unit", "Material", "Labor", "Equipment", "Total", "Incl")
+COLS = ["crew", "output", "hours", "unit", "material", "labor", "equipment", "total", "total_op"]
+NUM_COLS = ("output", "hours", "material", "labor", "equipment", "total", "total_op")
+MONEY = ("material", "labor", "equipment", "total", "total_op")
+LINE_RE = re.compile(r"^\d{4}$")
+VALID_DIVS = {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "21", "22", "23", "25", "26", "27", "28",
+              "31", "32", "33", "34", "35", "41", "44", "46", "48"}
+REF_RE = re.compile(r"^R\d{6}-\d{2}")
+JUNK_RE = re.compile(r"^[|:;.,'‘’`\"~=_\-—–*°)(\]\[}{!]+$")
+OCR_DIGIT_FIX = str.maketrans({"O": "0", "o": "0", "l": "1", "I": "1", "|": "1", "S": "5", "B": "8", "Z": "2", "D": "0", "G": "6"})
+TRADES = {"skwk", "clab", "asbe", "boil", "bric", "brhe", "carp", "cefi", "elec", "elev", "eqhv", "eqmd", "eqlt", "eqol", "eqmm", "glaz", "lath",
+          "marb", "mill", "mstz", "pord", "psst", "pape", "pile", "plas", "plah", "plum", "rodm", "rofc", "rots", "rohe", "shee", "spri", "stpi",
+          "ston", "sswk", "tilf", "tilh", "trlt", "trhv", "sswl", "wrck", "swk", "clam", "pile", "bric", "carp"}
+UNIT_TABLE = {"SF": "S.F.", "SY": "S.Y.", "LF": "L.F.", "CF": "C.F.", "CY": "C.Y.", "EA": "Ea.", "JOB": "Job", "HR": "Hr.", "DAY": "Day",
+              "WEEK": "Week", "WK": "Week", "MONTH": "Month", "MO": "Month", "TON": "Ton", "LB": "Lb.", "GAL": "Gal.", "MSF": "M.S.F.", "MLF": "M.L.F.",
+              "CLF": "C.L.F.", "CSF": "C.S.F.", "SQ": "Sq.", "M": "M", "%": "%", "SET": "Set", "PR": "Pr.", "OPNG": "Opng.", "FLIGHT": "Flight",
+              "FLT": "Flight", "RISER": "Riser", "PAIR": "Pair", "MILE": "Mile", "MI": "Mile", "VLF": "V.L.F.", "MBF": "M.B.F.", "PC": "Pc.", "PT": "Pt.",
+              "QT": "Qt.", "CWT": "Cwt.", "CORD": "Cord", "BAG": "Bag", "ROLL": "Roll", "KIT": "Kit", "CASE": "Case", "SHEET": "Sheet", "BOX": "Box",
+              "TOTAL": "Total", "INCH": "Inch", "IN": "Inch", "SFCA": "SFCA", "BF": "B.F.", "STORY": "Story", "ROOM": "Room", "FLOOR": "Floor",
+              "ACRE": "Acre", "LOAD": "Load", "TRIP": "Trip", "UNIT": "Unit", "HOUR": "Hr.", "SYST": "System", "SYSTEM": "System", "OUTLET": "Outlet",
+              "FIXT": "Fixt.", "GALLON": "Gal.", "YEAR": "Year", "YR": "Year", "PERSON": "Person", "KW": "kW", "HP": "H.P.", "LBS": "Lb.", "TONS": "Ton",
+              "EACH": "Ea.", "VERT": "V.L.F.", "SQFT": "S.F.", "LNFT": "L.F.", "CUYD": "C.Y.", "DRUM": "Drum", "CAN": "Can", "BUNDLE": "Bundle",
+              # units of the book missing above, and OCR shapes of printed units that no other unit can take (F read as E, C as O)
+              "BCY": "B.C.Y.", "LCY": "L.C.Y.", "ECY": "E.C.Y.", "STOP": "Stop", "POINT": "Point", "SFSURF": "S.F. Surf.",
+              "VLE": "V.L.F.", "CLE": "C.L.F.", "MLE": "M.L.F.", "MSE": "M.S.F.", "MBE": "M.B.F.", "CSE": "C.S.F.", "OLE": "C.L.F.",
+              "BDL": "Bundle", "CARTON": "Carton", "PKG": "Pkg.", "SPAN": "Span", "SEAT": "Seat", "COURT": "Court", "LANE": "Lane", "BED": "Bed",
+              "STALL": "Stall", "DOOR": "Door", "LEAF": "Leaf", "WINDOW": "Window", "VEHICLE": "Vehicle", "BAY": "Bay", "SPACE": "Space",
+              "SE": "S.F.", "SR": "S.F.", "LE": "L.F.", "CE": "C.F.", "EO": "Ea.", "FA": "Ea.", "SYS": "System", "CSY": "C.S.Y."}
+
+
+# ----------------------------------------------------------------------------------------------- loading
+def load_tess(path: Path) -> tuple[int, int, list[dict]]:
+    words, w, h = [], 0, 0
+    with path.open(encoding="utf-8", errors="replace") as f:
+        for r in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
+            if r["level"] == "1":
+                w, h = int(r["width"]), int(r["height"])
+            if r["level"] != "5" or not r["text"].strip():
+                continue
+            x0, y0, ww, hh = int(r["left"]), int(r["top"]), int(r["width"]), int(r["height"])
+            t = r["text"].strip()
+            if JUNK_RE.fullmatch(t) or hh > 110 or ww < 3:      # column leaders, stray punctuation, vertical rules (titles are up to ~80 px tall)
+                continue
+            words.append({"x0": x0, "x1": x0 + ww, "y0": y0, "y1": y0 + hh, "t": t, "conf": float(r["conf"]), "src": "T"})
+    return w, h, words
+
+
+def load_ia(path: Path, w: int, h: int) -> list[dict]:
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text(encoding="utf-8"))
+    out = []
+    for r in d["words"]:
+        t = r["t"].strip()
+        if t and not JUNK_RE.fullmatch(t) and (r["y1"] - r["y0"]) * h <= 110:
+            out.append({"x0": int(r["x0"] * w), "x1": int(r["x1"] * w), "y0": int(r["y0"] * h), "y1": int(r["y1"] * h), "t": t, "conf": None, "src": "I"})
+    return out
+
+
+def rows_of(words: list[dict], tol: int) -> list[list[dict]]:
+    """Cluster words into text rows: a word joins the current row when its vertical extent overlaps the row's by at least
+    40% of its own height (or its centre is within `tol` px) - bold section titles are taller than the table text."""
+    ws = sorted(words, key=lambda z: ((z["y0"] + z["y1"]) / 2, z["x0"]))
+    rows: list[list[dict]] = []
+    for z in ws:
+        yc = (z["y0"] + z["y1"]) / 2
+        if rows:
+            r = rows[-1]
+            ry0, ry1, ryc = r[-1]["_ry0"], r[-1]["_ry1"], r[-1]["_yc"]
+            overlap = min(z["y1"], ry1) - max(z["y0"], ry0)
+            if abs(yc - ryc) <= tol or overlap >= 0.4 * (z["y1"] - z["y0"]):
+                n = len(r)
+                z["_yc"] = (ryc * n + yc) / (n + 1)
+                z["_ry0"] = (ry0 * n + z["y0"]) / (n + 1)
+                z["_ry1"] = (ry1 * n + z["y1"]) / (n + 1)
+                for t in r:
+                    t["_yc"], t["_ry0"], t["_ry1"] = z["_yc"], z["_ry0"], z["_ry1"]
+                r.append(z)
+                continue
+        z["_yc"], z["_ry0"], z["_ry1"] = yc, z["y0"], z["y1"]
+        rows.append([z])
+    for r in rows:
+        r.sort(key=lambda z: z["x0"])
+    return rows
+
+
+class Parts:
+    """pdf page -> rendered gray image (numpy), rendered on demand, one page cached."""
+
+    def __init__(self, parts_dir: Path):
+        self.map = {}
+        for p in sorted(parts_dir.glob("*.pdf")):
+            m = re.search(r"_p(\d{4})-(\d{4})\.pdf$", p.name)
+            if m:
+                self.map[(int(m.group(1)), int(m.group(2)))] = p
+        self._doc = None
+        self._doc_path = None
+        self._cache: dict[int, np.ndarray] = {}
+
+    def image(self, pdf_page: int, dpi: int = 360) -> Optional[np.ndarray]:
+        if pdf_page in self._cache:
+            return self._cache[pdf_page]
+        for (a, b), path in self.map.items():
+            if a <= pdf_page <= b:
+                if self._doc_path != path:
+                    self._doc = pymupdf.open(path)
+                    self._doc_path = path
+                pix = self._doc[pdf_page - a].get_pixmap(dpi=dpi, colorspace=pymupdf.csGRAY)
+                img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width).copy()
+                self._cache = {pdf_page: img}
+                return img
+        return None
+
+
+# ----------------------------------------------------------------------------------------------- header / columns
+def header_name(t: str) -> Optional[str]:
+    """Which column header a token is, allowing the usual OCR damage (Lobor, Moterial, ourpuT, EQUIP., INCLO&P)."""
+    t = re.sub(r"[^A-Za-z&]", "", t).lower()
+    if len(t) < 3:
+        return None
+    for hname in HEADERS:
+        h = hname.lower()
+        if t == h or (len(t) >= 4 and h.startswith(t)) or (t.startswith(h) and len(t) <= len(h) + 3):
+            return hname
+        if len(t) >= 4 and abs(len(t) - len(h)) <= 2 and _lev(t[:len(h) + 1], h) <= (1 if len(h) <= 5 else 2):
+            return hname
+    if t.startswith("equip"):
+        return "Equipment"
+    if t.startswith("mat") and len(t) <= 9:
+        return "Material"
+    if t.startswith("incl"):
+        return "Incl"
+    return None
+
+
+def find_header(rows: list[list[dict]]) -> Optional[dict]:
+    best = None
+    for i, r in enumerate(rows):
+        toks = {}
+        for z in r:
+            hname = header_name(z["t"])
+            if hname:
+                toks.setdefault(hname, (z["x0"] + z["x1"]) / 2)
+        if len(toks) >= 5 and "Material" in toks and ("Labor" in toks or "Equipment" in toks) and "Crew" in toks:
+            if best is None or len(toks) > len(best[1]):
+                best = (i, toks)
+    if best is None:
+        return None
+    i, c = best
+    c = dict(c)
+    if "Equipment" not in c and "Labor" in c and "Total" in c:
+        c["Equipment"] = (c["Labor"] + c["Total"]) / 2
+    if "Total" not in c and "Equipment" in c and "Labor" in c:
+        c["Total"] = c["Equipment"] + (c["Equipment"] - c["Labor"])
+    if "Incl" not in c and "Total" in c and "Equipment" in c:
+        c["Incl"] = c["Total"] + (c["Total"] - c["Equipment"]) * 1.0
+    if "Unit" not in c and "Hours" in c and "Material" in c:
+        c["Unit"] = (c["Hours"] + c["Material"]) / 2
+    if "Hours" not in c and "Output" in c and "Unit" in c:
+        c["Hours"] = (c["Output"] + c["Unit"]) / 2
+    if "Output" not in c and "Crew" in c and "Hours" in c:
+        c["Output"] = (c["Crew"] + c["Hours"]) / 2
+    if "Crew" not in c and "Output" in c and "Hours" in c:
+        c["Crew"] = c["Output"] - (c["Hours"] - c["Output"]) * 1.3
+    need = ("Crew", "Output", "Hours", "Unit", "Material", "Labor", "Equipment", "Total", "Incl")
+    if any(k not in c for k in need):
+        return None
+    order = [c[k] for k in need]
+    if order != sorted(order):
+        return None
+    bounds = {}
+    for j, k in enumerate(COLS):
+        left = (order[j - 1] + order[j]) / 2 if j else order[0] - 95
+        right = (order[j] + order[j + 1]) / 2 if j + 1 < len(order) else 10 ** 6
+        bounds[k] = (left, right)
+    return {"row": i, "centres": c, "bounds": bounds, "desc_end": order[0] - 95, "y": rows[i][0]["_yc"]}
+
+
+def template_header(pdf_page: int, book: Path) -> Optional[dict]:
+    """No header could be read on this page (the band is printed but OCR lost its words). Pages on the same side of the spread
+    share the column layout (material centre moves by a few px, up to ~45 px between neighbours; the other side is ~120 px
+    off), so take the header of the nearest same-side page whose header was read; the money columns are then re-fitted to this
+    page's own number clusters and the left columns shifted by the fitted offset (see parse_page)."""
+    for d in (2, -2, 4, -4, 6, -6, 8, -8, 10, -10):
+        q = pdf_page + d
+        f = book / "ocr" / f"p{q:04d}.tsv"
+        if q < 24 or not f.exists():
+            continue
+        w, h, tw = load_tess(f)
+        hdr = find_header(rows_of(tw, tol=16))
+        if hdr is None:
+            ia = book / "ia" / f"p{q:04d}.json"
+            if ia.exists():
+                hdr = find_header(rows_of(load_ia(ia, w, h), tol=16))
+        if hdr is not None:
+            hdr = dict(hdr)
+            hdr["row"] = -1                                    # no header row to skip on this page
+            hdr["template_from"] = q
+            hdr["template_rows"] = rows_of(tw, tol=16)
+            return hdr
+    return None
+
+
+NUMERIC_TOKEN = re.compile(r"^[\d][\d,]*(\.\d+)?$|^\.\d+$")
+
+
+def column_anchors(bounds: dict, rows: list[list[dict]], y_min: float) -> dict[str, float]:
+    """Right edge of the numbers in every numeric column of a page whose columns are known (median over >= 3 tokens)."""
+    xs: dict[str, list[float]] = {k: [] for k in NUM_COLS}
+    for r in rows:
+        if r[0]["_yc"] <= y_min:
+            continue
+        for z in r:
+            if z["x0"] < 230 or not NUMERIC_TOKEN.match(z["t"].replace(" ", "")) or (z["x1"] - z["x0"]) >= 260:
+                continue
+            k = col_of((z["x0"] + z["x1"]) / 2, bounds)
+            if k in xs:
+                xs[k].append(z["x1"])
+    return {k: sorted(v)[len(v) // 2] for k, v in xs.items() if len(v) >= 3}
+
+
+def template_bounds(thdr: dict, trows_template: list[list[dict]], rows: list[list[dict]], page_w: int) -> tuple[dict, float]:
+    """Columns of a page without a readable header, from the page's own numbers: the right-edge clusters of its numeric tokens
+    are labelled by the nearest column anchor of the template page (same side of the spread, so the layout differs by a
+    few px, far less than the ~185 px column pitch), the median offset between the two pages is removed, and the boundary
+    between two numeric columns is the midpoint of their right edges. Text columns (crew, unit) and the description edge
+    take the template's bounds shifted by that offset."""
+    tb = calibrate_bounds(thdr, trows_template, page_w)
+    t_anchor = column_anchors(tb, trows_template, thdr["y"])
+    for k in NUM_COLS:                                          # a column empty on the template page: its header centre + offset of the others
+        if k not in t_anchor:
+            name = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment",
+                    "total": "Total", "total_op": "Incl"}[k]
+            offs = [t_anchor[j] - thdr["centres"][{"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor",
+                                                   "equipment": "Equipment", "total": "Total", "total_op": "Incl"}[j]] for j in t_anchor]
+            t_anchor[k] = thdr["centres"][name] + (sorted(offs)[len(offs) // 2] if offs else 60)
+    # right-edge clusters of this page's numeric tokens (line numbers and description numbers excluded)
+    xs = sorted(z["x1"] for r in rows for z in r
+                if z["x0"] >= tb["crew"][0] - 80 and NUMERIC_TOKEN.match(z["t"].replace(" ", "")) and (z["x1"] - z["x0"]) < 260)
+    clusters: list[list[float]] = []
+    for x in xs:
+        if clusters and x - clusters[-1][-1] <= 45:
+            clusters[-1].append(x)
+        else:
+            clusters.append([x])
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    matched: dict[str, float] = {}
+    shift = 0.0
+    for _ in range(2):
+        matched = {}
+        for m in meds:
+            k = min(t_anchor, key=lambda kk: abs(t_anchor[kk] + shift - m))
+            d = abs(t_anchor[k] + shift - m)
+            if d <= 70 and (k not in matched or d < abs(t_anchor[k] + shift - matched[k])):
+                matched[k] = m
+        if len(matched) >= 2:
+            diffs = sorted(matched[k] - t_anchor[k] for k in matched)
+            shift = diffs[len(diffs) // 2]
+    anchor = {k: matched.get(k, t_anchor[k] + shift) for k in NUM_COLS}
+    bounds: dict = {}
+    bounds["crew"] = (tb["crew"][0] + shift, tb["crew"][1] + shift)
+    bounds["output"] = (bounds["crew"][1], (anchor["output"] + anchor["hours"]) / 2)
+    bounds["hours"] = (bounds["output"][1], tb["hours"][1] + shift)
+    bounds["unit"] = (bounds["hours"][1], tb["material"][0] + shift)
+    prev_right = bounds["unit"][1]
+    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):
+        mid = (anchor[a] + anchor[b]) / 2
+        bounds[a] = (prev_right, mid)
+        prev_right = mid
+    bounds["total_op"] = (prev_right, 10 ** 6)
+    bounds["_anchors"] = {k: v for k, v in matched.items()}
+    bounds["_shift"] = shift
+    bounds["_matched"] = sorted(matched)
+    return bounds, thdr["desc_end"] + shift
+
+
+def calibrate_bounds_header(hdr: dict, rows: list[list[dict]]) -> dict:
+    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column. Re-fit the
+    column boundaries to those clusters (the header words alone are off by a few mm on skewed or cut pages)."""
+    bounds = dict(hdr["bounds"])
+    centres = hdr["centres"]
+    keys = ["output", "hours", "material", "labor", "equipment", "total", "total_op"]
+    xs = []
+    for r in rows:
+        if r[0]["_yc"] <= hdr["y"] + 10:
+            continue
+        for z in r:
+            if z["x0"] > bounds["output"][0] - 30 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
+                xs.append(z["x1"])
+    if len(xs) < 12:
+        return bounds
+    xs.sort()
+    clusters, cur = [], [xs[0]]
+    for x in xs[1:]:
+        if x - cur[-1] > 45:
+            clusters.append(cur)
+            cur = [x]
+        else:
+            cur.append(x)
+    clusters.append(cur)
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    names = {"output": "Output", "hours": "Hours", "material": "Material", "labor": "Labor", "equipment": "Equipment", "total": "Total", "total_op": "Incl"}
+    assigned: dict[str, float] = {}
+    for m in meds:
+        k = min(keys, key=lambda kk: abs(centres[names[kk]] + 45 - m))
+        if abs(centres[names[k]] + 45 - m) <= 110 and (k not in assigned or abs(centres[names[k]] + 45 - m) < abs(centres[names[k]] + 45 - assigned[k])):
+            assigned[k] = m
+    if len(assigned) < 3:
+        return bounds
+    bounds["_anchors"] = dict(assigned)                       # right-edge anchors (used for numeric tokens in cell_tokens)
+    # boundary between two neighbouring NUMERIC columns = midpoint of their number right edges (numbers never cross it);
+    # the Unit column sits between Hours and Material and keeps its header-based bounds
+    for a, b in (("material", "labor"), ("labor", "equipment"), ("equipment", "total"), ("total", "total_op")):      # not output|hours: header bounds do better there
+        if a in assigned and b in assigned:
+            mid = (assigned[a] + assigned[b]) / 2
+            bounds[a] = (bounds[a][0], mid)
+            bounds[b] = (mid, bounds[b][1])
+    return bounds
+
+
+
+
+def calibrate_bounds_clusters(hdr: dict, rows: list[list[dict]]) -> dict:
+    """Numbers are right-aligned: the right edges of the page's own numeric tokens cluster at one x per column, evenly spaced
+    (about 190 px at 360 dpi). The clusters right of the Unit column are the money columns in order (material, labor,
+    equipment, total, total incl. O&P); a double gap means an empty column. This is more reliable than the header words,
+    which OCR sometimes loses or shifts by a column."""
+    bounds = dict(hdr["bounds"])
+    centres = hdr["centres"]
+    unit_x = centres["Unit"]
+    xs = []
+    for r in rows:
+        if r[0]["_yc"] <= hdr["y"] + 10:
+            continue
+        for z in r:
+            if z["x0"] > unit_x + 20 and re.search(r"\d", z["t"]) and "%" not in z["t"] and (z["x1"] - z["x0"]) < 260:
+                xs.append(z["x1"])
+    if len(xs) < 10:
+        return bounds
+    xs.sort()
+    clusters, cur = [], [xs[0]]
+    for x in xs[1:]:
+        if x - cur[-1] > 45:
+            clusters.append(cur)
+            cur = [x]
+        else:
+            cur.append(x)
+    clusters.append(cur)
+    meds = [sorted(c)[len(c) // 2] for c in clusters if len(c) >= 3]
+    if len(meds) < 2:
+        return bounds
+    gaps = [b - a for a, b in zip(meds, meds[1:])]
+    small = [g for g in gaps if 120 <= g <= 260]
+    typ = sorted(small)[len(small) // 2] if small else 190
+    money = ["material", "labor", "equipment", "total", "total_op"]
+    # absolute reference: the Material header (reliably read) + the typical spacing gives the expected right edge of every column
+    mat_edge = centres["Material"] + 70
+    expected = {k: mat_edge + i * typ for i, k in enumerate(money)}
+    anchors: dict[str, float] = {}
+    for m in meds:
+        k = min(money, key=lambda kk: abs(expected[kk] - m))
+        if abs(expected[k] - m) <= 0.45 * typ and (k not in anchors or abs(expected[k] - m) < abs(expected[k] - anchors[k])):
+            anchors[k] = m
+    if len(anchors) < 2:
+        return bounds
+    # virtual anchors for columns with no numbers on this page, so that the bins stay evenly spaced
+    full = {}
+    for k in money:
+        full[k] = anchors.get(k, expected[k])
+    for a, b in zip(money, money[1:]):
+        if a in full and b in full:
+            mid = (full[a] + full[b]) / 2
+            bounds[a] = (bounds[a][0] if a == "material" else bounds[a][0], mid)
+            bounds[b] = (mid, bounds[b][1])
+    bounds["material"] = ((unit_x + full["material"] - 60) / 2, bounds["material"][1])  # left edge of material: between Unit and its numbers
+    bounds["unit"] = (bounds["unit"][0], bounds["material"][0])
+    bounds["total_op"] = (bounds["total_op"][0], 10 ** 6)
+    bounds["_anchors"] = dict(anchors)                       # right-edge anchors (used for numeric tokens in cell_tokens)
+    return bounds
+
+
+def calibrate_bounds(hdr: dict, rows: list[list[dict]], page_w: int = 2814) -> dict:
+    """Header words give the columns when they are regularly spaced (the normal case); when the header is damaged (a word
+    lost or shifted by a column, a centre beyond the page) the evenly spaced right-edge clusters of the page's numbers do."""
+    c = hdr["centres"]
+    xs = [c[k] for k in ("Material", "Labor", "Equipment", "Total", "Incl")]
+    gaps = [b - a for a, b in zip(xs, xs[1:])]
+    med = sorted(gaps)[len(gaps) // 2]
+    regular = all(0.75 * med <= g <= 1.25 * med for g in gaps) and xs[-1] <= page_w - 20 and 120 <= med <= 260
+    return calibrate_bounds_header(hdr, rows) if regular else calibrate_bounds_clusters(hdr, rows)
+
+
+def col_of(xc: float, bounds: dict) -> Optional[str]:
+    for k, v in bounds.items():
+        if k.startswith("_"):
+            continue
+        l, r = v
+        if l <= xc < r:
+            return k
+    return None
+
+
+# ----------------------------------------------------------------------------------------------- numbers
+def digits_of(t: str) -> str:
+    return re.sub(r"[^0-9]", "", t.translate(OCR_DIGIT_FIX))
+
+
+def clean_num(t: str) -> str:
+    t = t.strip().strip("|:;'\"`‘’“”~=_-—–*°)(]}{[!").replace(" ", "")
+    if not t:
+        return ""
+    s = re.sub(r"[^0-9.,]", "", t.translate(OCR_DIGIT_FIX))
+    return s.strip(",")
+
+
+def candidates(raw: str, kind: str) -> list[tuple[Decimal, str]]:
+    """Possible values of one OCR token: (value, how). 'as_read' = the token had the point where it is; 'point_restored' = a
+    plausible place for a point the OCR dropped."""
+    s = clean_num(raw)
+    if not s or not re.search(r"\d", s):
+        return []
+    out: list[tuple[Decimal, str]] = []
+    try:
+        if "." in s:
+            whole, frac = s.rsplit(".", 1)
+            whole = whole.replace(",", "")
+            if not re.fullmatch(r"\d*", whole) or not re.fullmatch(r"\d+", frac):
+                return []
+            if kind == "hours" and len(frac) != 3:
+                return []                                      # labor-hours are always printed with three decimals
+            if kind == "output" and len(frac) >= 3:
+                return []                                      # a daily output never has three decimals: the hours' digits merged into it
+            if kind in MONEY and len(frac) > 2:
+                return []                                      # a cost never has more than two decimals: merged or garbled token
+            out.append((Decimal((whole or "0") + "." + frac), "as_read"))
+        else:
+            s2 = s.replace(",", "")
+            if not re.fullmatch(r"\d+", s2):
+                return []
+            n = Decimal(s2)
+            if kind == "hours":
+                if len(s2) >= 3:
+                    out.append((Decimal((s2[:-3] or "0") + "." + s2[-3:]), "point_restored"))
+                if len(s2) <= 2:
+                    out.append((n, "as_read"))                 # whole labor-hours are printed without decimals (2, 8, 16)
+            elif kind == "output":
+                out.append((n, "as_read"))
+                if len(s2) >= 3:
+                    out.append((Decimal(s2[:-2] + "." + s2[-2:]), "point_restored"))
+            else:
+                out.append((n, "as_read"))
+                if len(s2) >= 3:
+                    out.append((Decimal(s2[:-2] + "." + s2[-2:]), "point_restored"))
+                elif len(s2) == 2:
+                    out.append((Decimal("0." + s2), "point_restored"))
+    except Exception:
+        return []
+    seen: dict[Decimal, str] = {}
+    for v, how in out:
+        seen.setdefault(v, how)
+    return list(seen.items())
+
+
+def rstep(v: Decimal) -> Decimal:
+    """Rounding step of a printed unit cost (the book rounds every cost above $5; steps inferred from the data)."""
+    v = abs(v)
+    if v <= 5:
+        return Decimal("0.01")
+    if v <= 20:
+        return Decimal("0.05")
+    if v <= 100:
+        return Decimal("0.50")
+    if v <= 300:
+        return Decimal("1")
+    if v <= 1000:
+        return Decimal("5")
+    if v <= 10000:
+        return Decimal("25")
+    if v <= 50000:
+        return Decimal("100")
+    return Decimal("500")
+
+
+def book_round(v: Decimal) -> Decimal:
+    st = rstep(v)
+    return (v / st).quantize(Decimal("1"), rounding=ROUND_HALF_UP) * st
+
+
+# ----------------------------------------------------------------------------------------------- settle one row
+WEIGHT = {("G", "as_read"): 3.0, ("T", "as_read"): 1.0, ("I", "as_read"): 1.0, ("H", "as_read"): 1.0,
+          ("T", "point_restored"): 0.25, ("I", "point_restored"): 0.25, ("H", "point_restored"): 0.25,
+          ("T", "count_mismatch"): 0.5, ("I", "count_mismatch"): 0.5, ("H", "count_mismatch"): 0.5}
+# T = tesseract on the 360-dpi page, I = the scan's own text layer, H = tesseract on the 600-dpi page (second pass),
+# G = geometric reading of the digit glyphs and the decimal point on the page image
+
+
+def weights(cands: list[tuple[Decimal, str, str]]) -> dict[Decimal, float]:
+    w: dict[Decimal, float] = {}
+    for v, how, src in cands:
+        w[v] = w.get(v, 0.0) + WEIGHT.get((src, how), 0.0)
+    return w
+
+
+def settle(cands: dict[str, list], crew: Optional[dict]) -> tuple[dict, dict, list[str]]:
+    flags: list[str] = []
+    vals: dict[str, Optional[Decimal]] = {k: None for k in NUM_COLS}
+    conf: dict[str, Optional[float]] = {k: None for k in NUM_COLS}
+    W = {k: weights(cands[k]) for k in NUM_COLS}
+
+    def opts(k):
+        return sorted(W[k]) if W[k] else [None]
+
+    def dominated(k, v):
+        """A value the arithmetic would like but the readings reject: another value of the same cell has strong evidence
+        (weight >= 3, i.e. the geometry or three readings) and this one has less than half of it."""
+        if v is None or not W[k]:
+            return False
+        top = max(W[k].values())
+        return top >= 3.0 and W[k].get(v, 0.0) < 0.5 * top
+
+    # ---- money: the printed total is the exact sum of the printed components
+    best, best_score, ties = None, None, 0
+    if not any(W[k] for k in ("material", "labor", "equipment")) and W["total"]:
+        # a cost printed under Total only (testing, allowances, subcontract items): nothing to add up
+        good = sorted(((w, v) for v, w in W["total"].items()), reverse=True)
+        if good[0][0] >= 2.0 and (len(good) == 1 or good[0][0] > good[1][0]):
+            vals["total"], conf["total"] = good[0][1], good[0][0]
+            best = ("lone_total",)
+        else:
+            flags.append("MONEY_UNSETTLED")
+    for m in opts("material"):
+        for l in opts("labor"):
+            for e in opts("equipment"):
+                for t in opts("total"):
+                    parts = [x for x in (m, l, e) if x is not None]
+                    if t is None or not parts or abs(sum(parts) - t) > Decimal("0.011"):
+                        continue
+                    if any(dominated(k, v) for k, v in (("material", m), ("labor", l), ("equipment", e), ("total", t))):
+                        continue
+                    score = sum(W[k].get(v, 0.0) for k, v in (("material", m), ("labor", l), ("equipment", e), ("total", t)) if v is not None)
+                    if best_score is None or score > best_score + 1e-9:
+                        best, best_score, ties = (m, l, e, t), score, 0
+                    elif abs(score - best_score) <= 1e-9 and (m, l, e, t) != best:
+                        ties += 1
+    if best == ("lone_total",):
+        pass
+    elif best and ties == 0:
+        vals["material"], vals["labor"], vals["equipment"], vals["total"] = best
+        for k, v in zip(("material", "labor", "equipment", "total"), best):
+            conf[k] = W[k].get(v) if v is not None else None
+    else:
+        if best:
+            flags.append("MONEY_AMBIGUOUS")
+        strong = {}
+        for k in ("material", "labor", "equipment", "total"):
+            good = sorted(((w, v) for v, w in W[k].items() if w >= 2.0), reverse=True)
+            strong[k] = good[0][1] if good and (len(good) == 1 or good[0][0] > good[1][0]) else None
+        derived = None
+        if not best:
+            # one cell printed but unreadable (candidates, none strong) while the others are strong: the sum defines it.
+            # Cells with no reading at all are taken as blank; when two or more cells are in doubt nothing is derived.
+            unresolved = [k for k in ("material", "labor", "equipment", "total") if W[k] and strong[k] is None]
+            # only a cell that was printed but could not be read is derived; a cell no reading saw is taken as blank, except the
+            # total, which the book prints whenever a component exists
+            free = unresolved[0] if len(unresolved) == 1 else ("total" if not unresolved and not W["total"] else None)
+            if free:
+                others = {k: strong[k] for k in ("material", "labor", "equipment", "total") if k != free}
+                if free == "total":
+                    parts = [v for v in others.values() if v is not None]
+                    val = sum(parts) if parts else None
+                    # a weak reading of the total that is close to the sum but not equal means a component was not read at all
+                    if val is not None and any(v != val and abs(v - val) <= max(Decimal("0.5"), val * Decimal("0.2")) for v in W["total"]):
+                        val = None
+                elif others["total"] is not None:
+                    val = others["total"] - sum(v for k, v in others.items() if k != "total" and v is not None)
+                    if val < 0:
+                        val = None
+                    elif val == 0:
+                        val = Decimal(0)
+                    elif val > 5 and val != book_round(val):
+                        val = None                             # a printed component above $5 is always on the rounding grid
+                else:
+                    val = None
+                if val is not None:
+                    derived = (free, None if val == 0 else val, others)
+        if derived not in (None, "ambiguous"):
+            free, val, others = derived
+            for k, v in others.items():
+                vals[k], conf[k] = v, W[k].get(v)
+            vals[free], conf[free] = val, None
+            flags.append(f"{free.upper()}_DERIVED_FROM_SUM")
+        else:
+            if not best and any(W[k] for k in ("material", "labor", "equipment", "total")):
+                flags.append("MONEY_UNSETTLED")
+            for k in ("material", "labor", "equipment", "total"):
+                vals[k] = strong[k]
+                conf[k] = W[k].get(vals[k]) if vals[k] is not None else None
+    # ---- output x hours = crew labor-hours per day
+    lh_known = Decimal(str(crew["labor_hours_per_day"])) if crew and crew.get("labor_hours_per_day") else None
+    best, best_score, ties = None, None, 0
+    for o in opts("output"):
+        for h in opts("hours"):
+            if o is None or h is None or o <= 0 or h <= 0 or dominated("output", o) or dominated("hours", h):
+                continue
+            prod = o * h
+            if lh_known is not None:
+                ok = abs(prod - lh_known) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.05"))
+            else:
+                k4 = (prod / 4).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                ok = 1 <= k4 <= 48 and abs(prod - 4 * k4) <= max(Decimal("0.02"), o * Decimal("0.0006") + Decimal("0.06"))
+            if not ok:
+                continue
+            score = W["output"].get(o, 0.0) + W["hours"].get(h, 0.0)
+            if best_score is None or score > best_score + 1e-9:
+                # without a known crew the crew-day rule (a multiple of 4 labor-hours) is weak: a second pair of readings with
+                # other digits that also passes it leaves the cell undecided, whatever the weights
+                if best is not None and lh_known is None and (digits_of(str(o)) != digits_of(str(best[0])) or digits_of(str(h)) != digits_of(str(best[1]))):
+                    ties += 1
+                best, best_score = (o, h), score
+            elif (abs(score - best_score) <= 1e-9 or lh_known is None) and (o, h) != best \
+                    and (lh_known is not None or digits_of(str(o)) != digits_of(str(best[0])) or digits_of(str(h)) != digits_of(str(best[1]))):
+                ties += 1
+    oh_settled = bool(best) and ties == 0
+
+    def reading_compatible(k, derived):
+        """A value computed by the crew rule must not contradict what was read in the cell: the digits of at least one
+        reading (even a doubtful one) must be the digits of the computed value or its tail (a cut leading digit)."""
+        if not W[k]:
+            return True
+        d = digits_of(str(derived))
+        for v in W[k]:
+            s = digits_of(str(v)).lstrip("0")
+            if s and (d == s or d.endswith(s)):
+                return True
+        return False
+
+    if best and ties == 0:
+        vals["output"], vals["hours"] = best
+        conf["output"], conf["hours"] = W["output"].get(best[0]), W["hours"].get(best[1])
+        if lh_known is not None:
+            flags.append("OUTPUT_HOURS_CREW_CHECK")           # the pair reproduces the crew's labor-hours per day
+    else:
+        if best:
+            flags.append("OUTPUT_HOURS_AMBIGUOUS")
+        strong = {}
+        for k in ("output", "hours"):
+            good = sorted(((w, v) for v, w in W[k].items() if w >= 2.0), reverse=True)
+            strong[k] = good[0][1] if good and (len(good) == 1 or good[0][0] > good[1][0]) else None
+        done = False
+        if not best and lh_known is not None:
+            # labor-hours = crew labor-hours / daily output by definition: one strong value defines the other, provided the
+            # computed value does not contradict what was read in the other cell
+            if strong["output"] and strong["output"] > 0:
+                h = (lh_known / strong["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                if reading_compatible("hours", h):
+                    vals["output"], conf["output"] = strong["output"], W["output"].get(strong["output"])
+                    vals["hours"] = h
+                    flags.append("HOURS_DERIVED_FROM_CREW")
+                    done = True
+            elif strong["hours"] and strong["hours"] > 0:
+                # hours are printed to 3 decimals: the output is only known within an interval; it is taken when exactly one
+                # reading of the cell (any weight) lies in it, or, for outputs of 20 and more (printed as integers), when
+                # exactly one integer does and no reading contradicts it
+                h = strong["hours"]
+                o_lo, o_hi = lh_known / (h + Decimal("0.0005")), lh_known / (h - Decimal("0.0005"))
+                reads = [v for v in W["output"] if o_lo <= v <= o_hi]
+                ints = [Decimal(i) for i in range(int(o_lo) + 1, int(o_hi) + 1) if o_lo <= i <= o_hi] if o_hi >= 20 else []
+                if len(reads) == 1:
+                    vals["hours"], conf["hours"] = h, W["hours"].get(h)
+                    vals["output"], conf["output"] = reads[0], W["output"].get(reads[0])
+                    flags.append("OUTPUT_FROM_CREW_CHECK")
+                    done = True
+                elif not reads and len(ints) == 1 and reading_compatible("output", ints[0]):
+                    vals["hours"], conf["hours"] = h, W["hours"].get(h)
+                    vals["output"] = ints[0]
+                    flags.append("OUTPUT_DERIVED_FROM_CREW")
+                    done = True
+        if not done:
+            if not best and (W["output"] or W["hours"]):
+                flags.append("OUTPUT_HOURS_UNSETTLED")
+            for k in ("output", "hours"):
+                vals[k] = strong[k]
+                conf[k] = W[k].get(vals[k]) if vals[k] is not None else None
+    # ---- crew arithmetic checks on the settled values
+    if crew and vals["labor"] is not None and crew.get("bare_labor_daily") is not None and vals["labor"] > 0:
+        daily = Decimal(str(crew["bare_labor_daily"]))
+        ok = vals["output"] is not None and vals["output"] > 0 and abs(book_round(daily / vals["output"]) - vals["labor"]) <= rstep(vals["labor"])
+        if ok:
+            flags.append("LABOR_CREW_OK")                      # labor = crew daily labor cost / output, as printed
+        if not ok:
+            # the printed labor cost is crew daily cost / output: find the output reading (any source) that reproduces it
+            alts = [o for o in opts("output") if o and o > 0 and abs(book_round(daily / o) - vals["labor"]) <= rstep(vals["labor"])]
+            if len(alts) == 1 and (lh_known is None or vals["hours"] is None or abs(alts[0] * vals["hours"] - lh_known) <= Decimal("0.1")):
+                vals["output"], conf["output"] = alts[0], W["output"].get(alts[0])
+                if lh_known is not None:
+                    vals["hours"] = (lh_known / alts[0]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                flags.append("OUTPUT_FROM_LABOR_CHECK")
+                flags[:] = [f for f in flags if f not in ("OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "HOURS_DERIVED_FROM_CREW")]
+            else:
+                # invert the book's own rule: output = crew daily labor / labor, where labor was printed rounded. When exactly one
+                # integer lies in the interval the printed output is determined (outputs of 20 and more are printed as integers).
+                step = rstep(vals["labor"])
+                lo, hi = daily / (vals["labor"] + step / 2), daily / (vals["labor"] - step / 2)
+                ints = [i for i in range(int(lo) + 1, int(hi) + 1) if lo <= i <= hi] if hi >= 20 else []
+                strong_out = [v for v, wgt in W["output"].items() if wgt >= 2.0]
+                if oh_settled and lh_known is not None and vals["output"] is not None and Decimal(ints[0]) != vals["output"] if len(ints) == 1 else False:
+                    ints = []                                  # output x hours already match this crew's day: the labor, not the output, disagrees
+                if len(ints) == 1 and (conf.get("labor") or 0) >= 2.0 and not (strong_out and Decimal(ints[0]) not in strong_out) \
+                        and (lh_known is None or vals["hours"] is None
+                             or abs(ints[0] * vals["hours"] - lh_known) <= Decimal("0.1") or "HOURS_DERIVED_FROM_CREW" in flags):
+                    vals["output"], conf["output"] = Decimal(ints[0]), None
+                    if lh_known is not None:
+                        vals["hours"] = (lh_known / vals["output"]).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                    flags[:] = [f for f in flags if f not in ("OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "HOURS_DERIVED_FROM_CREW")]
+                    flags.append("OUTPUT_DERIVED_FROM_LABOR")
+                else:
+                    # the crew rule and the printed total may agree on a labor value the OCR misread (79 read as 19)
+                    exp = book_round(daily / vals["output"]) if vals["output"] and vals["output"] > 0 else None
+                    tot, mat, eq = vals["total"], vals["material"], vals["equipment"]
+                    if exp is not None and tot is not None and (conf.get("total") or 0) >= 2.0 and (mat is None or (conf.get("material") or 0) >= 2.0) \
+                            and abs(tot - (mat or 0) - (eq or 0) - exp) <= rstep(exp):
+                        vals["labor"], conf["labor"] = tot - (mat or 0) - (eq or 0), None
+                        flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS")]
+                        flags.append("LABOR_DERIVED_FROM_CREW_SUM")
+                    else:
+                        flags.append("LABOR_CREW_MISMATCH")
+    # labor confirmed by the crew rule + strong material (+ equipment): a total that does not add up is the misread cell —
+    # unless the total itself is geometry-backed (weight >= 4): then three well-read cells contradict and the line stays open
+    if crew and vals["labor"] is not None and vals["material"] is not None and vals["total"] is not None and "LABOR_CREW_MISMATCH" not in flags \
+            and crew.get("bare_labor_daily") is not None and vals["output"] and vals["output"] > 0 and (conf.get("material") or 0) >= 2.0 \
+            and (conf.get("labor") or 0) >= 2.0 and (conf.get("total") or 0) < 4.0 \
+            and abs(vals["material"] + vals["labor"] + (vals["equipment"] or 0) - vals["total"]) > Decimal("0.011"):
+        vals["total"], conf["total"] = vals["material"] + vals["labor"] + (vals["equipment"] or 0), None
+        flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS")]
+        flags.append("TOTAL_DERIVED_FROM_SUM")
+    # the crew says whether an equipment cost exists at all; with labor confirmed, a total that does not add up pins the material
+    if crew and crew.get("bare_labor_daily") is not None and vals["labor"] is not None and vals["output"] and vals["total"] is not None \
+            and "LABOR_CREW_MISMATCH" not in flags and (crew.get("bare_equip_daily") or 0) == 0 and conf.get("total", 0) and conf["total"] >= 2.0:
+        m = vals["total"] - vals["labor"]
+        # only a material cell that was not read, or read weakly, is pinned by the total; a well-read material that
+        # disagrees means the total (or the labor) is the misread cell and the line stays open
+        # an equipment value read on a crew without equipment is NOT repaired here: it is the signature of a column slip and
+        # the line is flagged by the table builder (EQUIP_WITHOUT_CREW_EQUIP)
+        if vals["equipment"] is None and ((vals["material"] is not None and vals["material"] != m and (conf.get("material") or 0) < 2.0)
+                                          or (vals["material"] is None and m > 0)):
+            if m >= 0 and (m <= 5 or m == book_round(m)):
+                vals["material"], conf["material"], vals["equipment"], conf["equipment"] = (m if m > 0 else None), None, None, None
+                flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "EQUIPMENT_DERIVED_FROM_SUM", "MATERIAL_DERIVED_FROM_SUM")]
+                flags.append("MATERIAL_DERIVED_FROM_CREW_SUM")
+    if crew and vals["output"] and vals["output"] > 0 and vals["equipment"] is not None and crew.get("bare_equip_daily") is not None:
+        exp = book_round(Decimal(str(crew["bare_equip_daily"])) / vals["output"])
+        if abs(exp - vals["equipment"]) > rstep(exp):
+            flags.append("EQUIP_CREW_DIFFERS")                 # informational: the book's own example line (C-14A) differs too
+    # ---- total incl O&P: often cut by the scan edge on right-hand pages; keep a strong reading only, plausibility-checked
+    good = sorted(((w, v) for v, w in W["total_op"].items()), reverse=True)
+    if good and good[0][0] >= 2.0 and (len(good) == 1 or good[0][0] > good[1][0]):
+        vals["total_op"], conf["total_op"] = good[0][1], good[0][0]
+    if vals["total_op"] is not None and vals["total"] is not None and not (vals["total"] <= vals["total_op"] <= vals["total"] * Decimal("2.2")):
+        strong_op = (conf["total_op"] or 0) >= 4.0           # geometry-backed: the glyphs are complete, not cut at the page edge
+        vals["total_op"] = None
+        conf["total_op"] = None
+        flags.append("OP_MISMATCH" if strong_op else "TOTAL_OP_UNREADABLE")   # a well-read O&P that contradicts the total: the total is in doubt
+    if vals["total_op"] is not None and vals["labor"] is None and vals["equipment"] is None and vals["material"] is not None and not W["labor"] and not W["equipment"]:
+        # material-only line: the book adds 10% for overhead and profit
+        m = vals["material"]
+        tol = Decimal("0.55") * rstep(m) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
+        if abs(Decimal("1.10") * m - vals["total_op"]) <= tol:
+            flags.append("OP_CHECK_OK")                        # total incl. O&P = 1.10 x material, as printed
+        else:
+            m2 = vals["total_op"] / Decimal("1.10")
+            alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]
+            if len(alts) == 1 and (conf.get("material") or 0) < 4.0:
+                vals["material"], conf["material"], vals["total"] = alts[0], None, alts[0]
+                flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "TOTAL_DERIVED_FROM_SUM")]
+                flags.append("MATERIAL_FROM_OP_CHECK")
+            else:
+                flags.append("OP_MISMATCH")
+    if crew and vals["total_op"] is not None and vals["output"] and vals["output"] > 0 and crew.get("op_labor_daily") is not None \
+            and (vals["labor"] is not None or vals["material"] is not None) and "LABOR_CREW_MISMATCH" not in flags:
+        o = vals["output"]
+        l_op = Decimal(str(crew["op_labor_daily"])) / o if vals["labor"] is not None else Decimal(0)
+        e_op = Decimal("1.10") * (vals["equipment"] or Decimal(0))        # "the cost of equipment plus 10% profit" (book p.5)
+        m = vals["material"] or Decimal(0)
+        exp = Decimal("1.10") * m + l_op + e_op
+        tol = (Decimal("0.55") * rstep(m) if m else Decimal(0)) + (rstep(vals["labor"]) / 2 if vals["labor"] is not None else Decimal(0)) \
+            + (rstep(vals["equipment"]) / 2 if vals["equipment"] is not None else Decimal(0)) + rstep(vals["total_op"]) / 2 + vals["total_op"] * Decimal("0.006")
+        if abs(exp - vals["total_op"]) <= tol:
+            flags.append("OP_CHECK_OK")                        # total incl. O&P = 1.10 x M + crew O&P labor / output + 1.10 x E, as printed
+        else:
+            # a material the O&P column disagrees with: pick the material candidate the O&P supports, if exactly one does
+            m2 = (vals["total_op"] - l_op - e_op) / Decimal("1.10")
+            alts = [v for v in opts("material") if v is not None and abs(v - m2) <= tol / Decimal("1.10")]
+            if len(alts) == 1 and vals["total"] is not None and (conf.get("material") or 0) < 4.0:
+                vals["material"], conf["material"] = alts[0], None
+                vals["total"] = alts[0] + (vals["labor"] or 0) + (vals["equipment"] or 0)
+                flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "MATERIAL_DERIVED_FROM_SUM", "TOTAL_DERIVED_FROM_SUM")]
+                flags.append("MATERIAL_FROM_OP_CHECK")
+            else:
+                flags.append("OP_MISMATCH")
+    weak = [k for k in ("material", "labor", "equipment", "total") if vals[k] is not None and conf.get(k) is not None and conf[k] < 2.0]
+    if weak:
+        flags.append("WEAK_READING:" + ",".join(weak))
+    flags[:] = list(dict.fromkeys(flags))
+    return vals, conf, flags
+
+
+# ----------------------------------------------------------------------------------------------- crews / units
+def normalise_crew(s: str, known: set[str]) -> Optional[str]:
+    if not s:
+        return None
+    t = re.sub(r"[^A-Za-z0-9.\-\]|‘’'!]", "", s)
+    if not t:
+        return None
+    # "1 Lath" is often read as "]loth", "Tloth", "1Cop": a confusable prefix stands for the count, the rest for the trade
+    m = re.match(r"^([\]|‘’'!lIT]|\d|\.5|1\.5|\d\.\d)?([A-Za-z]{3,5})$", t)
+    if m:
+        trade = m.group(2).lower()
+        pre = m.group(1) or ""
+        qty = pre if re.fullmatch(r"\d|\.5|1\.5|\d\.\d", pre) else ("1" if pre or trade in TRADES else None)
+        if trade in TRADES and qty:
+            return f"{qty} {trade[0].upper() + trade[1:]}"
+        close = sorted({tr for tr in TRADES if _lev(tr, trade) <= 1})
+        if len(close) != 1 and pre:
+            close = sorted({tr for tr in TRADES if _lev(tr, trade) <= 2})       # a printed count (or its OCR shadow) makes a looser match safe
+        if len(close) == 1 and qty:
+            return f"{qty} {close[0][0].upper() + close[0][1:]}"
+    m = re.match(r"^([A-Za-z])-?(\d{1,2})([A-Za-z]?)$", t)
+    if m and m.group(1).upper() in "ABCDEFGHJKLMNPQR":
+        return f"{m.group(1).upper()}-{int(m.group(2))}{m.group(3).upper()}"
+    # fuzzy against the known crew list (e.g. 'lloth' -> '1 Lath', 'C14A' -> 'C-14A'); never from 1-2 characters (ditto marks read as 'il', 'll')
+    if known and len(re.sub(r"[^A-Za-z0-9]", "", t)) >= 4:
+        key = t.lower().replace("-", "")
+        cand = [c for c in known if _close(key, c.lower().replace(" ", "").replace("-", ""))]
+        if len(cand) == 1:
+            return cand[0]
+    return None
+
+
+def _lev(a: str, b: str) -> int:
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def _close(a: str, b: str) -> bool:
+    if len(a) != len(b) or not a:
+        return False
+    confus = {("l", "1"), ("1", "l"), ("i", "1"), ("1", "i"), ("o", "a"), ("a", "o"), ("o", "0"), ("0", "o"), ("c", "e"), ("e", "c"), ("t", "l"), ("l", "t"),
+              ("i", "l"), ("l", "i"), ("h", "b"), ("b", "h"), ("u", "o"), ("o", "u"), ("s", "5"), ("5", "s"), ("q", "g"), ("g", "q"), ("1", "l")}
+    d = sum(1 for x, y in zip(a, b) if x != y and (x, y) not in confus)
+    e = sum(1 for x, y in zip(a, b) if x != y)
+    return d == 0 and e <= 2 or (d <= 1 and e <= 1)
+
+
+def normalise_unit(s: str) -> Optional[str]:
+    if not s:
+        return None
+    t = re.sub(r"[^A-Za-z%.]", "", s).upper()
+    if not t:
+        return None
+    if t in UNIT_TABLE:
+        return UNIT_TABLE[t]
+    t2 = t.replace(".", "")
+    if t2 in UNIT_TABLE:
+        return UNIT_TABLE[t2]
+    return None
+
+
+# ----------------------------------------------------------------------------------------------- page
+MERGED_OH = re.compile(r"^(\d{1,4})[.,]?(\d{3})[.:]?$")
+
+
+def cell_tokens(row: list[dict], bounds: dict, desc_end: float) -> dict:
+    cells: dict[str, list[dict]] = {k: [] for k in bounds if not k.startswith("_")}
+    desc = []
+    row = list(row)
+    for i, z in enumerate(row[:-1]):
+        nxt = row[i + 1]
+        if re.fullmatch(r"[1-9]", re.sub(r"[^0-9A-Za-z]", "", z["t"])) and re.fullmatch(r"[A-Za-z]{3,5}", re.sub(r"[^A-Za-z]", "", nxt["t"])) \
+                and bounds["crew"][0] - 60 <= z["x0"] < bounds["output"][0] + 40 \
+                and col_of((nxt["x0"] + nxt["x1"]) / 2, bounds) in ("crew", "output"):
+            z["_crew_count"] = True                            # "1 Elec" read as two tokens: the count must not become the output
+            nxt["_crew_count"] = True
+    anchors = bounds.get("_anchors") or {}
+    for z in row:
+        if z.get("_crew_count"):
+            cells["crew"].append(z)
+            continue
+        xc = (z["x0"] + z["x1"]) / 2
+        if z["x1"] <= desc_end + 20 and xc < desc_end:
+            desc.append(z)
+            continue
+        k = col_of(xc, bounds)
+        if anchors and k in MONEY and re.search(r"\d", z["t"]) and "%" not in z["t"]:
+            # right-aligned numbers: the right edge, not the centre, says which column a wide number belongs to
+            near = min(anchors.items(), key=lambda kv: abs(kv[1] - z["x1"]))
+            if near[0] in MONEY and abs(near[1] - z["x1"]) <= 70 and near[0] != k:
+                k = near[0]
+        if k in ("output", "hours") and z["x0"] < bounds["output"][1] - 10 and z["x1"] > bounds["hours"][0] + 10:
+            # one OCR token spanning the Daily Output and Labor-Hours columns ("500.016", "313.026"): split it
+            m = MERGED_OH.fullmatch(z["t"].replace(" ", ""))
+            if m:
+                cut = bounds["output"][1]
+                cells["output"].append({**z, "t": m.group(1), "x1": int(cut) - 8})
+                cells["hours"].append({**z, "t": "." + m.group(2), "x0": int(cut) + 8})
+                continue
+        if k in MONEY:
+            # one token spanning two money columns ("89.15105" = 89.15 | 105): split it at the column boundary
+            i = COLS.index(k)
+            pair = None
+            if k != "total_op" and z["x1"] > bounds[COLS[i + 1]][0] + 25 and z["x0"] < bounds[k][1] - 25:
+                pair = (k, COLS[i + 1])
+            elif k != "material" and z["x0"] < bounds[COLS[i - 1]][1] - 25 and z["x1"] > bounds[k][0] + 25:
+                pair = (COLS[i - 1], k)
+            if pair:
+                mm = re.fullmatch(r"(\d[\d,]*\.\d{2})(\d[\d,]*(?:\.\d{1,2})?)", z["t"].replace(" ", ""))
+                if mm:
+                    cut = bounds[pair[0]][1]
+                    cells[pair[0]].append({**z, "t": mm.group(1), "x1": int(cut) - 8})
+                    cells[pair[1]].append({**z, "t": mm.group(2), "x0": int(cut) + 8})
+                    continue
+        if k:
+            cells[k].append(z)
+    return {"desc": desc, "cells": cells}
+
+
+def numeric_candidates(kind: str, toks_t: list[dict], toks_i: list[dict], img: Optional[np.ndarray], page_w: int) -> list[tuple[Decimal, str, str]]:
+    out: list[tuple[Decimal, str, str]] = []
+    raw_t = "".join(z["t"] for z in toks_t)
+    raw_i = "".join(z["t"] for z in toks_i)
+    for v, how in candidates(raw_t, kind):
+        out.append((v, how, "T"))
+    for v, how in candidates(raw_i, kind):
+        out.append((v, how, "I"))
+    # geometric reading on the OCR box (tesseract's, else the text layer's)
+    box_src = toks_t if toks_t else toks_i
+    if img is not None and box_src:
+        x0 = min(z["x0"] for z in box_src)
+        x1 = max(z["x1"] for z in box_src)
+        y0 = min(z["y0"] for z in box_src)
+        y1 = max(z["y1"] for z in box_src)
+        if x1 < page_w - 12:                                   # a box touching the page edge is cut: no geometric reading
+            g = analyse(img, x0, x1, y0, y1)
+            if g is not None and len(g.points) <= 1:
+                # the geometry fixes the POINT of each OCR digit string; it does not decide between different digit strings
+                matched = False
+                for d in sorted({digits_of(raw_t), digits_of(raw_i)}):
+                    if d:
+                        s = g.apply(d)
+                        if s is not None:
+                            frac = s.split(".")[1] if "." in s else ""
+                            if (kind == "hours" and len(frac) != 3) or (kind in MONEY and len(frac) > 2):
+                                continue                       # not a printable value: the box spans two cells or is garbled
+                            matched = True
+                            try:
+                                out.append((Decimal(s), "as_read", "G"))
+                            except Exception:
+                                pass
+                if not matched and g.tall and all(len(d) != len(g.tall) for d in (digits_of(raw_t), digits_of(raw_i)) if d):
+                    # the page shows another number of digit glyphs than any OCR string has: both readings are suspect
+                    out = [(v, "count_mismatch", src) for v, how, src in out]
+    return out
+
+
+def parse_page(pdf_page: int, book: Path, parts: Parts, crews: dict) -> dict:
+    w, h, tw = load_tess(book / "ocr" / f"p{pdf_page:04d}.tsv")
+    iw = load_ia(book / "ia" / f"p{pdf_page:04d}.json", w, h)
+    trows = rows_of(tw, tol=16)
+    irows = rows_of(iw, tol=16)
+    hdr = find_header(trows)
+    if hdr is None and irows:
+        hdr = find_header(irows)
+        if hdr is not None:
+            # anchor the row index on the tesseract rows nearest to that y
+            hdr["row"] = min(range(len(trows)), key=lambda j: abs(trows[j][0]["_yc"] - hdr["y"])) if trows else 0
+    template = False
+    if hdr is None:
+        # a table page whose header band OCR lost: at least three rows start with a line number in the left margin
+        def line_row(r):
+            # a line number at the left margin and at least one number in the table area (crew/output/costs): division
+            # intro pages ("Estimating Tips") have numbered paragraphs but no table numbers
+            numbered = (LINE_RE.fullmatch(r[0]["t"]) and r[0]["x0"] < 230) or (re.fullmatch(r"\d{2,3}", r[0]["t"]) and r[0]["x0"] < 60)
+            return numbered and any(z["x0"] > 1150 and re.search(r"\d", z["t"]) for z in r[1:])
+        n_line_rows = sum(1 for r in trows if line_row(r)) + sum(1 for r in irows if line_row(r))
+        if n_line_rows >= 3:
+            hdr = template_header(pdf_page, book)
+            template = hdr is not None
+    out = {"pdf_page": pdf_page, "book_page": pdf_page - 14, "header_found": hdr is not None, "lines": [], "sections": [], "divisions": [],
+           "header_source": (f"template:{hdr['template_from']}" if template else "read") if hdr else None, "other_rows": []}
+    if hdr is None:
+        return out
+
+    def keep_other(r):
+        # rows that became neither a line nor a section: kept with their geometry for the second pass (section header recovery)
+        if r[0]["x0"] < 230 and len(r) >= 2:
+            out["other_rows"].append({"y0": min(z["y0"] for z in r), "y1": max(z["y1"] for z in r), "x0": r[0]["x0"],
+                                      "x1": max(z["x1"] for z in r), "text": " ".join(z["t"] for z in r)[:120]})
+    img = parts.image(pdf_page)
+    if img is not None and img.shape[1] != w:
+        img = None                                             # OCR was run at another size; no geometry then
+    if template:
+        bounds, desc_end = template_bounds(hdr, hdr["template_rows"], trows, w)
+        out["template_columns"] = {"matched": bounds["_matched"], "shift": round(bounds["_shift"])}
+    else:
+        bounds, desc_end = (calibrate_bounds(hdr, trows, w) if os.environ.get("BOOK_CALIBRATE", "1") != "0" else dict(hdr["bounds"])), hdr["desc_end"]
+    out["bounds"] = {k: [round(v[0], 1), round(min(v[1], w + 50), 1)] for k, v in bounds.items() if not k.startswith("_")}
+    out["anchors"] = {k: round(v, 1) for k, v in (bounds.get("_anchors") or {}).items()}
+    out["desc_end"] = round(desc_end, 1)
+    out["header_y"] = round(hdr["y"], 1)
+    out["page_size"] = [w, h]
+    irow_by_y = [(r[0]["_yc"], r) for r in irows]
+    known = set(crews)
+
+    def ia_row_near(yc):
+        best = min(irow_by_y, key=lambda p: abs(p[0] - yc), default=None)
+        return best[1] if best and abs(best[0] - yc) <= 18 else []
+
+    def division(txt):
+        m3 = re.match(r"^(\d{2})\s?(\d{2})\s?(\d{2})(?![.,\d])\s*(.*)$", txt)
+        m2 = re.match(r"^(\d{2})\s?(\d{2})(?![.,\d])\s*(.*)$", txt)
+        if m3 and not re.match(r"^\d{2} \d{2} \d{2}[.,]\d{2}", txt):
+            return ("div3", f"{m3.group(1)} {m3.group(2)} {m3.group(3)}", m3.group(4).strip(" -—–~_=|"))
+        if m2 and len(m2.group(3).strip()) > 2:
+            return ("div2", f"{m2.group(1)} {m2.group(2)}", m2.group(3).strip(" -—–~_=|"))
+        return None
+
+    section = None
+    div2 = div3 = None
+    last_unit = None
+    last_crew = None
+    last_line: Optional[int] = None
+
+    SEC_RE = re.compile(r"^(\d{1,2})[\s.]*(\d{2})[\s.]*(\d{2})\s*[.,]\s*(\d{2})(?!\d)")     # "33 52 16.23", also "33.52 16.23" as OCR prints bold ids
+
+    def section_from(tokens_row: list[dict]) -> Optional[dict]:
+        if not tokens_row or tokens_row[0]["x0"] > 230:
+            return None
+        joined = " ".join(z["t"] for z in tokens_row[:6])
+        m = SEC_RE.match(joined)
+        if not m:
+            return None
+        first = m.group(1)
+        uncertain = len(first) == 1 or tokens_row[0]["x0"] < 60 or first not in VALID_DIVS
+        if uncertain and div2 and div2[0][3:5] == m.group(2) and div2[0][:2] in VALID_DIVS:
+            first = div2[0][:2]                                # the division digit at the page edge is cut or misread; the running division says what it is
+        elif len(first) == 1:
+            first = "0" + first                                # placeholder: fixed in the merge step from neighbouring pages
+        # title = the words after the id, inside the description area
+        consumed = 0
+        acc = ""
+        for i, z in enumerate(tokens_row):
+            acc = (acc + " " + z["t"]).strip()
+            if re.sub(r"\s", "", acc) == re.sub(r"\s", "", m.group(0)) or len(re.sub(r"\D", "", acc)) >= 8:
+                consumed = i + 1
+                break
+        title = " ".join(z["t"] for z in tokens_row[consumed:] if z["x1"] < desc_end and re.search(r"[A-Za-z]", z["t"]))
+        return {"section_id": f"{first} {m.group(2)} {m.group(3)}.{m.group(4)}", "title": title.strip(" -—–=~_.|"), "div2": div2, "div3": div3,
+                "pdf_page": pdf_page, "division_uncertain": uncertain, "division_raw": m.group(1)}
+
+    for r in trows:
+        txt = " ".join(z["t"] for z in r)
+        if hdr["row"] >= 0 and r is trows[hdr["row"]]:
+            sec = section_from(r)
+            if sec is None:
+                ia_r = ia_row_near(r[0]["_yc"])
+                sec = section_from(ia_r) if ia_r else None    # the bold id in the header band: the text layer may have read it
+            if sec:
+                section = sec
+                out["sections"].append(sec)
+            else:
+                keep_other(r)                                  # the page's first section id sits in the header band; unread here
+            continue
+        if r[0]["_yc"] < hdr["y"]:
+            if template:
+                sec = section_from(r)                          # the page's first section id sits in the (unread) header band
+                if sec:
+                    section = sec
+                    out["sections"].append(sec)
+                    continue
+            dv = division(txt)
+            if dv:
+                if dv[0] == "div3":
+                    div3 = dv[1:]
+                else:
+                    div2 = dv[1:]
+                out["divisions"].append(dv)
+            else:
+                keep_other(r)
+            continue
+        if r[0]["x0"] > desc_end * 0.25:
+            continue
+        sec = section_from(r)
+        if sec is None and not LINE_RE.fullmatch(r[0]["t"]):
+            ia_r = ia_row_near(r[0]["_yc"])
+            sec = section_from(ia_r) if ia_r else None     # tesseract lost the id, the scan's own text layer may have it
+        if sec:
+            section = sec
+            out["sections"].append(sec)
+            last_unit = last_crew = last_line = None
+            continue
+        first = r[0]["t"]
+        partial = False
+        ir = ia_row_near(r[0]["_yc"])
+        ia_first = ir[0]["t"] if ir and ir[0]["x0"] < 230 and re.fullmatch(r"\d{3,4}", ir[0]["t"]) else None
+        if ia_first and LINE_RE.fullmatch(r[0]["t"]) and ia_first[-3:] != r[0]["t"][-3:]:
+            ir, ia_first = [], None                            # the nearest text-layer row is another line: do not mix the two
+        body = r[1:]
+        if LINE_RE.fullmatch(first) and r[0]["x0"] < 230:
+            line_no = first
+            if ia_first and ia_first != first and len(ia_first) == 4 and last_line is not None:
+                # the two readings differ: keep the one that continues the numbering
+                if not (int(first) > last_line) and int(ia_first) > last_line:
+                    line_no = ia_first
+        elif re.fullmatch(r"\d{2,3}", first) and r[0]["x0"] < 60:
+            line_no, partial = first, True                     # left edge of the page cut off: thousands (and hundreds) digit missing
+        elif r[0]["x0"] >= 60 and ia_first and (not (ir[0]["x0"] < 60) or len(ia_first) == 4):
+            line_no, partial, body = ia_first, len(ia_first) == 3, r   # tesseract missed the number, the text layer has it
+        elif r[0]["x0"] >= 150 and not division(txt) \
+                and any(col_of((z["x0"] + z["x1"]) / 2, bounds) in ("material", "labor", "total") and re.search(r"\d", z["t"]) for z in r) \
+                and any(re.search(r"[A-Za-z]", z["t"]) for z in r if z["x1"] < desc_end):
+            line_no, body = None, r                            # a priced row whose number no reading caught
+        else:
+            dv = division(txt)
+            if dv:
+                if dv[0] == "div3":
+                    div3 = dv[1:]
+                else:
+                    div2 = dv[1:]
+                out["divisions"].append(dv)
+            else:
+                keep_other(r)
+            continue
+        order_flag = None
+        if line_no is not None and not partial:
+            last_line = int(line_no)
+        ct = cell_tokens(body, bounds, desc_end)
+        ci = cell_tokens([z for z in ir if not (re.fullmatch(r"\d{3,4}", z["t"]) and z["x0"] <= r[0]["x1"] + 5)], bounds, desc_end)
+        desc_toks = [z for z in ct["desc"] if not JUNK_RE.fullmatch(z["t"])]
+        ref = [z["t"] for z in desc_toks if REF_RE.match(z["t"])]
+        desc_toks = [z for z in desc_toks if not REF_RE.match(z["t"])]
+        desc_t = " ".join(z["t"] for z in desc_toks)
+        desc_i = " ".join(z["t"] for z in ci["desc"] if not REF_RE.match(z["t"]) and not JUNK_RE.fullmatch(z["t"]))
+        indent = desc_toks[0]["x0"] if desc_toks else (ci["desc"][0]["x0"] if ci["desc"] else None)
+        crew_raw = " ".join(z["t"] for z in ct["cells"]["crew"]).strip(" |:;.,'‘’`\"~=_")
+        crew_raw_i = " ".join(z["t"] for z in ci["cells"]["crew"]).strip(" |:;.,'‘’`\"~=_")
+        unit_raw = " ".join(z["t"] for z in ct["cells"]["unit"]).strip(" |:;,'‘’`\"~=_")
+        unit_raw_i = " ".join(z["t"] for z in ci["cells"]["unit"]).strip(" |:;,'‘’`\"~=_")
+        pct = {}
+        for k in MONEY:
+            raw_k = "".join(z["t"] for z in ct["cells"][k]) + "|" + "".join(z["t"] for z in ci["cells"][k])
+            if "%" in raw_k:
+                m_pct = re.search(r"(\d{1,3})\s*%", raw_k)
+                pct[k] = m_pct.group(1) if m_pct else "?"
+        cands = {k: ([] if k in pct else numeric_candidates(k, ct["cells"][k], ci["cells"][k], img, w)) for k in NUM_COLS}
+        crew_id = normalise_crew(crew_raw, known) or normalise_crew(crew_raw_i, known)
+        crew_src = "printed" if crew_id else None
+        ditto = re.compile(r"^[\s|'\"‘’“”″lIi1!jt]{0,3}$")        # the book's ditto mark (″) and what OCR makes of it (il, ll, ", '')
+        cell_has_text = (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw or "")) and not ditto.match(crew_raw or "")) \
+            or (bool(re.search(r"[A-Za-z0-9]{2,}", crew_raw_i or "")) and not ditto.match(crew_raw_i or ""))
+        crew_unread = crew_id is None and cell_has_text
+        if crew_id is None and not cell_has_text and (cands["hours"] or cands["output"]) and last_crew:
+            crew_id, crew_src = last_crew, "carried"             # the book prints the crew once and leaves the cell blank below
+        crew_row = crews.get(crew_id) if crew_id else None
+        vals, confs, flags = settle(cands, crew_row)
+        if crew_unread:
+            flags.append("CREW_UNREAD")
+        if pct:
+            flags.append("PERCENT_ADD")
+            flags[:] = [f for f in flags if f not in ("MONEY_UNSETTLED", "TOTAL_DERIVED_FROM_SUM")]
+        unit = normalise_unit(unit_raw) or normalise_unit(unit_raw_i)
+        if unit:
+            last_unit, unit_src = unit, "printed"
+        elif last_unit:
+            unit, unit_src = last_unit, "carried"
+        else:
+            unit_src = None
+        if crew_src == "printed":
+            last_crew = crew_id
+        elif crew_unread:
+            last_crew = None                                   # whatever is printed here is what the lines below inherit: unknown
+        if crew_id and crews and crew_row is None:
+            flags.append("CREW_UNKNOWN")
+        if partial:
+            flags.append("LINE_NUMBER_PARTIAL")
+        if line_no is None:
+            flags.append("LINE_NUMBER_MISSING")
+        if order_flag:
+            flags.append(order_flag)
+        if template:
+            flags.append("HEADER_TEMPLATE")                    # columns from a neighbouring page's header, re-fitted to this page's numbers
+        out["lines"].append({
+            "line": line_no, "line_partial": partial, "section_id": section["section_id"] if section else None, "pdf_page": pdf_page,
+            "book_page": pdf_page - 14, "y0": min(z["y0"] for z in r), "y1": max(z["y1"] for z in r), "line_x": [r[0]["x0"], r[0]["x1"]],
+            "description": desc_t, "description_alt": desc_i if desc_i != desc_t else None, "indent_px": indent,
+            "ref_note": ref[0] if ref else None, "crew": crew_id, "crew_source": crew_src, "crew_raw": crew_raw or crew_raw_i or None,
+            "unit": unit, "unit_source": unit_src, "unit_raw": unit_raw or unit_raw_i or None,
+            **{k: (str(vals[k]) if vals[k] is not None else None) for k in NUM_COLS},
+            "percent": pct or None,
+            "conf": {k: confs[k] for k in NUM_COLS if confs[k] is not None},
+            "raw": {k: [(str(v), how, src) for v, how, src in cands[k]] for k in NUM_COLS if cands[k]},
+            "flags": flags})
+    return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("book_dir")
+    ap.add_argument("out_dir")
+    ap.add_argument("first", type=int)
+    ap.add_argument("last", type=int)
+    ap.add_argument("--crews", default=None)
+    ap.add_argument("--pages", default=None, help="comma-separated pdf pages to parse instead of the first..last range")
+    a = ap.parse_args()
+    book = Path(a.book_dir)
+    crews = {}
+    if a.crews and Path(a.crews).exists():
+        with open(a.crews, encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                crews[r["crew_id"]] = {k: (float(v) if v not in ("", None) else None) for k, v in r.items()
+                                       if k not in ("crew_id", "notes", "checks_ok", "page_pdf")}
+    parts = Parts(book / "parts")
+    out = Path(a.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    n_lines = n_pages = 0
+    pages = [int(x) for x in a.pages.split(",")] if a.pages else range(a.first, a.last + 1)
+    for p in pages:
+        if not (book / "ocr" / f"p{p:04d}.tsv").exists():
+            continue
+        res = parse_page(p, book, parts, crews)
+        (out / f"p{p:04d}.json").write_text(json.dumps(res, ensure_ascii=False), encoding="utf-8")
+        if res["header_found"]:
+            n_pages += 1
+            n_lines += len(res["lines"])
+        if p % 50 == 0:
+            print(f"  page {p}: {n_pages} table pages, {n_lines} lines so far", flush=True)
+    print(f"pages with a unit-price header: {n_pages}; lines: {n_lines}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

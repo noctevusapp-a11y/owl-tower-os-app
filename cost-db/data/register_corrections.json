@@ -1,0 +1,212 @@
+{
+ "_comment": "Corrections from the independent source-claim review (agent F2, see docs/independent_review_F2.md). Original agent statements are preserved in data/raw_agent_returns; corrections are appended to notes and enumerated fields are set. Applied by pipeline/scripts/ingest_agent_returns.py.",
+ "reviewer": "agent-F2",
+ "source_corrections": [
+  {
+   "source_id": "SRC-FRED-API",
+   "set": {
+    "reuse_status": "restricted_no_storage"
+   },
+   "append_notes": "CORRECTION (reviewer F2): FRED restrictions on storing/caching FRED content and AI/ML use are supported by FRED's announcement and legal-notice text, but the API Terms of Use page was not read. Human must read https://fred.stlouisfed.org/docs/api/terms_of_use.html. Project rule unchanged: use FRED only to discover series ids; ingest values from bls.gov.",
+   "reason": "F2 claim 3 PARTLY: restriction is real (announcement + legal notice) but the API terms page itself was not read",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-FRED-PPI-READYMIX-CONCRETE",
+   "set": {
+    "title": "FRED: PPI ready-mix concrete series (WPU1333 NSA primary; WPS1333 SA stale; PCU327320327320 industry cross-check) - ids to verify",
+    "reuse_status": "restricted_no_storage",
+    "review_status": "flagged"
+   },
+   "append_notes": "CORRECTION (reviewer F2): primary escalation series is WPU1333 (NSA, monthly, 1982=100; same data as WPU133301). WPS1333 (SA twin) last value seen Sep 2025 - looks stale, do not use. WPS133301 NOT FOUND. Register title's 'PCU3273232732' not seen in any result (probable typo for PCU327320327320 = industry-based NAICS 327320 series, a cross-check only). WPU13330101D (West region) is an UNVERIFIED candidate for Los Angeles. A human must open the series pages before any ingestion. Values must not be stored from FRED.",
+   "reason": "F2 claim 4: identifier dispute resolved partly; 'PCU3273232732' not seen anywhere",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-BLS-PPI",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): Agent A1's 'WPS133301' (SA ready-mix PPI, 'Apr 2026: 391.392') could not be found - do not use it. 'Latest values seen' in agent text (e.g. WPUID612 Feb 2026) are stale snapshots and are not stored; re-pull from bls.gov at ingestion time.",
+   "reason": "F2 claim 4 / X2: WPS133301 not verifiable; 'latest values' are stale",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-BLS-ECI",
+   "set": {
+    "review_status": "flagged"
+   },
+   "append_notes": "CORRECTION (reviewer F2): 'ECICONWAG' is a FRED-style alias; BLS-native ECI series ids look like CIU.../CIS.... The BLS-native id of the construction wages-and-salaries series was NOT seen. Read https://www.bls.gov/eci/factsheets/eci-series-id-guide.htm before API ingestion; the stored series_code will fail against the BLS API as it stands.",
+   "reason": "F2 claim 4: ECICONWAG is a FRED alias, not a BLS-native id",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-HOMEDEPOT-TERMS-AMPSERVICES",
+   "set": {
+    "reuse_status": "restricted_no_automated_access"
+   },
+   "append_notes": "CORRECTION (reviewer F2): the clause on homedepot.com itself is NOT known. Provisional operating rule = no automated access (manual capture only) until a person reads the live Terms of Use and https://www.homedepot.com/c/faqs/legal-and-ethical-policies/ and pastes the clause here.",
+   "reason": "F2 claim 5 NOT VERIFIABLE: the main homedepot.com clause was never seen; three Home Depot properties prohibit scraping",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-GRAINGER-TERMS-OF-ACCESS",
+   "set": {
+    "reuse_status": "restricted_no_automated_access",
+    "review_status": "flagged"
+   },
+   "append_notes": "CORRECTION (reviewer F2): the statement that no robots.txt was found is WRONG. https://www.grainger.com/robots.txt exists and blocks named AI/SEO crawlers (including GPTBot and ClaudeBot) site-wide. The Terms of Access clause is still not verified; provisional operating rule = manual capture only.",
+   "reason": "F2 claim 5 CONTRADICTED: register said no robots.txt; one exists and blocks named AI/SEO crawlers site-wide",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-DUNNEDWARDS-PDS-LIBRARY",
+   "set": {
+    "review_status": "flagged"
+   },
+   "append_notes": "CORRECTION (reviewer F2): Dunn-Edwards terms exist at https://www.dunnedwards.com/terms-of-use/ (not read; no automation clause seen). Copying data sheets is not licensed; recording individual values as cited facts looks low risk. EVEREST VOC '2 g/L' came from an older sheet: the Oct 2024 PDS (EVER10-EN-PDS-1024) says <5 g/L (RAVOC <3 g/L). EVER10 also exists as EVER10-EN-PDS-1024.pdf. RULE: store the data-sheet revision date with every manufacturer value. 1.5 mil DFT and 375-425 sq ft/gal are not contradicted but not confirmed on a current sheet.",
+   "reason": "F2 claims 5/12: ToS exists; VOC 2 g/L contradicted by the Oct 2024 sheet",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-DIR-PWD-GENERAL-2026-2",
+   "set": {
+    "access_format": "PDF (Excel referenced on index page; unconfirmed)"
+   },
+   "append_notes": "CORRECTION (reviewer F2): 'PDF only / no API' is softened: the DIR index page mentions Excel (2003-era wording), so some files may be .xls. 'No API or bulk download found' does not mean none exists - ask the DIR Research Unit.",
+   "reason": "F2 claim 6 PARTLY: index page mentions Excel; 'no API' unproven rather than disproved",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-CALTRANS-EQRR-2026-27",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): 'PDF plus CSV' is unsupported - PDF confirmed, CSV not confirmed. Edition in force on 2026-10-24 is probably the Sep 2026-Mar 2027 interim (v3 = Apr-Aug 2026) but no result states which is official; a 15% fuel-price re-publication trigger was noted. Operator treatment is UNKNOWN - do not assume rates are operator-excluded until the User's Guide in the rate book is read.",
+   "reason": "F2 claims 9: edition unconfirmed, operator unknown, CSV unsupported",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-CALTRANS-CONTRACTCOST",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): existence and size confirmed; no export described; conditions of use text unseen - do not scrape; a person must read the conditions.",
+   "reason": "F2 claim 9 PARTLY",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-USACE-EP1110-1-8-VOL07-2016",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): Region VII must NOT be treated as the California volume; that was never established. A person must read Figure 1.1 and Appendix B (area factors). Current rates page: https://www.usace.army.mil/Missions/Cost-Engineering/EP1110-1-8/.",
+   "reason": "F2 claim 9 NOT VERIFIABLE",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-USACE-EP1110-1-8-RV1-12",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): methodology edition 12 Aug 2021 is supported; regional rate volumes seen are Nov 2016 / 2018.",
+   "reason": "F2 claim 9 PARTLY",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-NAVFAC-P405-1996",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): existence, public download and 'man-hours per work function' tables supported; coverage of framing/drywall/painting/concrete and distribution status NOT verified.",
+   "reason": "F2 claim 10 PARTLY",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-JOINT-TM3-34-41-2021",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): existence, Oct 2021 edition (Change 1 Oct 2022) and public Marine Corps PDF supported; labor-hour/production tables per unit for the target trades NOT verified.",
+   "reason": "F2 claim 10 PARTLY",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-CSI-MASTERFORMAT-TERMS",
+   "set": {
+    "reuse_status": "licence_required"
+   },
+   "append_notes": "CORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists.",
+   "reason": "F2 claim 11 PARTLY: 'prohibited' overstates; CSI requires a licence for commercial derivative products using numbers/titles",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-CSI-UNIFORMAT-EULA",
+   "set": {
+    "reuse_status": "licence_required"
+   },
+   "append_notes": "CORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists.",
+   "reason": "F2 claim 11 PARTLY: 'prohibited' overstates; CSI requires a licence for commercial derivative products using numbers/titles",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-CSI-OMNICLASS-LICENSE",
+   "set": {
+    "reuse_status": "licence_required"
+   },
+   "append_notes": "CORRECTION (reviewer F2): CSI wording is 'licence required for a commercial derivative product that employs numbers/titles; contact CSI', not an outright prohibition. PROJECT RULE unchanged: own category codes only, external-reference field empty until a licence exists.",
+   "reason": "F2 claim 11 PARTLY: 'prohibited' overstates; CSI requires a licence for commercial derivative products using numbers/titles",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-JM-FIBERGLASS-FACT-SHEET",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F2): R-19 15x93 coverage 87.18 sq ft/bag is consistent with distributor listings (9 pieces x 9.69 sq ft) but the fact-sheet row itself was not re-seen.",
+   "reason": "F2 claim 12 PARTLY",
+   "reviewer": "agent-F2"
+  },
+  {
+   "source_id": "SRC-BLS-OEWS-LA-MAY2025-NR",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F1): the statement that metro division 31084 is 'used for LA County trade wages' is an ASSUMPTION. This release covers the Los Angeles-Long Beach-Anaheim MSA; the metropolitan-division table was not located or confirmed. Labor capture targets addressed to REG-MD-31084 must be confirmed against the OEWS area list before ingestion.",
+   "reason": "F1-030(2): 'used for LA County trade wages' is an assumption",
+   "reviewer": "agent-F1"
+  },
+  {
+   "source_id": "SRC-BLS-API-V2",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F1): this entry and SRC-BLS-PUBLIC-DATA-API describe the same BLS API FAQ page. The registry keeps both for traceability; the effective terms are the more cautious of the two until a person reads https://www.bls.gov/developers/api_faqs.htm.",
+   "reason": "F1-030(3): same BLS API FAQ registered twice with different status/tier",
+   "reviewer": "agent-F1"
+  },
+  {
+   "source_id": "SRC-BLS-PUBLIC-DATA-API",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F1): duplicate of SRC-BLS-API-V2 (same FAQ page, different reuse_status/tier). Treat unknown_needs_check as authoritative until the page is read.",
+   "reason": "F1-030(3): duplicate of SRC-BLS-API-V2",
+   "reviewer": "agent-F1"
+  },
+  {
+   "source_id": "SRC-BLS-PPI-CONSTRUCTION-INPUTS",
+   "set": {},
+   "append_notes": "CORRECTION (reviewer F1): the reuse statement refers to SRC-BLS-PUBLIC-DATA-API; the BLS copyright page itself was NOT seen by agent A3 (agent A1 reports seeing it in a search summary). Treat the public-domain status as search-summary level only.",
+   "reason": "F1-030(3): depends on a copyright statement that was never seen",
+   "reviewer": "agent-F1"
+  }
+ ],
+ "digest_notes": {
+  "A1": {
+   "18": "REVIEWER F2: ECICONWAG is a FRED alias, not a BLS-native id.",
+   "20": "REVIEWER F2: stale snapshot from FRED - never stored; re-pull from bls.gov.",
+   "22": "REVIEWER F2: WPS133301 NOT FOUND; use WPU1333 as primary after a human opens it."
+  },
+  "A3": {
+   "3": "REVIEWER F2: WPS1333 SA twin last value seen Sep 2025 - stale; primary is WPU1333.",
+   "4": "REVIEWER F2: series id 'PCU3273232732' not seen in any result (probable typo).",
+   "5": "REVIEWER F2: industry-based cross-check series only.",
+   "16": "REVIEWER F2: not confirmed on a current data sheet (1.5 mils DFT).",
+   "17": "REVIEWER F2: not contradicted (EPD declares 400; theoretical ~428) but the 375-425 range was not confirmed on a current sheet.",
+   "18": "REVIEWER F2: CONTRADICTED. The Oct 2024 PDS (EVER10-EN-PDS-1024) says <5 g/L (RAVOC <3 g/L); 2 g/L is from an older sheet. Store the PDS revision date with manufacturer values.",
+   "34": "REVIEWER F2: consistent with distributor listings (9 pieces x 9.69 sq ft); fact-sheet row not re-seen."
+  }
+ },
+ "index_corrections": [
+  {
+   "series_code": "ECICONWAG",
+   "review_status": "flagged",
+   "note": "REVIEWER F2: series_code is a FRED alias, not a BLS-native id; confirm the BLS id before API ingestion."
+  }
+ ],
+ "finding_notes": [
+  "REVIEWER F1 (F1-030): the A1 finding that the example ECEC id 'CMU2010000000000D' is 'not 17 characters' is WRONG - it has exactly 17 characters. The raw agent text is preserved unchanged in data/raw_agent_returns/agent_A1_labor_indices.json.",
+  "REVIEWER F1 (F1-030): finding A1 says the OEWS metropolitan-division table was not located, while regions.csv / SRC-BLS-OEWS-LA-MAY2025-NR said it is 'used for LA County'. Resolution: the geography is an ASSUMPTION (see corrections on SRC-BLS-OEWS-LA-MAY2025-NR).",
+  "REVIEWER F1 (F1-030): finding A3 (gap) says the BLS copyright page was not seen, while A1 and most BLS register rows say it was. Resolution: BLS public-domain status is search-summary level (see SRC-BLS-PPI-CONSTRUCTION-INPUTS).",
+  "REVIEWER F2: series 'WPS133301' in agent A1's data points was NOT FOUND; 'PCU3273232732' in agent A3's source title is a probable typo; 'ECICONWAG' is a FRED alias, not a BLS-native id (see register corrections)."
+ ]
+}

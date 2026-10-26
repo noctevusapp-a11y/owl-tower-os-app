@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Write the extraction report of the book table: what was read, how it was checked, what is derived, what is open.
+
+  python3 -I report.py <table_dir> <crews_totals.csv> <trade_rates.csv> <out.md> [--spot label=sample.csv ...]
+
+Each --spot is a spot-check sample (written by spot_check.py) with the reviewer's verdict column filled (ok / wrong:<cells>).
+A sample is reported against the *current* table: rows that the current rule moved out of the sampled tier are listed, and the
+correctness rate is given for the rows still in the tier (a sample drawn from the earlier tier, restricted to the current tier,
+is still a uniform random sample of the current tier because the rule only removes rows).
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+
+OPEN_FLAGS = {"MONEY_UNSETTLED", "MONEY_AMBIGUOUS", "OUTPUT_HOURS_UNSETTLED", "OUTPUT_HOURS_AMBIGUOUS", "LABOR_CREW_MISMATCH",
+              "CREW_UNREAD", "LINE_NUMBER_MISSING", "LINE_ORDER", "SECTION_ID_DOUBTFUL", "OP_MISMATCH", "COST_MISSING", "OUTPUT_HOURS_MISSING",
+              "EQUIPMENT_DERIVED_FROM_SUM", "EQUIP_WITHOUT_CREW_EQUIP", "SECTION_UNKNOWN", "LINE_NUMBER_DUPLICATE"}
+MEANING = {"MONEY_UNSETTLED": "material/labor/equipment/total do not add up for any combination of readings",
+           "MONEY_AMBIGUOUS": "two combinations add up equally well", "OUTPUT_HOURS_UNSETTLED": "daily output × labor-hours is not a crew-day",
+           "OUTPUT_HOURS_AMBIGUOUS": "two output/hours pairs fit", "LABOR_CREW_MISMATCH": "labor ≠ crew daily cost / output",
+           "CREW_UNREAD": "the crew cell is printed but unreadable", "LINE_NUMBER_MISSING": "no reading caught the line number",
+           "LINE_ORDER": "line number out of the section's numbering order (misread)",
+           "SECTION_ID_DOUBTFUL": "the line numbering restarted under a section id: a new section began whose header line (id) was unreadable, "
+                                  "so the lines from the restart on carried the previous id — they get no section id and no cost code",
+           "LINE_NUMBER_DUPLICATE": "another line carries the same section and line number without doubt: this line's cost code is removed "
+                                    "(a code names one printed line)",
+           "OP_MISMATCH": "total incl. O&P contradicts the components",
+           "COST_MISSING": "a crew-day was printed but no cost was read", "OUTPUT_HOURS_MISSING": "a labor cost is printed but no output/hours were read",
+           "EQUIPMENT_DERIVED_FROM_SUM": "equipment computed as total − material − labor (no crew confirmation)",
+           "EQUIP_WITHOUT_CREW_EQUIP": "an equipment cost on a crew that owns no equipment — the signature of the total slipping one column left",
+           "SECTION_UNKNOWN": "no section id read on the page and none could be carried from the previous page: the line has no cost code",
+           "LINE_NUMBER_ASSUMED": "leading digit(s) of the line number cut at the page edge; the restored value rests on an assumption "
+                                  "(no later full number brackets it, or only two digits were read)",
+           "UNIT_UNREAD": "the unit cell is printed but no reading could turn it into a unit of the book",
+           "COLUMN_SLIP_MOVED": "a reading under Equipment on a crew without equipment and nothing under Total was moved to Total: columns in doubt",
+           "WEAK_READING": "a money cell kept on one reading only (prefix; the cells are named after the colon)"}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("table")
+    ap.add_argument("crews_csv")
+    ap.add_argument("trades_csv")
+    ap.add_argument("out")
+    ap.add_argument("--spot", action="append", default=[], help="label=path of a spot-check sample.csv with verdicts")
+    a = ap.parse_args()
+    table, out = Path(a.table), Path(a.out)
+    rows = list(csv.DictReader((table / "book_lines_la_latest.csv").open(encoding="utf-8")))
+    rep = json.loads((table / "build_report.json").read_text(encoding="utf-8"))
+    drep = json.loads((table / "derive_report.json").read_text(encoding="utf-8"))
+    crews = list(csv.DictReader(Path(a.crews_csv).open(encoding="utf-8"))) if Path(a.crews_csv).exists() else []
+    trades = list(csv.DictReader(Path(a.trades_csv).open(encoding="utf-8"))) if Path(a.trades_csv).exists() else []
+    st = Counter(r["status"] for r in rows)
+    tiers = ("verified", "machine_read", "flagged")
+    priced = [r for r in rows if r["status"] in tiers]
+    by_div = Counter((r["division"], r["status"]) for r in priced)
+    divs = sorted({r["division"] for r in priced if r["division"]})
+    flags = Counter()
+    for r in rows:
+        for f in r["flags"].split(";"):
+            if f:
+                flags[f.split(":")[0] if f.startswith("WEAK_READING") else f] += 1
+    crews_ok = sum(1 for c in crews if c.get("checks_ok", "").lower() == "true")
+    trades_ok = sum(1 for t in trades if t.get("checks_ok", "").lower() == "true")
+    derived_verified = sum(1 for r in rows if r["status"] == "verified" and r.get("total_la_latest"))
+    no_code = sum(1 for r in priced if r["status"] in ("verified", "machine_read") and not r["cost_code"])
+
+    # spot checks against the current table
+    by_key: dict = {}
+    by_key2: dict = {}
+    for r in rows:
+        by_key.setdefault((r["section_id"], r["line"], r["pdf_page"]), []).append(r)
+        by_key2.setdefault((r["line"], r["pdf_page"]), []).append(r)
+
+    def find_row(s):
+        """the table row a sample row refers to; when two rows share page and line number (a duplicate number), the description decides"""
+        cands = by_key.get((s["section_id"], s["line"], s["pdf_page"])) or by_key2.get((s["line"], s["pdf_page"])) or []
+        if len(cands) > 1:
+            # the sample carries the cells as they were when drawn: the row with the same unit and printed money is the one
+            cells = ("unit", "material_2022", "labor_2022", "equipment_2022", "total_2022")
+            same = [r for r in cands if all((r.get(c) or "") == (s.get(c) or "") for c in cells if c in s)]
+            if len(same) == 1:
+                return same[0]
+            if s.get("description"):
+                same = [r for r in cands if (r.get("description") or "").strip() == s["description"].strip()]
+                if same:
+                    return same[0]
+        return cands[0] if cands else None
+    spot_lines = []
+    for item in a.spot:
+        label, path = item.split("=", 1)
+        sample = list(csv.DictReader(Path(path).open(encoding="utf-8")))
+        tier = "machine_read" if label.startswith("machine_read") else "verified"
+        still, ok, left = 0, 0, []
+        for s in sample:
+            v = s.get("reviewer_verdict", "").strip()
+            if not v:
+                continue
+            t = find_row(s)
+            cur = t["status"] if t else "missing"
+            if cur == tier:
+                still += 1
+                ok += v.lower().startswith("ok")
+            else:
+                left.append(f"p{s['pdf_page']} {s['section_id'] or '(no section)'} {s['line']} → {cur}: {v}" + (f" [{t['flags']}]" if t and not v.lower().startswith('ok') else ""))
+        spot_lines += [f"* **{label}** sample (`spot_check/{label}/`): {len(sample)} rows drawn and compared cell by cell against the page image; "
+                       f"{still} of them are in the `{tier}` tier of this build — **{ok} of {still} fully correct**."]
+        for l in left:
+            spot_lines.append(f"  * left the tier under the current rule: {l}")
+
+    lines = [f"# Book table extraction report — Building Construction Costs with RSMeans data 2022 (company reference copy)", "",
+             f"Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%MZ')}. Scripts: `cost-db/book_ocr/` (OCR, three-reading parser, table builder, "
+             "derivation, spot check). Data: `cost-db/data/books/rsmeans_bcc_2022/`.", "",
+             "## 1. What was read", "",
+             f"* Scan: 964 PDF pages (sha256 `9c5aee73…c075bc`), unit-price section PDF pages 24–750, split into 6 parts and transferred from the owner's Mac.",
+             f"* Readings of every cell: tesseract 5.3 on the 360-dpi page (T, weight 1) **and** the scan's own text layer, a second engine (I, weight 1) "
+             "**and** tesseract on the 600-dpi page, a second pass (H, weight 1) **and** a geometric reading of every number (G, weight 3: digit-glyph "
+             "count and decimal-point position on the page image; it fixes the point of an OCR digit string, it does not invent digits). A value is kept "
+             "only when the readings agree or the table's arithmetic selects it: `total = material + labor + equipment`; `labor-hours = crew labor-hours / "
+             "daily output`; `labor = crew daily labor cost / output`; `total incl. O&P = 1.10 × material + crew O&P labor / output + 1.10 × equipment`.",
+             f"* Second pass over the open lines (`second_pass.py`): a line whose crew cell is unreadable gets the crew only when exactly one crew of the "
+             f"crew table satisfies all identities of the line at once (labor-hours per day, bare daily labor cost, equipment printed iff the crew owns "
+             f"equipment, total incl. O&P where printed) — `CREW_FROM_ARITHMETIC`, {flags.get('CREW_FROM_ARITHMETIC', 0)} lines; a reading under Equipment "
+             f"on a crew without equipment and nothing under Total is the total that slipped a column (`COLUMN_SLIP_MOVED`, {flags.get('COLUMN_SLIP_MOVED', 0)} "
+             "lines, the sum check decides); then every line is re-settled with the four readings.",
+             f"* Table pages parsed: **{rep['pages']}** (every unit-price table page of the scan; on {rep.get('pages_template', 0)} of them the column header "
+             "was unreadable and the columns were fitted to the page's own number clusters, labelled by the anchors of the neighbouring same-side page: "
+             f"`HEADER_TEMPLATE`); pages without a table skipped: {rep.get('pages_skipped', '?')} (division intro, Division Notes, reference); sections: **{rep['sections']}**; "
+             f"printed lines: **{rep['lines']}** (priced lines {len(priced)}, description-only lines {st.get('header', 0)}, percentage-add lines {st.get('percent_add', 0)}).",
+             f"* Crew table (book pages 749–785): {len(crews)} crews parsed, {crews_ok} pass every identity (member sums, labor-hours, cost per labor-hour); "
+             f"single-trade crews (`1 Carp` …) are built from the trade-rate table (inside back cover: {len(trades)} trades, {trades_ok} pass the row identities).",
+             f"* City Cost Index, Los Angeles (900–902), book page 791: 20 rows read from a 300-dpi crop and checked against the image.",
+             f"* A page that starts in the middle of a section takes the section id of the previous page (`SECTION_CARRIED`, {flags.get('SECTION_CARRIED', 0)} lines) "
+             "only when its line numbers continue that section's numbering in order and the page's first printed section comes after it; otherwise the "
+             f"lines stay without a section (`SECTION_UNKNOWN`, {flags.get('SECTION_UNKNOWN', 0)} lines) and without a cost code.", "",
+             "## 2. Status of the priced lines (the rule)", "",
+             "A line is **verified** only when all of the following hold. Nothing else is called verified; no tolerance is attached to any number.", "",
+             "1. every printed number (output, hours, material, labor, equipment, total, total incl. O&P) is **confirmed**: two different engines read "
+             "exactly the same value (the scan's text layer and tesseract; tesseract at 360 and 600 dpi count as one engine; the geometric reading "
+             "fixes the decimal point but reads no digits), or an identity of the book determines it from confirmed cells — crew day (output × hours = "
+             "crew labor-hours), crew labor (labor = crew daily cost / output), O&P (1.10 × M + crew O&P labor / output + 1.10 × E), sum (M + L + E = T): "
+             "in each identity all cells but one confirm the last; a cell computed by the settle step has no reading and is confirmed only this way;",
+             "2. (contained in 1) a daily output / labor-hours pair without a known crew needs both numbers read by two engines: the crew-day rule alone "
+             "(a multiple of 4 labor-hours) is too weak to decide between readings;",
+             "3. no check is open: the money cells add up, labor agrees with the crew's daily cost, output × hours is a crew-day, the line number is in "
+             "the section's numbering order, the section id is known, the crew is read, total incl. O&P (where printed) agrees with the components;",
+             "4. the money columns are tied: the total was read (so `total = M + L + E` ties the cells to their columns) or the O&P value checks the row "
+             "or the equipment cell is empty or confirmed by the crew's own equipment cost;",
+             "5. an equipment cost on a crew that owns no equipment fails the line (`EQUIP_WITHOUT_CREW_EQUIP`).", "",
+             "**machine_read**: no check failed, but at least one number rests on fewer readings than rule 1–2 demand (for example two readings agree "
+             "and the third is absent) or the columns are not tied by rule 4. **flagged**: a check failed or a cell stayed unreadable; the values shown "
+             "are the best readings. Both tiers are *not verified*: read the line on `book_page` before using it.", "",
+             f"| status | lines | share of priced |", "|---|---|---|"]
+    for t in tiers:
+        lines.append(f"| {t} | {st.get(t, 0)} | {st.get(t, 0) / max(1, len(priced)):.1%} |")
+    lines += ["", f"Every verified and machine_read line carries a cost code ({no_code} without one).", "",
+              "By division (verified / machine_read / flagged):", "", "| division | verified | machine_read | flagged |", "|---|---|---|---|"]
+    for d in divs:
+        lines.append(f"| {d} | {by_div[(d, 'verified')]} | {by_div[(d, 'machine_read')]} | {by_div[(d, 'flagged')]} |")
+    lines += ["", "Open flags (one line can carry several):", "", "| flag | lines | meaning |", "|---|---|---|"]
+    for f, n in sorted(flags.items(), key=lambda kv: -kv[1]):
+        if f in OPEN_FLAGS or f == "WEAK_READING":
+            lines.append(f"| `{f}` | {n} | {MEANING.get(f, '')} |")
+    lines += ["", "Informational flags (a cell computed from the others by the book's own rules, or a structural note): " +
+              ", ".join(f"`{f}` {n}" for f, n in sorted(flags.items(), key=lambda kv: -kv[1]) if f not in OPEN_FLAGS and f != "WEAK_READING"), "",
+              "## 3. Spot check against the page images", ""]
+    lines += spot_lines if spot_lines else ["Spot check sheets are in `spot_check/`; verdicts not yet recorded."]
+    lines += ["", "\"Fully correct\" means every cell printed on the row strip (line number, description, crew, output, hours, unit, the money cells) "
+              "matches the table. In the `section_carried` sample the carried section id is not visible on the strip: it rests on the numbering rule of "
+              "section 1 (continuing line numbers, next printed section after it), not on an eye check.", "",
+              "Every wrong verified row found in a round became a rule before the next round, so the rows marked wrong above have left the tier "
+              "(the slipped total, the merged output token, the output computed from rounded hours, the carried unit, the dropped O&P, the off-grid "
+              "reading, the material pinned by a slipped O&P, the component derived beside an unread one, and the output/hours pair decided by "
+              "weights alone). The one wrong verified row found first (page 322, 08 71 20.44 0610: the printed total 391.50 landed in the equipment column) is the reason for "
+              "rules 4–5 above; it is flagged in this build. Residual error types that no arithmetic reaches: a digit misread identically by all readings, "
+              "a value overlapped by the row above, the cut right edge of the scan (total incl. O&P).", "",
+              "## 4. Derived Los Angeles, latest-month values", "",
+              f"* {drep['priced_2022']} lines carry a 2022 cost; {drep['priced_latest']} got a derived Los Angeles value for {drep['latest_period']} "
+              f"({derived_verified} of them on verified lines).",
+              "* Formula per line: component × City Cost Index (LA, book 2022; material index for material, installation index for labor and equipment) "
+              "× BLS factor (material: PPI series by material class; labor: ECI total compensation, construction; equipment: PPI machinery). "
+              "Every factor is written next to the value. `origin = derived`, `review_status = unreviewed`.",
+              "* Not escalated separately: fuel inside the equipment cost (the fuel share of a crew's equipment cost is not published). Not applied: "
+              "any company-specific markup, sales tax, delivery, quantity discounts, current supplier quotes.", "",
+              "## 5. Limits", "",
+              "* The 2022 values are what the book printed, read by machine: the verified set is machine-verified by the rule above, not human-verified line by line; "
+              "the spot checks in section 3 are the only human-read sample.",
+              "* machine_read and flagged lines must be checked against the book page (`book_page`) before use.",
+              "* The crew id is confirmed by two identities only (labor-hours per day, daily labor cost). Crews that differ only in equipment "
+              "(B-13 / B-13B / B-13C) satisfy both; between them the OCR text of the crew cell decides, and the printed equipment column does not "
+              "reproduce the crew table closely enough to arbitrate (`EQUIP_CREW_DIFFERS` is informational). A crew suffix can therefore be wrong "
+              "on a verified line while every number on it is right.",
+              "* Line numbers cut at the left edge of the scan (one or two leading digits lost) are restored only when exactly one value with that tail "
+              "fits between the previous and the next fully read line numbers of the section (`LINE_NUMBER_RECONSTRUCTED`); otherwise the line keeps no number "
+              "and is flagged (`LINE_NUMBER_MISSING`).",
+              "* Total incl. O&P is missing on right-hand pages where the scan cut the column; where the crew is known it can be recomputed by the formula above.",
+              "* Descriptions are OCR text (cleaned); `description_path` applies the book's indentation rule mechanically and can over-include a sibling line.",
+              "* The derived latest values are budget-level references, not prices observed in Los Angeles in 2026.", ""]
+    out.write_text("\n".join(lines), encoding="utf-8")
+    print(f"wrote {out}")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

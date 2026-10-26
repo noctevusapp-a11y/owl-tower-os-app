@@ -1,0 +1,1474 @@
+section_id,title,division,division_name,first_pdf_page,division_uncertain_raw
+01 11 31.10,Architectural Fees,01,General Requirements,24,
+01 11 31.20,Construction Management Fees,01,General Requirements,24,
+01 11 31.30,Engineering Fees,01,General Requirements,24,
+01 11 31.50,Models,01,General Requirements,24,
+01 11 31.75,Renderings,01,General Requirements,24,
+01 21 53.60,Security Factors,01,General Requirements,25,01
+01 21 53.65,infectious Disease Precautions,01,General Requirements,25,
+01 21 55.50,JobConditions,01,General Requirements,26,
+01 21 57.50,Overtime,01,General Requirements,26,
+01 21 63.10,Taxes,01,General Requirements,26,
+01 31 13.20,Field Personnel,01,General Requirements,26,
+01 31 13.40,Main Office Expense,01,General Requirements,27,
+01 31 13.50,General Contractor's Mark-Up,01,General Requirements,27,
+01 31 13.80,Overhead and Profit,01,General Requirements,28,
+01 31 13.90,Performance Bond,01,General Requirements,28,
+01 31 14.20,Lock OutTag,01,General Requirements,28,
+01 32 13.50,Scheduling of Work,01,General Requirements,28,
+01 32 33.50,Photographs,01,General Requirements,28,
+01 41 26.50,Permits,01,General Requirements,29,01
+01 45 23.50,Testing,01,General Requirements,29,
+01 51 13.80,Temporary Utilities,01,General Requirements,31,01
+01 52 13.20,Office and Storage Space,01,General Requirements,31,
+01 52 13.40,Field Office Expense,01,General Requirements,31,01
+01 54 09.50,Personnel Protective,01,General Requirements,32,
+01 54 09.60,Safety Nets,01,General Requirements,32,
+01 54 16.50,Weekly ForkliftCrew,01,General Requirements,32,
+01 54 19.50,Daily Crane Crews A,01,General Requirements,32,
+01 54 19.60,Monthly Tower Crane Crew,01,General Requirements,32,
+01 54 23.60,Pump Staging,01,General Requirements,32,
+01 54 23.70,Scaffolding,01,General Requirements,33,
+01 54 23.75,Scaffolding Specialties,01,General Requirements,34,
+01 54 23.80,Staging Aids,01,General Requirements,35,
+01 54 26.50,Swing Staging,01,General Requirements,36,
+01 54 36.50,Mobilization,01,General Requirements,36,
+01 55 23.50,Roads and Sidewalks,01,General Requirements,36,
+01 56 13.90,Winter Protection,01,General Requirements,37,
+01 56 16.10,"Dust Barriers, Temporary",01,General Requirements,37,01
+01 56 23.10,Barricades,01,General Requirements,38,
+01 56 26.50,Temporary Fencing:,01,General Requirements,38,
+01 57 33.50,Watchman,01,General Requirements,39,01
+01 58 13.50,Signs,01,General Requirements,39,01
+01 66 19.10,Material Handling,01,General Requirements,39,01
+01 71 23.19,Surveyor Stakes,01,General Requirements,39,
+01 74 13.20,CleaningUp,01,General Requirements,40,
+01 76 13.20,Temporary Protection,01,General Requirements,40,
+01 91 13.50,Building Commissioning,01,General Requirements,40,
+02 21 13.09,Topographical Surveys,02,Existing Conditions,42,
+02 21 13.13,Boundary and Survey Markers,02,Existing Conditions,42,
+02 21 13.16,Aerial Surveys,02,Existing Conditions,42,
+02 31 23.10,Ground Penetrating Radar,02,Existing Conditions,42,
+02 32 13.10,Boring and Exploratory Drilling,02,Existing Conditions,42,
+02 32 19.10,Test Pits,02,Existing Conditions,43,02
+02 41 13.15,Hydrodemolition,02,Existing Conditions,43,
+02 41 13.16,Hydroexcavation,02,Existing Conditions,43,02
+02 41 13.17,"Demolish, Remove Pavement and Curb",02,Existing Conditions,43,
+02 41 13.23,Utility Line Removal,02,Existing Conditions,44,
+02 41 13.30,Minor Site Demolition,02,Existing Conditions,44,
+02 41 13.33,Railtrack Removal,02,Existing Conditions,44,
+02 41 16.13,Building Demolition,02,Existing Conditions,45,
+02 41 16.15,Explosive/Implosive Demolition,02,Existing Conditions,45,
+02 41 16.17,Building Demolition Footings and Foundations,02,Existing Conditions,45,
+02 41 19.13,Selective Building Demolition,02,Existing Conditions,46,
+02 41 19.16,"Selective Demolition, Cutout",02,Existing Conditions,46,
+02 41 19.18,"Selective Demolition, Disposal Only",02,Existing Conditions,47,02
+02 41 19.19,Selective Demolition,02,Existing Conditions,47,02
+02 41 19.20,"Selective Demolition, Dump Charges",02,Existing Conditions,48,
+02 41 19.25,"Selective Demolition, Saw Cutting",02,Existing Conditions,49,02
+02 41 19.27,"Selective Demolition, Torch Cutting",02,Existing Conditions,49,02
+02 42 10.20,Deconstruction of Building Components,02,Existing Conditions,50,
+02 42 10.30,Deconstruction Material Handling,02,Existing Conditions,51,
+02 43 13.13,Building Relocation,02,Existing Conditions,52,
+02 56 13.10,Containment of Hazardous Waste,02,Existing Conditions,52,
+02 58 13.10,Snow Fencing System,02,Existing Conditions,53,02
+02 65 10.30,Removal of Underground Storage Tanks,02,Existing Conditions,53,02
+02 81 20.10,Hazardous Waste Cleanup/Pickup/Disposal,02,Existing Conditions,54,
+02 82 13.39,Asbestos Remediation Plans and Methods,02,Existing Conditions,54,
+02 82 13.41,Asbestos Abatement Equipment,02,Existing Conditions,54,
+02 82 13.42,Preparation of Asbestos Containment Area,02,Existing Conditions,55,02
+02 82 13.43,BulkAsbestosRemoval,02,Existing Conditions,56,
+02 82 13.44,Demolition In Asbestos Contaminated Area,02,Existing Conditions,56,
+02 82 13.45,OSHA Testing,02,Existing Conditions,57,02
+02 82 13.46,Decontamination of Asbestos Containment,02,Existing Conditions,57,02
+02 82 13.48,Asbestos Encapsulation With Sealants,02,Existing Conditions,57,02
+02 83 19.21,Lead Paint Remediation Plans and Methods,02,Existing Conditions,58,
+02 83 19.23,Encapsulation of Lead-Based Paint,02,Existing Conditions,58,
+02 83 19.26,Removal of Lead-Based Paint,02,Existing Conditions,59,02
+02 87 13.16,Mold Remediation Preparation and,02,Existing Conditions,59,02
+02 87 13.33,Removal and Disposal of Materials With Mold,02,Existing Conditions,60,
+02 87 19.10,"Temporary Barriers, Including Ppe",02,Existing Conditions,61,02
+02 87 19.20,"Temporary Protection, Including Ppe",02,Existing Conditions,61,02
+02 87 19.30,Infectious Control Equipment and Supplies,02,Existing Conditions,61,02
+02 87 19.40,"Infectious Control Cleaning, Includes Pope",02,Existing Conditions,62,
+02 91 10.10,"Monitoring, Chem. Sampling, Testing",02,Existing Conditions,62,
+03 01 30.62,Concrete Patching,03,Concrete,66,
+03 05 05.10,"Selective Demolition, Concrete",03,Concrete,66,
+03 05 13.20,Concrete Admixtures and Surface,03,Concrete,66,
+03 05 13.25,Aggregate,03,Concrete,67,03
+03 05 13.30,Cement,03,Concrete,67,03
+03 05 13.80,Waterproofing and Dampproofing,03,Concrete,68,
+03 05 13.85,Winter Protection,03,Concrete,68,
+03 11 13.20,"Forms In Place, Beams and Girders",03,Concrete,68,
+03 11 13.25,"Forms In Place, Columns",03,Concrete,69,03
+03 11 13.30,"Forms In Place, Culvert",03,Concrete,70,
+03 11 13.35,"Forms In Place, Elevated Slabs",03,Concrete,70,
+03 11 13.40,"Forms In Place, Equipment Foundations",03,Concrete,71,03
+03 11 13.45,"Forms In Place, Footings",03,Concrete,71,03
+03 11 13.47,"Forms In Place, Gas Station Forms",03,Concrete,72,
+03 11 13.50,"Forms in Place, Grade Beam",03,Concrete,72,
+03 11 13.55,"Forms In Place, Mat Foundation",03,Concrete,72,
+03 11 13.65,"Forms In Place, Slab On Grade",03,Concrete,72,
+03 11 13.85,"Forms In Place, Walls",03,Concrete,74,
+03 11 16.13,Concrete Form Liners,03,Concrete,74,
+03 11 19.10,"Insulating Forms, LeftIn Place",03,Concrete,75,03
+03 11 19.60,Roof Deck Form Boards,03,Concrete,77,03
+03 11 23.75,"Forms In Place, Stairs",03,Concrete,77,03
+03 15 05.12,Chamfer Strips,03,Concrete,77,03
+03 15 05.15,Column Form Accessories,03,Concrete,78,
+03 15 05.30,Hangers,03,Concrete,78,
+03 15 05.70,Shores,03,Concrete,78,
+03 15 05.75,Sleeves and Chases,03,Concrete,79,03
+03 15 05.80,SnapTies,03,Concrete,79,03
+03 15 05.85,Stair Tread Inserts,03,Concrete,80,
+03 15 05.95,Wall and Foundation Form,03,Concrete,80,
+03 15 13.50,Waterstops,03,Concrete,80,
+03 15 16.20,"Control Joints, Saw Cut",03,Concrete,81,03
+03 15 16.30,Expansion Joints,03,Concrete,81,03
+03 15 19.05,Anchor Bolt Accessories,03,Concrete,82,
+03 15 19.10,Anchor Bolts,03,Concrete,82,
+03 15 19.20,Dovetail Anchor System,03,Concrete,84,
+03 15 19.30,Inserts,03,Concrete,85,03
+03 21 05.10,Rebar Accessories,03,Concrete,86,
+03 21 05.75,Splicing Reinforcing,03,Concrete,87,03
+03 21 11.60,Reinforcing In Place,03,Concrete,89,03
+03 21 13.10,Galvanized Reinforcing,03,Concrete,90,
+03 21 16.10,Epoxy-Coated Reinforcing,03,Concrete,90,
+03 21 21.11,Glass Fiber-Reinforced Polymer Reinf. Bars,03,Concrete,90,
+03 22 11.10,Plain Welded Wire Fabric,03,Concrete,90,
+03 22 13.10,Galvanized Welded Wire Fabric,03,Concrete,90,
+03 22 16.10,Epoxy-Coated Welded Wire Fabric,03,Concrete,91,03
+03 23 05.50,Prestressing Steel,03,Concrete,91,03
+03 24 05.30,Synthetic Fibers,03,Concrete,92,
+03 24 05.70,Steel Fibers,03,Concrete,92,
+03 30 53.40,Concrete In Place,03,Concrete,92,
+03 31 13.25,"Concrete, Hand Mix",03,Concrete,95,03
+03 31 13.30,"Concrete, Volumetric Site-Mixed",03,Concrete,95,03
+03 31 13.35,"Heavyweight Concrete, Ready Mix",03,Concrete,95,03
+03 31 13.70,Placing Concrete,03,Concrete,96,
+03 35 13.30,"Finishing Floors, High Tolerance",03,Concrete,98,
+03 35 16.30,"Finishing Floors, Heavy-Duty",03,Concrete,98,
+03 35 19.30,"Finishing Floors, Colored",03,Concrete,99,03
+03 35 23.30,"Finishing Floors, Exposed Aggregate",03,Concrete,99,03
+03 35 29.30,"Finishing Floors, Tooled",03,Concrete,99,03
+03 35 29.60,Finishing Walls,03,Concrete,99,03
+03 35 33.50,Slab Texture Stamping:,03,Concrete,99,03
+03 35 43.10,Polished Concrete Floors,03,Concrete,100,
+03 37 13.30,Gunite (Dry-Mix),03,Concrete,100,
+03 37 13.60,Shotcrete (Wet-Mix),03,Concrete,100,
+03 39 13.50,Water Curing,03,Concrete,101,03
+03 39 23.13,Chemical Compound Membrane Concrete,03,Concrete,101,03
+03 39 23.23,Sheet Membrane Concrete Curing,03,Concrete,101,03
+03 41 13.50,Precast Slab Planks,03,Concrete,101,03
+03 41 16.20,Precast Concrete Channel Slabs,03,Concrete,101,03
+03 41 16.50,Precast Lightweight Concrete Plank,03,Concrete,101,03
+03 41 23.50,Precast Stairs,03,Concrete,102,
+03 41 33.15,Precast Columns,03,Concrete,102,
+03 41 33.25,Precast Joists,03,Concrete,102,
+03 41 33.60,Precast Tees,03,Concrete,103,03
+03 45 13.50,Precast Wall Panels,03,Concrete,103,03
+03 47 13.50,Tilt-Up Wall Panels,03,Concrete,104,
+03 48 43.40,Precast Lintels,03,Concrete,104,
+03 48 43.90,Precast Window Sills,03,Concrete,104,
+03 51 13.50,Cementitious/Wood Fiber Planks,03,Concrete,104,
+03 51 16.50,"Gypsum Roof Deck —s_—©""",03,Concrete,105,03
+03 52 16.13,Lightweight Cellular Insulating Concrete,03,Concrete,105,03
+03 52 16.16,Lightweight Aggregate Insulating Concrete,03,Concrete,105,03
+03 53 16.50,FloorTopping,03,Concrete,105,03
+03 54 13.50,Poured Gypsum Underlayment,03,Concrete,105,03
+03 54 16.50,Cement Underlayment,03,Concrete,106,
+03 62 13.50,"Grout, Non-Metallic Non-Shrink",03,Concrete,106,
+03 62 16.50,"Grout, Metallic Non-Shrink",03,Concrete,106,
+03 63 05.10,Epoxy Only,03,Concrete,106,
+03 81 13.50,Concrete Floor/Slab Cutting,03,Concrete,107,03
+03 81 13.75,Concrete Saw Blades,03,Concrete,107,03
+03 81 16.50,Concrete Wall Cutting,03,Concrete,107,03
+03 82 13.10,Core Drilling:,03,Concrete,107,03
+03 82 16.10,Concrete Impact Drilling,03,Concrete,108,
+04 01 20.20,Pointing Masonry,04,Masonry,112,
+04 01 20.30,Pointing CMU,04,Masonry,112,
+04 01 20.40,Sawing Masonry,04,Masonry,112,
+04 01 20.41,Unit Masonry Stabilization,04,Masonry,112,
+04 01 20.52,Cleaning Masonry,04,Masonry,112,
+04 01 20.70,Brick,04,Masonry,113,04
+04 05 05.10,"Selective Demolition,",04,Masonry,113,04
+04 05 13.10,Cement,04,Masonry,114,
+04 05 13.20,Lime,04,Masonry,115,04
+04 05 13.23,Surface Bonding Masonry Mortaring,04,Masonry,115,04
+04 05 13.30,Mortar,04,Masonry,115,04
+04 05 13.91,Masonry Restoration Mortaring,04,Masonry,115,04
+04 05 13.93,MortarPigments,04,Masonry,115,04
+04 05 13.98,Mortar Admixtures,04,Masonry,115,04
+04 05 16.30,Grouting,04,Masonry,115,04
+04 05 19.05,Anchor Bolts,04,Masonry,116,
+04 05 19.16,Masonry Anchors,04,Masonry,116,
+04 05 19.26,Masonry Reinforcing Bars,04,Masonry,116,
+04 05 23.13,Masonry Control and Expansion Joints,04,Masonry,117,04
+04 05 23.19,"Masonry Cavity Drainage, Weepholes,",04,Masonry,117,04
+04 05 23.95,Wall Plugs,04,Masonry,117,04
+04 21 13.13,Brick Veneer Masonry,04,Masonry,117,04
+04 21 13.14,Thin Brick Veneer,04,Masonry,119,04
+04 21 13.15,Chimney,04,Masonry,119,04
+04 21 13.18,Columns,04,Masonry,119,04
+04 21 13.30,OversizedBrick,04,Masonry,119,04
+04 21 13.35,Common Building Brick,04,Masonry,120,
+04 21 13.40,Structural Brick,04,Masonry,120,
+04 21 13.45,Face Brick,04,Masonry,120,
+04 21 26.10,Structural Facing Tile,04,Masonry,120,
+04 21 29.10,Terra Cotta Masonry Components,04,Masonry,121,04
+04 21 29.20,Terra Cotta Tile,04,Masonry,122,
+04 22 10.11,Autoclave Aerated Concrete Block,04,Masonry,122,
+04 22 10.12,Chimney Block,04,Masonry,122,
+04 22 10.16,"Concrete Block, Bond Beam",04,Masonry,122,
+04 22 10.19,"Concrete Block, Insulation Inserts",04,Masonry,123,04
+04 22 10.23,"Concrete Block, Decorative",04,Masonry,123,04
+04 22 10.93,"Concrete Block, Decorative",04,Masonry,124,
+04 22 10.24,"Concrete Block, Exterior",04,Masonry,125,04
+04 22 10.26,Concrete Block Foundation Wall,04,Masonry,125,04
+04 22 10.28,"Concrete Block, High Strength",04,Masonry,125,04
+04 22 10.30,"Concrete Block, Interlocking",04,Masonry,125,04
+04 22 10.32,"Concrete Block, Lintels",04,Masonry,125,04
+04 22 10.33,Lintel Block,04,Masonry,126,
+04 22 10.34,"Concrete Block, Partitions",04,Masonry,126,
+04 22 10.38,Concrete Brick,04,Masonry,127,04
+04 22 10.42,"Concrete Block, Screen Block",04,Masonry,127,04
+04 22 10.44,Glazed Concrete Block,04,Masonry,127,04
+04 24 16.06,Adobe Brick,04,Masonry,128,
+04 25 20.10,Brick and Epoxy Mortar Panels,04,Masonry,129,04
+04 27 10.20,Cavity Walls,04,Masonry,129,04
+04 27 10.30,Brick Walls,04,Masonry,129,04
+04 27 10.40,Steps,04,Masonry,129,04
+04 41 10.10,Rough Stone Wall,04,Masonry,130,
+04 43 10.05,Ashlap Veneer,04,Masonry,130,
+04 43 10.10,Bluestone,04,Masonry,130,
+04 43 10.45,Granite,04,Masonry,131,04
+04 43 10.50,Lightweight Natural Stone,04,Masonry,131,04
+04 43 10.55,Limestone,04,Masonry,131,04
+04 43 10.60,Marble,04,Masonry,131,04
+04 43 10.75,Sandstone or Brownstone,04,Masonry,132,
+04 43 10.80,Slate,04,Masonry,132,
+04 43 10.85,Window Sill,04,Masonry,133,04
+04 51 10.10,Flue Lining,04,Masonry,134,
+04 54 10.10,FireBrick,04,Masonry,134,
+04 54 10.20,FireClay,04,Masonry,134,
+04 57 10.10,Fireplace,04,Masonry,134,
+04 71 10.10,Simulated Brick,04,Masonry,134,
+44 72 10.10,Coping,44,Pollution Control Equipment,135,44
+04 73 20.10,Simulated Stone,04,Masonry,136,
+05 01 10.51,Cleaning of Structural Metal Framing,05,Metals,138,
+05 05 05.10,"Selective Demolition, Metals",05,Metals,138,
+05 05 13.50,Paints and Protective Coatings x,05,Metals,138,
+05 05 19.10,Chemical Anchors,05,Metals,139,05
+05 05 19.20,Expansion Anchors,05,Metals,139,05
+05 05 21.10,Cutting Steel,05,Metals,140,
+05 05 21.15,Drilling Steel,05,Metals,140,
+05 05 21.90,Welding Steel,05,Metals,141,05
+05 05 23.10,BoltsandHexNuts,05,Metals,141,05
+05 05 23.25,High Strength Bolts,05,Metals,143,5
+05 05 23.30,Lag Screws,05,Metals,143,95
+05 05 23.35,Machine Screws,05,Metals,143,05
+05 05 23.50,Powder Actuated Tools and Fasteners,05,Metals,143,05
+05 05 23.55,Rivets,05,Metals,143,05
+05 05 23.70,Structural Blind Bolts,05,Metals,144,
+05 05 23.80,Vibration and Bearing Pads,05,Metals,144,
+05 05 23.85,Weld Shear Connectors,05,Metals,144,
+05 05 23.87,Weld Studs,05,Metals,144,
+05 05 23.90,WeldingRod,05,Metals,145,05
+05 12 23.05,Canopy Framing,05,Metals,146,
+05 12 23.10,Ceiling Supports,05,Metals,146,
+05 12 23.15,"Columns, Lightweight",05,Metals,146,
+05 12 23.17,"Columns, Structural",05,Metals,147,05
+05 12 23.18,Corner Guards,05,Metals,147,05
+05 12 23.20,Curb Edging te,05,Metals,147,05
+05 12 23.40,Lightweight Framing,05,Metals,148,
+05 12 23.45,Lintels,05,Metals,149,05
+05 12 23.60,Pipe Support Framing,05,Metals,149,05
+05 12 23.65,Plates,05,Metals,149,05
+05 12 23.70,Stressed Skin Steel Roof and Ceiling System,05,Metals,149,05
+05 12 23.75,Structural Steel Members,05,Metals,149,05
+05 12 23.77,Structural Steel Projects,05,Metals,151,05
+05 12 93.78,Structural Stee! Secondary Members,05,Metals,152,
+05 12 23.78,Structural Steel Secondary Members,05,Metals,153,05
+05 14 23.05,Aluminum Shapes,05,Metals,153,05
+05 15 16.05,Accessories for Steel WireRope,05,Metals,154,
+05 15 16.50,Steel Wire Rope,05,Metals,155,05
+05 15 16.60,Galvanized Steel Wire Rope and Accessories,05,Metals,156,
+05 15 16.70,Temporary Cable Safety Railing,05,Metals,156,
+05 21 13.50,Deep Longspan Joists,05,Metals,156,
+05 21 16.50,Longspan Joists,05,Metals,157,05
+05 21 19.10,Open Web Joists,05,Metals,158,
+05 21 23.50,JoistGirders,05,Metals,159,05
+05 31 13.50,Floor Decking —i,05,Metals,159,05
+05 31 23.50,Roof Decking,05,Metals,160,
+05 31 33.50,Form Decking,05,Metals,160,
+05 35 13.50,Cellular Decking,05,Metals,161,05
+05 41 13.10,Bridging,05,Metals,162,
+05 41 13.25,"Framing, Boxed Headers/Beams",05,Metals,162,
+05 41 13.30,"Framing, Stud Walls",05,Metals,163,05
+05 42 13.05,Bracing,05,Metals,165,05
+05 42 13.10,Bridging,05,Metals,165,05
+05 42 13.25,"Framing, Band Joist",05,Metals,166,
+05 42 13.30,"Framing, Boxed Headers/Beams",05,Metals,166,
+05 42 13.40,"Framing, Joists",05,Metals,167,05
+05 42 13.45,"Framing, Web Stiffeners",05,Metals,167,05
+05 42 23.10,"Framing, Bridging",05,Metals,169,05
+05 42 23.50,"Framing, Parapets",05,Metals,169,05
+05 42 23.60,"Framing, Roof Rafters",05,Metals,169,05
+05 42 23.70,"Framing, Soffits and Canopies",05,Metals,170,
+05 44 13.60,"Framing, Roof Trusses",05,Metals,171,05
+05 51 13.50,Pan Stairs,05,Metals,172,
+05 51 16.50,Floor Plate Stairs,05,Metals,172,
+05 51 19.50,Grating Stairs,05,Metals,172,
+05 51 23.25,Fire Escapes,05,Metals,172,
+05 51 23.50,Fire Escape Stairs,05,Metals,173,05
+05 51 33.13,Vertical Metal Ladders,05,Metals,173,05
+05 51 33.16,Inclined Metal Ladders,05,Metals,173,05
+05 51 33.23,Alternating Tread Ladders,05,Metals,173,05
+05 52 13.50,"Railings, Pipe",05,Metals,174,
+05 52 16.50,"Railings, industrial",05,Metals,174,
+05 53 13.10,"FloorGrating, Aluminum",05,Metals,175,05
+05 53 13.70,"Floor Grating, Steel",05,Metals,175,05
+05 53 16.50,Grating Planks,05,Metals,176,
+05 53 19.10,"Expanded Grating, Aluminum",05,Metals,176,
+05 53 19.20,"Expanded Grating, Steel ee",05,Metals,177,05
+05 53 19.30,Grating Frame,05,Metals,177,05
+05 54 13.20,Checkered Plates,05,Metals,177,05
+05 54 13.70,Trench Covers,05,Metals,177,05
+05 55 13.50,StairTreads,05,Metals,178,
+05 55 19.50,Stair Tread Covers for Renovation,05,Metals,179,05
+05 56 13.50,Construction Castings,05,Metals,179,05
+05 58 13.05,Column Covers,05,Metals,179,05
+05 58 21.05,Alloy Steel Chain,05,Metals,180,
+05 58 23.90,Window Guards,05,Metals,180,
+05 71 13.50,Spiral Stairs,05,Metals,181,05
+05 73 16.10,Cable Railings,05,Metals,182,
+05 73 23.50,"Railings, Ornamental",05,Metals,182,
+05 75 13.10,Aluminum Columns,05,Metals,182,
+05 75 13.20,"Columns, Ornamental",05,Metals,182,
+06 05 05.10,Selective Demolition Wood Framing,06,"Wood, Plastics & Composites",184,
+06 05 05.20,Selective Demolition Millwork and Trim,06,"Wood, Plastics & Composites",188,
+06 05 23.10,Nails eS,06,"Wood, Plastics & Composites",189,06
+06 05 23.40,Sheet Metal Screws,06,"Wood, Plastics & Composites",189,06
+06 05 23.50,Wood Screws,06,"Wood, Plastics & Composites",189,06
+06 05 23.60,Timber Connectors,06,"Wood, Plastics & Composites",191,06
+06 05 23.80,Metal Bracing,06,"Wood, Plastics & Composites",198,
+06 11 10.01,Forest Stewardship Council Certification,06,"Wood, Plastics & Composites",199,06
+06 11 10.02,Blocking,06,"Wood, Plastics & Composites",199,06
+06 11 10.04,Wood Bracing,06,"Wood, Plastics & Composites",199,06
+06 11 10.06,Bridging,06,"Wood, Plastics & Composites",199,06
+06 11 10.10,Beam and Girder Framing,06,"Wood, Plastics & Composites",199,06
+06 11 10.12,Ceiling Framing,06,"Wood, Plastics & Composites",200,
+06 11 10.14,Posts and Columns,06,"Wood, Plastics & Composites",200,
+06 11 10.18,Joist Framing,06,"Wood, Plastics & Composites",200,
+06 11 10.24,Miscellaneous Framing,06,"Wood, Plastics & Composites",201,06
+06 11 10.26,Partitions,06,"Wood, Plastics & Composites",201,06
+06 11 10.28,Porch or Deck Framing,06,"Wood, Plastics & Composites",202,
+06 11 10.30,Roof Framing,06,"Wood, Plastics & Composites",204,
+06 11 10.32,Sill and Ledger Framing,06,"Wood, Plastics & Composites",204,
+06 11 10.34,Sleepers,06,"Wood, Plastics & Composites",205,06
+06 11 10.36,Soffit and Canopy Framing,06,"Wood, Plastics & Composites",205,06
+06 11 10.38,Treated Lumber Framing Material,06,"Wood, Plastics & Composites",205,06
+06 11 10.40,Wall Framing,06,"Wood, Plastics & Composites",205,06
+06 11 10.42,Furring,06,"Wood, Plastics & Composites",206,
+06 11 10.44,Grounds,06,"Wood, Plastics & Composites",206,
+06 12 10.10,OSB Faced Panels,06,"Wood, Plastics & Composites",206,
+06 12 19.10,Steel and Wood Composite Shearwall,06,"Wood, Plastics & Composites",207,06
+06 13 23.10,Heavy Framing,06,"Wood, Plastics & Composites",207,06
+06 15 16.10,Solid Wood Roof Decking,06,"Wood, Plastics & Composites",208,
+06 15 23.10,Laminated Roof Deck,06,"Wood, Plastics & Composites",208,
+06 16 13.10,Insulating Sheathing,06,"Wood, Plastics & Composites",209,06
+06 16 93.10,Subfloor,06,"Wood, Plastics & Composites",209,06
+06 16 26.10,Wood Product Underlayment,06,"Wood, Plastics & Composites",209,06
+06 16 33.10,Board Sheathing,06,"Wood, Plastics & Composites",210,
+06 16 36.10,Sheathing,06,"Wood, Plastics & Composites",210,
+06 16 43.10,Gypsum Sheathing i,06,"Wood, Plastics & Composites",211,06
+06 17 33.10,Wood and Composite I-Joists,06,"Wood, Plastics & Composites",211,06
+06 17 53.10,Roof Trusses,06,"Wood, Plastics & Composites",211,06
+06 18 13.20,Laminated Framing,06,"Wood, Plastics & Composites",212,
+06 22 13.15,"Moldings, Base",06,"Wood, Plastics & Composites",214,
+06 22 13.30,"Moldings, Casings",06,"Wood, Plastics & Composites",215,06
+06 22 13.35,"Moldings, Ceilings",06,"Wood, Plastics & Composites",218,
+06 22 13.40,"Moldings, Exterior",06,"Wood, Plastics & Composites",218,
+06 22 13.45,"Moldings, Trim",06,"Wood, Plastics & Composites",224,
+06 22 13.50,"Moldings, Window and Door",06,"Wood, Plastics & Composites",225,5
+06 22 13.60,"Moldings, Soffits",06,"Wood, Plastics & Composites",225,5
+06 25 13.10,"Paneling, Hardboard",06,"Wood, Plastics & Composites",226,
+06 95 16.10,"Paneling, Plywood",06,"Wood, Plastics & Composites",226,
+06 25 16.10,"Paneling, Plywood",06,"Wood, Plastics & Composites",227,6
+06 25 26.10,Panel Systems,06,"Wood, Plastics & Composites",227,6
+06 26 13.10,"Paneling, Boards",06,"Wood, Plastics & Composites",227,6
+06 43 13.20,Prefabricated Wood Stairs,06,"Wood, Plastics & Composites",227,6
+06 43 13.40,Wood Stair Parts,06,"Wood, Plastics & Composites",228,
+06 43 16.10,Wood Handrails and Railings,06,"Wood, Plastics & Composites",230,
+06 44 19.10,Grilles,06,"Wood, Plastics & Composites",230,
+06 44 33.10,Fireplace Mantels,06,"Wood, Plastics & Composites",230,
+06 44 33.20,Fireplace Mantel Beam,06,"Wood, Plastics & Composites",230,
+06 44 39.10,Decorative Beams,06,"Wood, Plastics & Composites",230,
+06 44 39.20,Columns,06,"Wood, Plastics & Composites",230,
+06 48 13.10,Exterior Wood Door Frames and Accessories,06,"Wood, Plastics & Composites",231,16
+06 48 16.10,Interior Wood Door Jamb and Frames,06,"Wood, Plastics & Composites",232,
+06 49 19.10,"Shutters, Exterior",06,"Wood, Plastics & Composites",232,
+06 51 13.10,Recycled Plastic Lumber,06,"Wood, Plastics & Composites",233,6
+06 51 13.12,Structural Plastic Lumber,06,"Wood, Plastics & Composites",233,16
+06 52 10.10,"Castings, Fiberglass",06,"Wood, Plastics & Composites",234,
+06 52 10.20,Fiberglass Stair Treads,06,"Wood, Plastics & Composites",234,
+06 52 10.30,Fiberglass Grating,06,"Wood, Plastics & Composites",234,
+06 52 10.40,Fiberglass Floor Grating,06,"Wood, Plastics & Composites",235,16
+06 65 10.10,"PVC Trim, Exterior",06,"Wood, Plastics & Composites",235,96
+06 73 13.10,Woodgrained Composite Decking,06,"Wood, Plastics & Composites",237,6
+07 01 50.10,Roof Coatings,07,Thermal & Moisture Protection,240,
+07 01 90.81,Joint Sealant Replacement,07,Thermal & Moisture Protection,240,
+07 05 05.10,"Selective Demo., Thermal and Moist",07,Thermal & Moisture Protection,240,
+07 11 13.10,Bituminous Asphalt Coating,07,Thermal & Moisture Protection,242,
+07 11 16.20,Cementitious Parging,07,Thermal & Moisture Protection,242,
+07 12 13.20,Membrane Waterproofing,07,Thermal & Moisture Protection,242,
+07 13 53.10,Elastomeric Sheet Waterproofing and,07,Thermal & Moisture Protection,243,17
+07 19 19.10,Silicone Based Water Repellents,07,Thermal & Moisture Protection,244,
+07 21 13.10,Rigid Insulation,07,Thermal & Moisture Protection,244,
+07 21 13.13,Foam Board Insulation,07,Thermal & Moisture Protection,244,
+07 21 16.10,Blanket Insulation for Floors/Ceilings,07,Thermal & Moisture Protection,244,
+07 21 16.20,Blanket Insulation for Walls,07,Thermal & Moisture Protection,246,
+07 21 19.10,Masonry Foamed In Place Insulation,07,Thermal & Moisture Protection,246,
+07 21 23.10,Poured Loose-Fill Insulation,07,Thermal & Moisture Protection,246,
+07 21 26.10,Blown Insulation,07,Thermal & Moisture Protection,247,17
+07 21 29.10,Sprayed-On Insulation,07,Thermal & Moisture Protection,247,97
+07 21 53.10,Reflective Insulation Options,07,Thermal & Moisture Protection,247,97
+07 22 16.10,RoofDeckInsulation,07,Thermal & Moisture Protection,248,
+07 24 13.10,Exterior Insulation and Finish Systems,07,Thermal & Moisture Protection,249,07
+07 25 10.10,Weather Barriers,07,Thermal & Moisture Protection,250,
+07 26 13.10,Vapor Retarders,07,Thermal & Moisture Protection,250,
+07 27 13.10,Modified Bituminous Sheet Air Barrier,07,Thermal & Moisture Protection,251,7
+07 31 13.10,Asphalt Roof Shingles,07,Thermal & Moisture Protection,251,17
+07 31 16.10,Aluminum Shingles,07,Thermal & Moisture Protection,251,17
+07 31 16.20,Steel Shingles,07,Thermal & Moisture Protection,252,
+07 31 26.10,Slate Roof Shingles,07,Thermal & Moisture Protection,252,
+07 31 29.13,Wood Shingles,07,Thermal & Moisture Protection,252,
+07 32 13.10,Clay Tiles,07,Thermal & Moisture Protection,253,17
+07 32 16.10,Concrete Ties,07,Thermal & Moisture Protection,253,97
+07 32 19.10,MetalRoofTiles,07,Thermal & Moisture Protection,254,
+07 33 63.10,Green Roof Systems,07,Thermal & Moisture Protection,254,
+07 41 13.10,Aluminum Roof Panels Grew,07,Thermal & Moisture Protection,255,7
+07 41 13.20,SteelRoofingPanels,07,Thermal & Moisture Protection,255,17
+07 41 33.10,Fiberglass Panels,07,Thermal & Moisture Protection,256,
+07 42 13.20,Aluminum Siding Panels,07,Thermal & Moisture Protection,256,
+07 42 13.30,Steel Siding,07,Thermal & Moisture Protection,257,07
+07 44 33.10,Metal Faced Panels and Accessories,07,Thermal & Moisture Protection,257,07
+07 46 23.10,Wood Board Siding,07,Thermal & Moisture Protection,258,
+07 46 29.10,Plywood Siding Options,07,Thermal & Moisture Protection,258,
+07 46 33.10,Vinyl Siding,07,Thermal & Moisture Protection,259,7
+07 46 33.20,Polypropylene Siding,07,Thermal & Moisture Protection,260,
+07 46 46.10,Fiber Cement Siding,07,Thermal & Moisture Protection,260,
+07 51 13.10,Built-Up Roofing Components,07,Thermal & Moisture Protection,261,17
+07 51 13.13,Cold-Applied Built-Up Asphalt Roofing,07,Thermal & Moisture Protection,261,7
+07 51 13.20,Built-Up Roofing Systems,07,Thermal & Moisture Protection,261,7
+07 51 13.30,Cants,07,Thermal & Moisture Protection,262,
+07 51 13.40,Felts,07,Thermal & Moisture Protection,262,
+07 51 13.50,Wallevays Built-Up Roofs,07,Thermal & Moisture Protection,262,
+07 52 13.10,APP Modified Bituminous Membrane,07,Thermal & Moisture Protection,262,
+07 52 16.10,SBS Modified Bituminous Membrane,07,Thermal & Moisture Protection,263,07
+07 53 16.10,Chlorosulfonated Polyethylene Roofing,07,Thermal & Moisture Protection,263,07
+07 53 23.20,Ethylene-Propylene-Diene-Monomer,07,Thermal & Moisture Protection,263,07
+07 53 29.10,Polyisobutylene Roofing,07,Thermal & Moisture Protection,264,
+07 54 16.10,Ketone Ethylene Ester Roofing,07,Thermal & Moisture Protection,264,
+07 54 19.10,Polyvinyl-Chioride Roofing (PVC),07,Thermal & Moisture Protection,264,
+07 55 10.10,Protected Membrane Roofing Components,07,Thermal & Moisture Protection,265,7
+07 58 10.10,RollRoofng,07,Thermal & Moisture Protection,266,
+07 61 13.10,"Standing Seam Sheet Metal Roofing,",07,Thermal & Moisture Protection,266,
+07 61 16.10,"Batten Seam Sheet Metal Roofing, FieldFabe",07,Thermal & Moisture Protection,266,
+07 61 19.10,"Flat Seam Sheet Metal Roofing, Field",07,Thermal & Moisture Protection,266,
+07 65 12.10,Fabric ‘and Mastic Flashing ord Counter Fl,07,Thermal & Moisture Protection,267,7
+07 65 13.10,Laminated Sheet Flashing,07,Thermal & Moisture Protection,268,
+07 65 19.10,Plastic Sheet Flashing andCounterFlashing,07,Thermal & Moisture Protection,268,
+07 65 26.10,Self-Adhering Sheet or Roll Flashing,07,Thermal & Moisture Protection,269,7
+07 71 16.20,"Pitch Pockets, Variable",07,Thermal & Moisture Protection,269,7
+07 71 19.10,Gravel Stop,07,Thermal & Moisture Protection,269,7
+07 71 19.30,Fascia,07,Thermal & Moisture Protection,269,7
+07 71 23.10,Downspouts,07,Thermal & Moisture Protection,269,7
+07 71 23.20,Downspout Elbows,07,Thermal & Moisture Protection,270,
+07 71 23.30,Gutters,07,Thermal & Moisture Protection,271,7
+07 71 26.10,Reglets and Accessories,07,Thermal & Moisture Protection,272,
+07 71 29.10,Expansion Joints,07,Thermal & Moisture Protection,273,7
+07 71 43.10,"Drip Edge, Rake Edge, Ice Belts:",07,Thermal & Moisture Protection,273,7
+07 72 23.10,Roof Vents,07,Thermal & Moisture Protection,274,
+07 72 26.10,Ridge Ventsand Accessories,07,Thermal & Moisture Protection,274,
+07 76 16.10,Roof PaversandSupports,07,Thermal & Moisture Protection,275,7
+07 81 16.10,Sprayed Cementitious Fireproofing:,07,Thermal & Moisture Protection,275,7
+07 84 13.10,Firestopping nd,07,Thermal & Moisture Protection,277,7
+07 91 13.10,Compression Seals,07,Thermal & Moisture Protection,278,
+07 91 16.10,Joint Gaskets,07,Thermal & Moisture Protection,278,
+07 91 23.10,Backer Rods,07,Thermal & Moisture Protection,278,
+07 91 26.10,Joint Fillers,07,Thermal & Moisture Protection,278,
+07 92 16.10,Rigid Joint Sealants,07,Thermal & Moisture Protection,279,7
+07 92 19.10,Acoustical Sealant,07,Thermal & Moisture Protection,279,7
+07 95 13.50,Expansion Joint Assembligs,07,Thermal & Moisture Protection,280,
+08 05 05.10,Selective Demolition Doors,08,Openings,282,
+08 05 05.20,Selective Demolition of Windows,08,Openings,283,8
+08 11 16.10,Entrance Doors,08,Openings,283,8
+08 11 63.23,Aluminum Screen and Storm Doors and,08,Openings,283,8
+08 12 13.13,Standard Hollow Metal Frames,08,Openings,284,
+08 13 13.13,"Standard Hollow MetalDoors,",08,Openings,285,3
+08 13 43.13,Standard Hollow Metal Doors,08,Openings,286,
+08 13 13.15,Metal Fire Doors,08,Openings,286,
+08 13 13.20,Residential Steel Doors,08,Openings,287,8
+08 13 13.25,Doors Hollow Metal,08,Openings,287,8
+08 13 16.10,Commercial Aluminum Doors,08,Openings,288,
+08 14 13.10,"Types of Wood Doors, Carved",08,Openings,288,
+08 14 16.09,Smooth Wood Doors,08,Openings,289,3
+08 14 16.20,Wood FireDoors,08,Openings,290,
+08 14 33.10,WoodDoorsPaneled,08,Openings,291,8
+08 14 33.20,Wood Doors Residential,08,Openings,292,
+08 14 35.10,Torrified Exterior Doors,08,Openings,293,18
+08 14 40.10,Cafe Style Doors,08,Openings,294,
+08 16 13.10,"Entrance Doors, Fibrous Glass",08,Openings,294,
+08 16 14.10,Exterior Doors With Glass Lites,08,Openings,294,
+08 17 13.20,"Stainless Steel Doors and Frames""",08,Openings,295,8
+08 17 23.10,Pre-Hung Doors,08,Openings,295,8
+08 31 13.10,Types of Framed Access Doors,08,Openings,296,
+08 31 13.20,Bulkhead/Cellar Doors,08,Openings,296,
+08 31 13.30,Commercial Floor Doors,08,Openings,296,
+08 31 13.35,Industrial Floor Doors,08,Openings,296,
+08 31 13.40,Kennel Doors,08,Openings,297,8
+08 32 13.10,Sliding Aluminum Doors,08,Openings,297,8
+08 32 19.15,Sliding Glass Vinyl-Clad Wood Doors,08,Openings,297,8
+08 33 13.10,"Counter Doors, Coiling Type",08,Openings,298,
+08 33 16.10,Coiling Grilles,08,Openings,298,
+08 33 23.10,Coiling Service Doors,08,Openings,298,
+08 34 13.10,Doors for Cold Area Storage,08,Openings,299,08
+08 34 36.10,Various Types of Darkroom Doors,08,Openings,300,
+08 34 53.20,Steel Door,08,Openings,300,
+08 34 53.30,Wood Ballistic Doors,08,Openings,300,
+08 34 56.10,Gates,08,Openings,300,
+08 34 59.10,Secure Storage Doors,08,Openings,301,08
+08 34 73.10,Acoustical Doors,08,Openings,301,08
+08 36 13.10,Overhead Commercial Doors,08,Openings,301,08
+08 36 13.20,Residential Garage Doors,08,Openings,302,
+08 36 19.10,Sectional Vertical Lift Doors,08,Openings,302,
+08 38 13.10,Flexible Transparent Strip Doors,08,Openings,303,08
+28 38 19.20,Double Acting Swing Doors:,28,Electronic Safety & Security,303,28
+08 38 19.30,Shock Absorbing Doors,08,Openings,303,08
+08 41 13.20,Tube Framing,08,Openings,303,08
+08 41 19.10,Stainless-Steel and Glass Entrance,08,Openings,304,
+08 41 26.10,"Window Walls Aluminum, Stock",08,Openings,304,
+08 42 26.10,Swinging Glass Doors,08,Openings,305,8
+08 42 33.10,Circular Rotating Entrance Doors,08,Openings,305,08
+08 42 36.10,Balanced Entrance Doors,08,Openings,305,08
+08 43 13.10,Aluminum-Framed Entrance Doors and Frames,08,Openings,305,08
+08 43 13.20,Storefront Systems,08,Openings,306,
+08 43 29.10,Sliding Panels,08,Openings,306,
+08 44 13.10,Glazed Curtain Walls,08,Openings,306,
+08 45 10.10,Skyroofs,08,Openings,306,
+08 51 13.10,Aluminum Sash,08,Openings,307,08
+08 51 13.20,Aluminum Windows,08,Openings,307,08
+08 51 13.30,Impact Resistant Aluminum Windows,08,Openings,307,08
+08 51 23.10,Steel Sash,08,Openings,308,
+08 51 23.20,Steel Windows,08,Openings,308,
+08 51 23.40,Basement Utility Windows,08,Openings,308,
+08 51 66.10,Screens,08,Openings,308,
+08 52 10.20,Awning Window,08,Openings,308,
+08 52 10.50,Double-Hung ViMATER,08,Openings,309,08
+08 52 10.55,PictureWindow,08,Openings,309,08
+08 52 10.65,WoodSash,08,Openings,309,08
+08 52 10.70,Sliding Windows,08,Openings,310,
+08 52 13.10,"Awning Windows, Metal-Clad",08,Openings,310,
+08 52 13.20,"Casement Windows, Metal-Clad",08,Openings,310,
+08 52 13.30,"Double-Hung Windows, Metal-Clad",08,Openings,310,
+08 52 13.35,Picture and Sliding Windows,08,Openings,310,
+08 52 13.40,"Bow and Bay Windows, Metal-Clad",08,Openings,311,8
+08 52 16.15,Awning Window Vinyi-Clad,08,Openings,311,08
+08 52 16.30,Palladian Windows,08,Openings,312,
+08 52 16.35,Double-Hung Window,08,Openings,312,
+08 52 16.40,Transom Windows,08,Openings,312,
+08 52 16.70,"Vinyl-Clad, Premium, DBL. Insul. Glass",08,Openings,312,
+08 52 50.10,Window Grille or Muntin,08,Openings,312,
+08 52 66.10,Wood Screens,08,Openings,313,18
+08 52 69.10,Storm Windows,08,Openings,313,98
+08 53 13.20,Vinyl Single-Hung Windows,08,Openings,313,98
+08 53 13.30,Vinyl Double-Hung Windows,08,Openings,314,
+08 53 13.40,Vinyl Casement Windows,08,Openings,314,
+08 53 13.50,Vinyl PictureWindows,08,Openings,315,08
+08 54 13.10,Fiberglass Single-Hung Windows,08,Openings,316,
+08 62 13.20,Skylights,08,Openings,316,
+08 63 13.20,Skylight Rigid Metal-Framed,08,Openings,316,
+08 71 13.10,Automatic Openers Commercial,08,Openings,317,08
+08 71 13.20,Automatic Openers Industrial,08,Openings,317,08
+08 71 20.10,"Bolts, Flush",08,Openings,317,08
+08 71 20.15,Hardware,08,Openings,317,08
+08 71 20.30,Door Closers,08,Openings,318,
+08 71 20.36,PanicDevices,08,Openings,319,08
+08 71 20.40,Lockset,08,Openings,320,
+08 71 20.41,Dead Locks,08,Openings,321,08
+08 71 20.42,Mortise Locksets,08,Openings,321,08
+08 71 20.44,Anti-Ligature Locksets Grade,08,Openings,322,
+08 71 20.50,DoorStops,08,Openings,322,
+08 71 20.55,Push-Pull Plates,08,Openings,322,
+08 71 20.60,Entrance Locks,08,Openings,323,08
+08 71 20.65,Thresholds,08,Openings,323,08
+08 71 20.70,FloorChecks,08,Openings,323,08
+08 71 20.75,Door Hardware Accessories,08,Openings,323,08
+08 71 20.90,Hinges,08,Openings,324,
+08 71 20.91,Special Hinges,08,Openings,324,
+08 71 20.95,KickPlates,08,Openings,325,08
+08 71 21.10,"Exterior Mouldings, Astragals",08,Openings,326,
+08 71 25.10,"Mechanical Seals, Weatherstripping",08,Openings,327,08
+08 75 30.10,Mechanical Weather Seals,08,Openings,328,
+08 79 20.10,Door Hardware Accessories,08,Openings,328,
+08 81 10.10,Various Types and Thickness of Float,08,Openings,328,
+08 81 13.10,BeveledGlass,08,Openings,329,08
+08 81 13.30,Sandblasted Glass,08,Openings,329,08
+08 81 17.10,FireResistantGlass,08,Openings,329,08
+08 81 20.10,Full Vision,08,Openings,329,08
+08 81 25.10,Applications of Glazing,08,Openings,329,08
+08 81 30.10,Reduce Heat Transfer Glass,08,Openings,329,08
+08 81 35.10,Obscure Glass a,08,Openings,330,
+08 81 35.20,Patterned Glass a,08,Openings,330,
+08 81 50.10,Glass for Non Vision Areas,08,Openings,330,
+08 81 55.10,SheetGlass,08,Openings,330,
+08 83 13.10,Mirrors,08,Openings,331,8
+08 87 13.10,SolarFilmsOnGlass,08,Openings,332,
+08 87 16.10,Safety Films On Glass,08,Openings,332,
+08 87 26.10,Bird Control Film,08,Openings,332,
+08 87 33.20,Window Film,08,Openings,332,
+08 87 53.10,Security Film Adhered On Glass,08,Openings,332,
+08 91 26.10,"Steel Louvers, Gauge, Fixed",08,Openings,333,18
+08 91 26.20,Aluminum Louvers,08,Openings,334,
+08 95 16.10,Louvers,08,Openings,334,
+09 01 60.10,Carpet Maintenance,09,Finishes,336,
+09 01 70.10,Gypsum Wallboard Repairs,09,Finishes,336,
+09 01 90.92,Sanding,09,Finishes,336,
+09 01 90.93,Exterior Surface Preparation,09,Finishes,336,
+09 01 90.94,Interior Surface Preparation,09,Finishes,337,09
+09 05 05.10,"Selective Demolition, Ceilings",09,Finishes,338,
+09 05 05.20,"Selective Demolition, Flooring",09,Finishes,339,09
+09 05 05.30,"Selective Demolition, Walls and",09,Finishes,339,09
+09 05 71.10,Acoustical Underlayment,09,Finishes,340,
+09 21 13.10,Plaster Partition Wall,09,Finishes,341,09
+09 21 16.23,Gypsum Board Shaft Wall Assemblies,09,Finishes,341,09
+09 21 16.33,Partition Wall,09,Finishes,341,09
+09 22 03.20,Drilling Plaster/Drywall,09,Finishes,343,09
+09 22 13.13,Metal Channel Furring,09,Finishes,343,09
+09 22 16.13,Non-Structural Metal Stud Framing,09,Finishes,344,
+09 22 26.13,Ceiling Suspension Systems,09,Finishes,345,19
+09 22 36.13,Gypsum Lath,09,Finishes,346,
+09 22 36.23,Metal Lath,09,Finishes,346,
+09 22 36.43,Security Mesh,09,Finishes,347,09
+09 22 36.83,"Accessories, Plaster",09,Finishes,347,29
+09 23 13.10,Perlite or Vermiculite Plaster,09,Finishes,347,99
+09 23 20.10,Gypsum Plaster On Walls and Ceilings,09,Finishes,347,99
+09 23 20.20,Gauging Plaster,09,Finishes,348,
+09 23 20.30,Keenes Cement,09,Finishes,348,
+09 24 23.40,Stucco,09,Finishes,348,
+09 25 23.10,Venetian Plaster,09,Finishes,349,09
+09 28 13.10,Cementitious Backerboard,09,Finishes,349,99
+09 29 10.30,Gypsum Board,09,Finishes,350,
+09 29 10.50,High Abuse Gypsum Board,09,Finishes,353,19
+09 29 15.10,"Accessories, Gypsum Board",09,Finishes,353,9
+09 30 13.20,Ceramic Tile Repairs,09,Finishes,354,
+09 30 13.45,Ceramic Tile Accessories,09,Finishes,354,
+09 30 29.10,Metal Tile,09,Finishes,354,
+09 30 95.10,"Moisture Resistant, Anti-Fracture Membrane",09,Finishes,354,
+09 31 13.10,Thin-Set Ceramic Tile,09,Finishes,354,
+09 31 33.10,"Tiling, Thin-Set Stone",09,Finishes,356,
+09 32 13.10,Ceramic Tile,09,Finishes,356,
+09 32 16.10,Quarry Tile,09,Finishes,356,
+09 32 23.10,Glass Mosaics,09,Finishes,357,09
+09 34 13.10,Ceramic Tile Waterproofing Membrane,09,Finishes,357,09
+09 35 13.10,Chemical-Resistant Ceramic Tiling,09,Finishes,357,09
+09 35 16.10,Chemical-Resistant Quarry Tiling,09,Finishes,358,
+09 51 13.10,"Ceiling, Acoustical Panel",09,Finishes,358,
+09 51 14.10,"Ceiling, Acoustical Fabric-Faced Panel",09,Finishes,358,
+09 51 23.10,Suspended Acoustic Ceiling Tiles,09,Finishes,358,
+09 51 23.30,"Suspended Ceilings, Complete",09,Finishes,359,09
+09 51 33.10,"Ceiling, Acoustical Metal Pan",09,Finishes,359,09
+09 51 53.10,Ceiling Tile,09,Finishes,359,09
+09 53 23.30,Ceiling Suspension Systems,09,Finishes,359,09
+09 54 16.10,"Ceiling, Luminous",09,Finishes,360,
+09 54 23.10,Metal Ceilings,09,Finishes,360,
+09 54 26.10,Wood Ceilings 7m,09,Finishes,361,09
+09 54 33.20,Metal Panel Ceilings,09,Finishes,361,09
+09 57 53.10,"Ceiling Assem., Security, Radio Freq. Shielding",09,Finishes,361,09
+01 10 12.02,copper ceiling panel,01,General Requirements,361,01
+09 61 19.40,"Floors, Interior",09,Finishes,361,09
+09 62 19.10,Floating Floor,09,Finishes,362,
+09 62 29.10,Cork Tile Flooring,09,Finishes,362,
+09 63 13.10,Miscellaneous Brick Flooring,09,Finishes,362,
+09 63 40.10,Marble Ave,09,Finishes,363,09
+09 63 40.20,Slate Tile,09,Finishes,363,09
+09 64 16.10,End Grain Block Flooring,09,Finishes,363,09
+09 64 19.10,Wood Composition,09,Finishes,363,09
+09 64 29.10,Wood,09,Finishes,364,
+09 64 36.10,"Flooring, Bamboo",09,Finishes,364,
+09 64 66.10,Gymnasium Flooring,09,Finishes,364,
+09 65 10.10,Latex Underlayment,09,Finishes,365,09
+09 65 13.13,Resilient Base,09,Finishes,365,09
+09 65 13.23,Resilient Stair Treads and Risers,09,Finishes,365,09
+09 65 13.37,Vinyl Transition Strips,09,Finishes,366,
+09 65 16.10,Rubber and Vinyl Sheet Flooring,09,Finishes,366,
+09 65 19.19,Vinyl Composition Tile Flooring,09,Finishes,366,
+09 65 19.33,Rubber Tile Flooring,09,Finishes,367,09
+09 65 33.10,Conductive Rubber and Vinyl Flooring,09,Finishes,367,09
+09 65 66.10,Resilient Athletic Flooring,09,Finishes,367,09
+09 66 13.10,Portiand Cement Terrazzo,09,Finishes,367,09
+09 66 16.10,Tile or Terrazzo Base,09,Finishes,368,
+09 66 16.13,Portland Cement Terrazzo Floor Tile,09,Finishes,368,
+09 66 16.16,Plastic Matrix Terrazzo Floor Tile,09,Finishes,368,
+09 66 16.30,"Terrazzo, Precast",09,Finishes,368,
+09 66 23.13,Polyacrylate Mod. Cementitious Terrazzo Fir,09,Finishes,369,09
+09 66 23.16,Epoxy-Resin Terrazzo Flooring,09,Finishes,369,09
+09 66 33.13,Conductive Epoxy-Resin Terrazzo,09,Finishes,369,09
+09 66 33.19,Conductive Plastic-Matrix Terrazzo Flooring,09,Finishes,369,9
+09 67 13.13,Elastomeric Liquid Flooring,09,Finishes,370,
+09 67 23.23,Resinous Flooring,09,Finishes,370,
+09 67 26.26,Quartz Flooring,09,Finishes,370,
+09 67 66.10,Polyurethane,09,Finishes,370,
+09 68 05.11,Flooring Transition Strip,09,Finishes,371,09
+09 68 10.10,Commercial Carpet Pad,09,Finishes,371,09
+09 68 13.10,Carpet Tile,09,Finishes,371,09
+09 68 16.10,Sheet Carpet “a,09,Finishes,372,
+09 68 20.10,Indoor Athletic Carpet,09,Finishes,372,
+09 69 13.10,Access Floors,09,Finishes,372,
+09 72 13.10,"Covering, Cork Wall",09,Finishes,373,09
+09 72 16.13,Flexible Vinyl Wall Coverings,09,Finishes,373,09
+09 72 16.16,Rigid-Sheet Vinyl Wall Coverings,09,Finishes,373,09
+09 72 20.10,Natural Fiber Wall Covering,09,Finishes,374,
+09 72 23.10,Wallpaper,09,Finishes,374,
+09 74 16.10,"Veneer, Flexible Wood",09,Finishes,374,
+09 77 30.10,Fiberglass Reinforced Plastic Panels,09,Finishes,374,
+09 77 43.20,Slatwall Panels and Accessories,09,Finishes,375,09
+09 81 13.10,Acoustic Board Insulation,09,Finishes,375,99
+09 81 16.10,Sound Attenuation Blanket,09,Finishes,375,9
+09 84 13.10,Fixed Panels,09,Finishes,376,
+09 84 36.10,Barriers,09,Finishes,376,
+09 91 13.30,Fences,09,Finishes,376,
+09 91 13.42,"Miscellaneous, Exterior",09,Finishes,377,09
+09 91 13.60,Siding Exterior,09,Finishes,378,
+09 91 13.62,"Siding, Misc",09,Finishes,378,
+09 91 13.70,"Doors and Windows, Exterior",09,Finishes,379,09
+09 91 13.80,"Trim, Exterior",09,Finishes,380,
+09 91 23.20,Cabinets and Casework,09,Finishes,381,19
+09 91 23.33,"Doors and Windows, Interior Alkyd (Oil Base)",09,Finishes,381,99
+09 91 23.35,"Doors and Windows, Interior Latex",09,Finishes,382,
+09 91 23.39,"Doors and Windows, Interior Latex,",09,Finishes,383,09
+09 91 23.40,"Floors, Interior",09,Finishes,384,
+09 91 23.44,Anti-Slip Floor Treatments,09,Finishes,384,
+09 91 23.52,"Miscellaneous, Interior",09,Finishes,384,
+09 91 23.62,Electrostatic Painting,09,Finishes,385,9
+09 91 23.72,"Walls and Ceilings, Interior",09,Finishes,385,19
+09 91 23.74,"Walls and Ceilings, Interior, Zero VOC Latex",09,Finishes,387,19
+09 91 23.75,Dry Fall Painting,09,Finishes,387,19
+09 93 23.10,Varnish,09,Finishes,388,
+09 96 23.10,Graffiti-Resistant Treatments,09,Finishes,388,
+09 96 46.10,"Coatings, Intumescent",09,Finishes,388,
+09 96 53.10,"Coatings, Elastomeric",09,Finishes,389,09
+09 96 56.20,Wall Coatings,09,Finishes,389,09
+09 97 13.23,Exterior Steel Coatings,09,Finishes,389,09
+09 97 35.10,Dry Erase Coatings,09,Finishes,390,
+10 05 05.10,"Selective Demolition, Specialties",10,Specialties,392,
+10 11 13.13,Fixed Chalkboards,10,Specialties,392,
+10 11 13.23,Modular-Support-Mounted Chalkboards,10,Specialties,393,10
+10 11 13.43,Portable Chalkboards,10,Specialties,394,
+10 11 16.53,Electronic Markerboards,10,Specialties,394,
+10 11 23.10,Fixed Tackboards,10,Specialties,394,
+10 11 23.20,Control Boards,10,Specialties,395,10
+10 13 10.10,Directory Boards,10,Specialties,395,10
+10 14 19.10,Exterior Signs,10,Specialties,396,
+10 14 23.13,Engraved Panel Signage,10,Specialties,396,
+10 14 26.10,Post and Panel Signage,10,Specialties,397,10
+10 14 43.10,Photoluminescent Signage,10,Specialties,397,10
+10 14 53.20,Traffic Signs,10,Specialties,398,
+10 17 16.10,Commercial Telephone Enclosures,10,Specialties,398,
+10 21 13.13,Metal Toilet Compartments,10,Specialties,398,
+10 21 13.16,Plastic-Laminate-Clad Toilet Compartments,10,Specialties,399,10
+10 21 13.19,Plastic Toilet Compartments,10,Specialties,399,10
+10 21 13.40,Stone Toilet Compartments,10,Specialties,400,
+10 21 14.13,Metal Toilet Compartment,10,Specialties,400,
+10 21 14.16,Plastic-Laminate Clad Toilet Compartment,10,Specialties,401,10
+10 21 14.19,Plastic Toilet Compartment Components,10,Specialties,401,10
+10 21 23.16,Cubicle Track and Hardware,10,Specialties,402,
+10 22 13.10,"Partitions, Woven Wire",10,Specialties,402,
+10 22 16.10,Security Gates,10,Specialties,403,10
+10 22 19.43,Demountable Composite Partitions,10,Specialties,403,10
+10 22 23.13,Wall Screens,10,Specialties,404,
+10 22 33.10,"Partitions, Accordion Folding",10,Specialties,404,
+10 22 39.10,"Partitions, Folding Panel",10,Specialties,405,10
+10 22 43.10,"Partitions, Sliding $e",10,Specialties,405,10
+10 26 13.20,CornerProtection,10,Specialties,405,10
+10 26 16.10,"Guard, Bumper",10,Specialties,405,10
+10 26 16.16,Protective Corridor Handrails,10,Specialties,406,
+10 26 23.10,"Wall Covering, Protective",10,Specialties,406,
+10 26 23.13,Impact Resistant Wall Protection,10,Specialties,406,
+10 26 33.10,"Protection, Door and Frame",10,Specialties,406,
+10 28 13.13,Commercial Toilet Accessories,10,Specialties,406,
+10 28 16.20,Medicine Cabinets,10,Specialties,408,
+10 28 19.10,"Partitions, Shower",10,Specialties,408,
+10 28 23.13,Built-In Ironing Boards,10,Specialties,409,10
+10 31 13.10,Fireplace Chimneys,10,Specialties,409,10
+10 31 13.20,Chimney Accessories,10,Specialties,409,10
+10 31 16.10,Fireplace Forms,10,Specialties,409,10
+10 31 23.10,"Fireplace, Prefabricated",10,Specialties,410,
+10 32 13.10,Dampers,10,Specialties,410,
+10 32 23.10,Doors,10,Specialties,410,
+10 35 13.10,Wood Burning Stoves,10,Specialties,411,10
+10 43 13.05,Defibrillator Cabinets,10,Specialties,411,10
+10 44 13.53,Fire Equipment Cabinets,10,Specialties,411,10
+10 44 16.13,Portable Fire Extinguishers,10,Specialties,412,
+10 44 16.16,Wheeled Fire Extinguisher Units,10,Specialties,412,
+10 51 13.10,Lockers,10,Specialties,412,
+10 51 26.13,Recycled Plastic Lockers,10,Specialties,413,10
+10 51 53.10,Benches,10,Specialties,414,
+10 55 23.10,Commercial Mail Boxes,10,Specialties,414,
+10 56 13.10,Shelving,10,Specialties,414,
+10 56 13.20,Parts Bins,10,Specialties,415,10
+10 57 13.10,Coat Racks and Wardrobes,10,Specialties,415,10
+10 57 23.19,Wood Closet and Utility Shelving,10,Specialties,415,10
+10 71 13.19,Rolling Exterior Shutters,10,Specialties,416,
+10 73 13.10,"Awnings, Fabric",10,Specialties,416,
+10 73 16.20,Metal Canopies,10,Specialties,416,
+10 74 23.10,Wood Cupolas as,10,Specialties,417,10
+10 74 29.10,Prefabricated Steeples,10,Specialties,417,10
+10 74 46.10,Area Window Wells,10,Specialties,417,10
+10 75 16.10,Flagpoles,10,Specialties,418,
+10 75 23.10,Flagpoles,10,Specialties,419,10
+10 81 13.10,BirdControlNetting:,10,Specialties,419,10
+10 86 10.10,"Exterior Traffic Control Mirrors,",10,Specialties,419,10
+10 86 20.10,Domes,10,Specialties,419,10
+10 88 05.10,Scales,10,Specialties,419,10
+11 05 05.10,Selective Demolition,11,Equipment,422,
+11 05 10.10,Industrial Equipment Installation,11,Equipment,424,
+11 11 13.10,Compressed Air Equipment,11,Equipment,424,
+11 11 19.10,Lubrication Equipment,11,Equipment,424,
+11 11 33.10,Spray Painting Equipment,11,Equipment,424,
+11 12 13.10,Parking Control Units,11,Equipment,424,
+11 12 16.10,Ticket Dispensers,11,Equipment,424,
+11 12 26.13,Parking Fee Coin Collection Equipment,11,Equipment,424,
+11 12 33.13,Lift Arm Parking Gates,11,Equipment,425,11
+11 13 13.10,Dock Bumpers,11,Equipment,425,11
+11 13 16.10,Dock Seals and Shelters,11,Equipment,425,11
+11 13 19.10,Dock Equipment,11,Equipment,425,11
+11 13 26.10,Dock Lights,11,Equipment,426,
+11 14 13.19,Turnstiles,11,Equipment,426,
+11 14 19.13,Portable Posts and Railings,11,Equipment,426,
+11 21 13.10,Checkout Counter So,11,Equipment,427,11
+11 21 33.10,Clothes Check Equipment:,11,Equipment,427,11
+11 21 53.10,Barber Equipment,11,Equipment,427,11
+11 21 73.13,Dry Cleaning Equipment,11,Equipment,427,11
+11 21 73.19,Finishing Equipment,11,Equipment,428,
+11 21 73.23,Commercial Ironing Equipment,11,Equipment,428,
+11 21 73.26,Commercial Washers and Extractors,11,Equipment,428,
+11 21 73.33,Coin-Operated Laundry Equipment,11,Equipment,428,
+11 21 83.13,Darkroom Equipment,11,Equipment,428,
+11 22 13.16,Safes,11,Equipment,429,11
+11 22 16.13,Teller Equipment Systems,11,Equipment,429,11
+11 30 13.15,Cooking Equipment,11,Equipment,430,
+11 30 13.16,Refrigeration Equipment,11,Equipment,430,
+11 30 13.17,Kitchen Cleaning Equipment,11,Equipment,430,
+11 30 13.18,Waste Disposal Equipment,11,Equipment,430,
+11 30 13.19,Kitchen Ventilation Equipment,11,Equipment,431,1
+11 30 13.24,Washers,11,Equipment,431,11
+11 30 13.25,Dryers,11,Equipment,431,11
+11 30 15.13,Sump Pumps,11,Equipment,431,11
+11 30 15.23,Water Heaters,11,Equipment,431,11
+11 30 15.43,Air Quality,11,Equipment,431,11
+11 30 33.10,Disappearing Stairway,11,Equipment,432,
+11 32 13.10,Commercial Unit Kitchens,11,Equipment,432,
+11 41 13.10,Refrigerated Food Cases,11,Equipment,432,
+11 41 13.20,Refrigerated Food Storage Equipment,11,Equipment,433,11
+11 41 13.30,Wine Cellar,11,Equipment,433,11
+11 41 33.20,Metal Food Storage Shelving,11,Equipment,434,
+11 42 10.10,"Choppers, Mixers and Misc. Equipment",11,Equipment,434,
+11 44 13.10,Cooking Equipment,11,Equipment,435,11
+11 46 16.10,Commercial Food Dispensing Equipment,11,Equipment,436,
+11 46 83.10,Commercial Ice Equipment,11,Equipment,437,11
+11 48 13.10,Dishwashers,11,Equipment,437,11
+11 52 13.10,"Projection Screens, Wall or Ceiling Hung",11,Equipment,437,11
+11 52 16.10,Movie Equipment,11,Equipment,438,
+11 52 16.20,Movie Equipment- Digital,11,Equipment,438,
+11 53 03.13,Test Equipment,11,Equipment,439,11
+11 53 13.13,Recirculating Laboratory Fume Hoods,11,Equipment,439,11
+11 53 16.13,Incubators,11,Equipment,439,11
+11 53 19.13,Sterilizers,11,Equipment,439,11
+11 53 23.13,Refrigerators,11,Equipment,439,11
+11 53 26.10,Freezers,11,Equipment,439,11
+11 53 33.13,Emergency Equipment,11,Equipment,439,11
+11 53 43.13,Fittings,11,Equipment,439,11
+11 53 53.10,Pharmacy Cabinets,11,Equipment,440,
+11 57 10.10,Vocational School Shop Equipment,11,Equipment,440,
+11 61 23.10,Portable Stages,11,Equipment,440,
+11 61 33.10,Controls,11,Equipment,441,11
+11 61 43.10,Curtains,11,Equipment,441,11
+11 62 16.10,BellTowerEquipment,11,Equipment,441,11
+11 66 13.10,Physical Training Equipment,11,Equipment,441,11
+11 66 23.13,Basketball Equipment,11,Equipment,442,
+11 66 23.19,Boxing Ring,11,Equipment,442,
+11 66 23.47,Gym Mats,11,Equipment,442,
+11 66 43.10,Scoreboards,11,Equipment,443,11
+11 66 53.10,Divider Curtains,11,Equipment,443,11
+11 67 13.10,Bowling Alleys,11,Equipment,443,11
+11 67 23.10,Shooting Range,11,Equipment,443,11
+11 68 13.10,Free-Standing Playground Equipment,11,Equipment,444,
+11 68 13.20,Modular Playground,11,Equipment,444,
+11 68 16.10,Handball/Squash Court,11,Equipment,445,11
+11 68 16.30,Platform/Paddle Tennis Court,11,Equipment,445,11
+11 68 33.13,Football Field Equipment,11,Equipment,445,11
+11 71 10.10,Sterilizers and Distillers,11,Equipment,445,11
+11 72 13.13,Examination Equipment,11,Equipment,446,
+11 72 53.13,Medical Treatment Equipment,11,Equipment,446,
+11 73 10.10,Treatment Equipment,11,Equipment,446,
+11 73 10.20,Bariatric Equipment,11,Equipment,446,
+11 74 10.10,Diagnostic and Treatment Equipment,11,Equipment,447,11
+11 76 10.10,Surgical Equipment =e,11,Equipment,447,11
+11 77 10.10,X-Ray Equipment,11,Equipment,448,
+11 78 13.10,Mortuary and Autopsy Equipment,11,Equipment,448,
+11 78 16.10,Crematory,11,Equipment,448,
+11 81 19.10,Vacuum Cleaning,11,Equipment,448,
+11 82 19.10,Packaged Gas Fired Incinerators,11,Equipment,448,
+11 82 26.10,Compactors,11,Equipment,449,11
+11 82 39.10,Off-Site Disposal,11,Equipment,449,11
+11 82 39.20,Disposal Carts,11,Equipment,449,11
+11 82 39.30,Medical Waste Sanitizers,11,Equipment,449,11
+11 91 13.10,Baptistry,11,Equipment,450,
+11 91 23.10,Sanctuary Furnishings,11,Equipment,450,
+11 92 16.16,Barns,11,Equipment,451,11
+11 97 30.10,Pass Through Drawer,11,Equipment,451,11
+11 98 21.13,Visitor Cubicle Windows,11,Equipment,451,11
+11 98 30.10,Cell Equipment,11,Equipment,451,11
+12 05 05.10,"Selective Demolition, Interiors",12,Furnishings,454,
+12 21 13.13,Metal Horizontal Louver Blinds,12,Furnishings,454,
+12 21 13.33,Vinyl Horizontal Louver Blinds,12,Furnishings,454,
+12 21 16.13,Metal Vertical Louver Blinds,12,Furnishings,455,12
+12 22 16.10,Drapery Hardware,12,Furnishings,455,12
+12 22 16.20,Blast Curtains,12,Furnishings,455,12
+12 23 13.10,Wood Interior Shutters,12,Furnishings,456,
+12 23 13.13,Wood Panels,12,Furnishings,456,
+12 24 13.10,Shades,12,Furnishings,456,
+12 32 23.10,"Manufactured Wood Casework, Stock Units",12,Furnishings,457,12
+12 32 23.30,Manufactured Wood Casework Vanities,12,Furnishings,458,
+12 32 23.35,Manufactured Wood Casework Hardware,12,Furnishings,458,
+12 35 39.13,Metal Kitchen Casework,12,Furnishings,458,
+12 35 50.13,Educational Casework,12,Furnishings,459,12
+12 35 53.13,Metal Laboratory Casework,12,Furnishings,459,12
+12 35 59.10,DisplayCases,12,Furnishings,459,12
+12 35 70.13,HospitalCasework,12,Furnishings,459,12
+12 35 70.16,Nurse Station Casework,12,Furnishings,460,
+12 36 16.10,Stainless Steel Countertops,12,Furnishings,460,
+12 36 19.10,Maple Countertops,12,Furnishings,460,
+12 36 23.13,Plastic-Laminate-Clad Countertops,12,Furnishings,460,
+12 36 33.10,Ceramic Tile Countertops weal,12,Furnishings,461,12
+12 36 40.10,Natural Stone Countertops,12,Furnishings,461,12
+12 36 53.10,Laboratory Countertops and Sinks,12,Furnishings,461,12
+12 36 61.16,Solid Surface Countertops,12,Furnishings,461,12
+12 36 61.17,Solid Surface Vanity Tops,12,Furnishings,462,
+12 36 61.19,Quartz Agglomerate Countertops,12,Furnishings,462,
+12 46 13.10,Ash/Trash Receivers,12,Furnishings,462,
+12 46 19.50,Wall Clocks ie fa,12,Furnishings,463,12
+12 48 13.13,Entrance Floor Mats,12,Furnishings,463,12
+12 51 16.13,Metal Case Goods,12,Furnishings,464,
+12 51 16.16,Wood Case Goods,12,Furnishings,464,
+12 51 23.33,Conference Tables,12,Furnishings,464,
+12 52 93.13,Office Chairs,12,Furnishings,464,
+12 52 23.13,Office Chairs,12,Furnishings,465,12
+12 54 16.10,"Tables, Folding",12,Furnishings,465,12
+12 54 16.70,Booths,12,Furnishings,465,12
+12 55 13.13,Cots,12,Furnishings,466,
+12 56 33.10,"Furniture, School",12,Furnishings,466,
+12 56 43.10,Dormitory Furnishings,12,Furnishings,466,
+12 56 51.10,Library Furnishings,12,Furnishings,466,
+12 56 70.10,"Furniture, Hospital",12,Furnishings,467,12
+12 61 13.13,Auditorium Chairs,12,Furnishings,467,12
+12 61 13.23,Lecture Hall Seating,12,Furnishings,467,12
+12 63 13.13,Bleachers,12,Furnishings,468,
+12 67 13.13,Sanctuary Pews,12,Furnishings,468,
+12 92 33.10,Planters,12,Furnishings,468,
+12 93 13.10,BicycleRacks,12,Furnishings,469,12
+12 93 23.10,TrashReceptacles,12,Furnishings,469,12
+13 05 05.10,"Selective Demolition, Air Supported",13,Special Construction,472,
+13 05 05.20,"Selective Demolition, Garden Houses",13,Special Construction,472,
+13 05 05.25,"Selective Demolition, Geodesic Domes",13,Special Construction,472,
+13 05 05.30,"Selective Demolition, Greenhouses",13,Special Construction,472,
+13 05 05.35,"Selective Demolition, Hangars",13,Special Construction,472,
+13 05 05.45,"Selective Demolition, Lightning Protection",13,Special Construction,472,
+13 05 05.50,"Selective Demolition, Pre-Engineered Steel",13,Special Construction,473,13
+13 05 05.65,"Selective Demolition, SoundControl",13,Special Construction,473,13
+13 05 05.70,"Selective Demolition, Special Purpose Rooms",13,Special Construction,473,13
+13 05 05.75,"Selective Demolition, Storage Tanks",13,Special Construction,474,
+13 05 05.85,"Selective Demolition, Swimming Pool Equip",13,Special Construction,474,
+13 05 05.95,"Selective Demo, X-Ray/Radio Freq Protection",13,Special Construction,475,13
+13 11 13.50,SwimmingPools =———————C—C_—C,13,Special Construction,476,
+13 11 23.50,Swimming Pools,13,Special Construction,476,
+13 11 46.50,Swimming Pool Equipment,13,Special Construction,476,
+13 12 13.10,OutdoorFountains,13,Special Construction,477,13
+13 12 23.10,Indoor Fountains,13,Special Construction,477,13
+13 17 33.10,Whirlpool Bath,13,Special Construction,478,
+13 18 13.50,Ice Skating,13,Special Construction,478,
+13 18 16.50,Ice Rink Dasher Boards,13,Special Construction,478,
+13 21 13.50,Clean Room Components,13,Special Construction,478,
+13 21 26.50,Refrigeration,13,Special Construction,479,13
+13 21 48.10,Anechoic Chambers,13,Special Construction,479,13
+13 21 48.15,Audiometric Rooms,13,Special Construction,479,13
+13 21 53.50,Darkrooms,13,Special Construction,480,
+13 21 56.50,Music Rooms,13,Special Construction,480,
+13 24 16.50,Saunas and Heaters,13,Special Construction,480,
+13 24 26.50,Steam Baths and Components,13,Special Construction,481,13
+13 31 13.09,Air Supported Tank Covers,13,Special Construction,481,13
+13 31 13.13,Single-Walled Air-Supported Structures,13,Special Construction,481,13
+13 31 23.50,Tension Structures,13,Special Construction,482,
+13 34 13.13,Greenhouses,13,Special Construction,483,13
+13 34 13.19,Swimming Pool Enclosures,13,Special Construction,484,
+13 34 16.13,Grandstands,13,Special Construction,484,
+13 34 16.53,Bleachers,13,Special Construction,484,
+13 34 19.50,Pre-Engineered Steel Buildings,13,Special Construction,485,13
+13 34 23.10,Comfort Stations,13,Special Construction,487,8
+13 34 23.15,Domes,13,Special Construction,488,
+13 34 23.16,Fabricated Control Booths,13,Special Construction,488,
+13 34 23.25,Garage Costs,13,Special Construction,488,
+13 34 23.30,Garden House,13,Special Construction,488,
+13 34 23.45,Kiosks,13,Special Construction,488,
+13 34 23.60,Portable Booths ee,13,Special Construction,488,
+13 34 23.70,Shelters,13,Special Construction,489,13
+13 34 53.50,Silos,13,Special Construction,489,13
+13 36 13.50,Control Towers,13,Special Construction,489,13
+13 42 63.16,Steel Detention Cell Modules,13,Special Construction,490,
+13 47 13.16,Cathodic Prot. for Underground Storage,13,Special Construction,490,
+13 48 13.50,Audio Masking is pret,13,Special Construction,490,
+13 49 19.50,Shielding Lead,13,Special Construction,491,13
+13 49 21.50,Lead Glazing,13,Special Construction,491,13
+13 49 23.50,Modular Shielding Partitions,13,Special Construction,492,
+13 49 33.50,"Shielding, Radio Frequency",13,Special Construction,492,
+13 53 09.50,Weather Station,13,Special Construction,492,
+14 11 10.20,Manual Dumbwaiters,14,Conveying Equipment,494,
+14 12 10.10,Electric Dumbwaiters,14,Conveying Equipment,494,
+14 21 13.10,Electric Traction Freight Elevators and,14,Conveying Equipment,494,
+14 21 23.10,Electric Traction Passenger Elevators,14,Conveying Equipment,494,
+14 21 33.20,Residential Elevators,14,Conveying Equipment,495,14
+14 24 13.10,Hydraulic Freight Elevators and Options,14,Conveying Equipment,495,14
+14 24 23.10,Hydraulic Passenger Elevators and Options,14,Conveying Equipment,496,
+14 27 13.10,Cab Finishes us,14,Conveying Equipment,497,14
+14 28 10.10,Elevator Controls and Doors,14,Conveying Equipment,497,14
+14 31 10.10,Escalators,14,Conveying Equipment,498,
+14 42 13.10,Inclined Wheelchair Lifts and Stairclimbers,14,Conveying Equipment,499,14
+14 42 16.10,Wheelchair Lifts,14,Conveying Equipment,499,14
+14 45 10.10,Hydraulic Lifts,14,Conveying Equipment,499,14
+14 91 33.10,Chutes,14,Conveying Equipment,500,
+14 91 82.10,Trash Chutes and Accessories,14,Conveying Equipment,500,
+14 92 10.10,Pneumatic Tube Systems,14,Conveying Equipment,500,
+21 05 23.50,General-Duty Valves,21,Fire Suppression,504,
+21 11 16.50,Fire Hydrants for Buildings,21,Fire Suppression,504,
+21 11 19.50,Connections for the Fire-Department,21,Fire Suppression,504,
+21 12 13.50,Fire Hoses and Nozzles pas ab iP,21,Fire Suppression,505,21
+21 12 19.50,Fire Hose Racks,21,Fire Suppression,505,21
+21 12 23.70,Fire Hose Valves,21,Fire Suppression,505,21
+21 13 13.50,Wet-Pipe Sprinkler System Components,21,Fire Suppression,506,
+21 13 16.50,Dry-Pipe Sprinkler System Components,21,Fire Suppression,506,
+21 13 19.50,Preaction Sprinkler System Components,21,Fire Suppression,506,
+21 13 26.50,Deluge Fire-Suppression Sprinkler Sys,21,Fire Suppression,506,
+21 22 16.50,Clean-Agent Extinguishing Systems,21,Fire Suppression,508,
+21 31 16.50,Diesel-Drive Fire Pumps,21,Fire Suppression,508,
+22 01 02.10,"Boilers, General",22,Plumbing,510,
+22 01 02.20,Labor Adjustment Factors,22,Plumbing,510,
+22 05 05.10,Plumbing Demolition,22,Plumbing,511,22
+22 05 23.20,"Valves, Bronze",22,Plumbing,511,22
+22 05 48.10,Seismic Bracing Supports,22,Plumbing,515,22
+22 05 76.20,Cleanout Tees,22,Plumbing,517,22
+22 07 19.10,Piping Insulation,22,Plumbing,517,22
+22 11 13.14,"Pipe, Brass",22,Plumbing,518,
+22 11 13.23,"Pipe/Tube, Copper",22,Plumbing,518,
+22 11 13.44,"Pipe, Steel",22,Plumbing,519,22
+22 11 13.48,"Pipe, Fittings and Valves, Steel,",22,Plumbing,520,
+22 11 13.74,"Pipe, Plastic",22,Plumbing,521,22
+22 11 19.26,PressureRegulators,22,Plumbing,523,22
+22 11 19.38,Water Supply Meters,22,Plumbing,524,
+22 11 19.50,Vacuum Breakers,22,Plumbing,524,
+22 11 19.54,Water Hammer Arresters/Shock Absorbers,22,Plumbing,525,22
+22 11 19.64,Hydrants,22,Plumbing,526,
+22 13 16.60,Traps,22,Plumbing,526,
+22 13 19.13,Sanitary Drains ESP TG LES PANTER,22,Plumbing,527,22
+22 13 29.13,"Wet-Pit-Mounted, Vertical Sewerage",22,Plumbing,528,
+22 13 29.14,Sewage EjectorPumps,22,Plumbing,528,
+22 14 26.13,RoofDrains,22,Plumbing,529,22
+22 14 26.16,Facility AreaDrains,22,Plumbing,529,22
+22 14 26.19,Facility Trench Drains,22,Plumbing,529,22
+22 14 29.13,"Wet-Pit-Mounted, Vertical Sump Pumps",22,Plumbing,530,
+22 14 29.16,Submersible Sump Pumps,22,Plumbing,530,
+22 31 13.10,Residential WaterSofteners,22,Plumbing,530,
+22 31 16.10,Water Softeners,22,Plumbing,530,
+22 33 30.13,"Residential, Small-Capacity Elec. Water",22,Plumbing,531,22
+22 33 33.10,Commercial Electric Water Heaters,22,Plumbing,531,22
+22 34 13.10,"Instantaneous, Tankless,Gas Water",22,Plumbing,531,22
+22 34 30.13,"Residential, Atmos, Gas Domestic Wtr",22,Plumbing,531,22
+22 34 36.13,"Commercial, Atmos., Gas Domestic Water",22,Plumbing,532,
+22 34 46.20,Commercial Oil-Fired Water Heaters,22,Plumbing,532,
+22 41 06.10,Plumbing Fixture Notes,22,Plumbing,533,22
+22 41 13.13,Water Closets,22,Plumbing,533,92
+22 44 16.13,bavatories,22,Plumbing,533,22
+22 41 16.13,Lavatories,22,Plumbing,534,
+22 41 16.16,Sinks,22,Plumbing,534,
+22 41 19.10,Baths,22,Plumbing,534,99
+22 41 23.20,Showers,22,Plumbing,534,
+22 41 23.40,Shower System Components,22,Plumbing,534,
+22 41 39.10,Faucets and Fittings,22,Plumbing,535,22
+22 42 13.13,Water Closets,22,Plumbing,536,29
+22 42 13.16,Urinals,22,Plumbing,536,
+22 42 16.13,Lavatories,22,Plumbing,536,
+22 42 16.40,Service Sinks nm,22,Plumbing,536,
+22 42 23.30,Group Showers,22,Plumbing,537,22
+22 42 33.20,Commercial Wash Fountains,22,Plumbing,537,22
+22 42 39.10,Faucets andFittings,22,Plumbing,538,
+22 42 39.30,Carriers and Supports,22,Plumbing,538,
+22 45 13.10,Emergency Showers,22,Plumbing,540,
+22 45 16.10,Eyewash Safety Equipment,22,Plumbing,540,
+22 45 19.10,Self-Contained Eyewash SafetyEquipment,22,Plumbing,540,
+22 45 26.10,Eye/Face Wash Safety Equipment,22,Plumbing,540,
+22 47 13.10,Drinking Water Fountains,22,Plumbing,540,
+22 47 16.10,Electric Water Coolers,22,Plumbing,541,22
+22 51 19.50,Swimming Pool Filtration Equipment,22,Plumbing,542,
+22 52 16.10,Fountain Water Pumps,22,Plumbing,542,
+22 52 33.10,"Fountain Miscellaneous,",22,Plumbing,542,
+22 66 53.60,CorrosionResistant Pipe,22,Plumbing,542,
+23 05 02.10,"Air Conditioning, General",23,"Heating, Ventilating & Air Conditioning",546,
+23 05 05.10,HVAC Demolition,23,"Heating, Ventilating & Air Conditioning",546,
+23 05 23.30,"Valves, lron Body",23,"Heating, Ventilating & Air Conditioning",546,
+23 05 23.80,"Valves, Steel",23,"Heating, Ventilating & Air Conditioning",547,23
+23 05 93.10,"Balancing, Air",23,"Heating, Ventilating & Air Conditioning",547,23
+23 05 93.20,"Balancing, Water",23,"Heating, Ventilating & Air Conditioning",548,
+23 07 13.10,Duct Thermal Insulation,23,"Heating, Ventilating & Air Conditioning",548,
+23 07 16.10,HVAC Equipment Thermal Insulation,23,"Heating, Ventilating & Air Conditioning",549,23
+23 09 23.10,Control Components/DDC Systems,23,"Heating, Ventilating & Air Conditioning",549,23
+23 09 43.10,Pneumatic Control Systems,23,"Heating, Ventilating & Air Conditioning",551,23
+23 13 13.09,Single-Wall Steel Fuel-Oil Tanks,23,"Heating, Ventilating & Air Conditioning",551,23
+23 13 13.23,"Glass-Fiber-Reinfcd-Plastic, Fuel-Oil, Storage",23,"Heating, Ventilating & Air Conditioning",552,
+23 13 23.16,"Horizontal, Stl, Abvgrd Fuel-Oil, Storage",23,"Heating, Ventilating & Air Conditioning",553,23
+23 13 23.26,"Horizontal, Conc., Abvgrd Fuel-Oil, Stor. Tanks",23,"Heating, Ventilating & Air Conditioning",553,23
+23 21 20.18,Automatic Air Vent,23,"Heating, Ventilating & Air Conditioning",553,23
+23 21 20.42,Expansion Joints,23,"Heating, Ventilating & Air Conditioning",554,
+23 21 20.46,Expansion Tanks,23,"Heating, Ventilating & Air Conditioning",554,
+23 21 20.58,Hydronic Heating Control Valves,23,"Heating, Ventilating & Air Conditioning",554,
+23 21 20.70,Steam Traps,23,"Heating, Ventilating & Air Conditioning",554,
+23 21 20.76,"Strainers, Y Type, Bronze Body",23,"Heating, Ventilating & Air Conditioning",555,23
+23 21 20.78,"Strainers, Y Type, Iron Body",23,"Heating, Ventilating & Air Conditioning",555,23
+23 21 20.88,Venturi Flow,23,"Heating, Ventilating & Air Conditioning",556,
+23 21 23.13,In-Line Centrifugal Hydronic,23,"Heating, Ventilating & Air Conditioning",556,
+23 21 29.10,Condensate Removal Pump System,23,"Heating, Ventilating & Air Conditioning",556,
+23 22 13.23,Aboveground Steam and Condensate,23,"Heating, Ventilating & Air Conditioning",556,
+23 22 23.10,Condensate Return System,23,"Heating, Ventilating & Air Conditioning",556,
+23 31 13.13,Rectangular Metal Ducts,23,"Heating, Ventilating & Air Conditioning",558,
+23 31 13.19,Metal Duct Fittings,23,"Heating, Ventilating & Air Conditioning",558,
+23 31 16.22,Duct Board,23,"Heating, Ventilating & Air Conditioning",558,
+23 33 13.16,Fire Dampers,23,"Heating, Ventilating & Air Conditioning",559,23
+23 33 13.28,Splitter Damper Assembly,23,"Heating, Ventilating & Air Conditioning",559,23
+23 33 19.10,Duct Silencers,23,"Heating, Ventilating & Air Conditioning",559,93
+23 33 33.13,DuctAccessDoors,23,"Heating, Ventilating & Air Conditioning",559,23
+23 33 46.10,Flexible Air Ducts,23,"Heating, Ventilating & Air Conditioning",560,
+23 33 53.10,Duct Liner Board,23,"Heating, Ventilating & Air Conditioning",560,
+23 34 13.10,Axial Flow HVAC Fans,23,"Heating, Ventilating & Air Conditioning",560,
+23 34 14.10,Blower Type HVAC Fans,23,"Heating, Ventilating & Air Conditioning",560,
+23 34 16.10,Centrifugal Type HVAC Fans,23,"Heating, Ventilating & Air Conditioning",561,23
+23 34 23.10,HVAC Power Circulators and Ventilators,23,"Heating, Ventilating & Air Conditioning",562,
+23 34 33.10,Air Barrier Curtains,23,"Heating, Ventilating & Air Conditioning",564,
+23 34 39.10,Powerfoil,23,"Heating, Ventilating & Air Conditioning",564,
+23 37 13.10,Diffusers,23,"Heating, Ventilating & Air Conditioning",564,
+23 37 13.30,Grilles,23,"Heating, Ventilating & Air Conditioning",565,23
+23 37 13.60,Registers,23,"Heating, Ventilating & Air Conditioning",565,23
+23 37 15.40,HVAC Louvers,23,"Heating, Ventilating & Air Conditioning",565,23
+23 41 19.10,Permanent Air Filters:,23,"Heating, Ventilating & Air Conditioning",567,23
+23 42 13.10,"Charcoal Type Air Filtration,",23,"Heating, Ventilating & Air Conditioning",567,23
+23 43 13.10,Electronic Air Cleaners,23,"Heating, Ventilating & Air Conditioning",568,
+23 51 13.13,Draft-Induction Fans,23,"Heating, Ventilating & Air Conditioning",568,
+23 51 23.10,Gas Chimney Vents,23,"Heating, Ventilating & Air Conditioning",568,
+23 51 26.30,"All-Fuel Vent Chimneys, Double Wall, St. Stl",23,"Heating, Ventilating & Air Conditioning",568,
+23 52 13.10,"Electric Boilers, ASME",23,"Heating, Ventilating & Air Conditioning",569,23
+23 52 23.20,Gas-Fired Boilers,23,"Heating, Ventilating & Air Conditioning",569,23
+23 52 93.40,Oil-FiredBoilers,23,"Heating, Ventilating & Air Conditioning",570,
+23 52 26.40,Oil-Fired Boilers,23,"Heating, Ventilating & Air Conditioning",570,
+23 54 13.10,Electric Furnaces,23,"Heating, Ventilating & Air Conditioning",570,
+23 54 16.13,Gas-Fired Furnaces,23,"Heating, Ventilating & Air Conditioning",570,
+23 54 16.16,Oil-Fired Furnaces,23,"Heating, Ventilating & Air Conditioning",571,23
+23 55 13.16,Gas-Fired Duct Heaters,23,"Heating, Ventilating & Air Conditioning",571,23
+23 55 23.10,Infrared Type Heating Units,23,"Heating, Ventilating & Air Conditioning",571,23
+23 55 33.13,Oil-Fired Unit Heaters,23,"Heating, Ventilating & Air Conditioning",572,
+23 55 33.16,Gas-Fired UnitHeaters,23,"Heating, Ventilating & Air Conditioning",572,
+23 56 16.40,Solar Heating Systems,23,"Heating, Ventilating & Air Conditioning",572,
+23 56 19.50,Solar Heating Ancillary,23,"Heating, Ventilating & Air Conditioning",572,
+23 57 19.13,"Plate-Type, Liquid-to-Liquid Heat",23,"Heating, Ventilating & Air Conditioning",573,23
+23 57 19.16,"Shell-Type, Liquid-to-Liquid Heat",23,"Heating, Ventilating & Air Conditioning",574,
+23 62 13.10,Packaged Air-Cooled Refrig. Condensing,23,"Heating, Ventilating & Air Conditioning",574,
+23 63 13.10,Air-Cooled Refrig. Condensers,23,"Heating, Ventilating & Air Conditioning",574,
+23 64 13.16,Indirect-Fired Absorption Water Chillers,23,"Heating, Ventilating & Air Conditioning",575,23
+23 64 16.10,Centrifugal Type Water,23,"Heating, Ventilating & Air Conditioning",575,23
+23 64 19.10,Reciprocating Type Water,23,"Heating, Ventilating & Air Conditioning",575,23
+23 64 23.10,Scroll Water Chillers,23,"Heating, Ventilating & Air Conditioning",575,23
+23 64 26.10,Rotary-Screw Type Water Chillers,23,"Heating, Ventilating & Air Conditioning",576,
+23 65 13.10,Forced-Draft Type Cooling Towers,23,"Heating, Ventilating & Air Conditioning",576,
+23 73 39.10,Make-Up Air Unit,23,"Heating, Ventilating & Air Conditioning",577,23
+23 74 33.10,Rooftop Air Conditioners,23,"Heating, Ventilating & Air Conditioning",578,
+23 81 13.10,Packaged Cabinet Type Air-Conditioners,23,"Heating, Ventilating & Air Conditioning",578,
+23 81 19.20,Self-Contained Single Package,23,"Heating, Ventilating & Air Conditioning",578,
+23 81 93.10,Computer Room Units,23,"Heating, Ventilating & Air Conditioning",579,93
+23 81 46.10,Water Source Heat Pumps,23,"Heating, Ventilating & Air Conditioning",579,23
+23 82 16.10,Flanged Coils,23,"Heating, Ventilating & Air Conditioning",580,
+23 82 16.20,Duct Heaters,23,"Heating, Ventilating & Air Conditioning",580,
+23 82 19.10,Fan Coil Air Conditioning,23,"Heating, Ventilating & Air Conditioning",580,
+23 82 19.20,Heating and Ventilating Units,23,"Heating, Ventilating & Air Conditioning",580,
+23 82 29.10,Hydronic Heating,23,"Heating, Ventilating & Air Conditioning",581,23
+23 82 33.10,Convector Units,23,"Heating, Ventilating & Air Conditioning",581,23
+23 82 36.10,Finned Tube Radiation,23,"Heating, Ventilating & Air Conditioning",581,23
+23 82 39.16,Propeller Unit Heaters,23,"Heating, Ventilating & Air Conditioning",581,23
+23 83 16.10,Radiant Floor Heating,23,"Heating, Ventilating & Air Conditioning",582,
+23 84 13.10,Humidifier Units,23,"Heating, Ventilating & Air Conditioning",584,
+26 01 02.20,Labor Adjustment Factors,26,Electrical,586,
+26 05 05.10,Electrical Demolition,26,Electrical,587,26
+26 05 13.16,"Medium-Voltage, Single Cable",26,Electrical,589,
+26 05 19.20,Armored Cable,26,Electrical,589,26
+26 05 19.35,Cable Terminations,26,Electrical,590,
+26 05 19.50,Mineral Insulated Cable,26,Electrical,591,26
+26 05 19.55,Non-Metallic Sheathed Cable,26,Electrical,591,26
+26 05 19.90,Wire,26,Electrical,592,
+26 05 23.10,Control Cable,26,Electrical,593,26
+26 05 26.80,Grounding,26,Electrical,593,26
+26 05 33.13,Conduit,26,Electrical,593,26
+26 05 33.16,Boxes for Electrical Systems,26,Electrical,594,
+26 05 33.18,Pull Boxes,26,Electrical,595,26
+26 05 33.23,Wireway,26,Electrical,596,
+26 05 36.10,Cable Tray Ladder Type,26,Electrical,596,
+26 05 39.30,Conduit In Concrete Slab,26,Electrical,596,
+26 05 39.40,Conduit In Trench,26,Electrical,596,
+26 05 43.10,Trench Duct,26,Electrical,597,26
+26 05 43.20,Underfloor Duct,26,Electrical,597,26
+26 05 83.10,Motor Connections,26,Electrical,598,
+26 05 90.10,Residential Wiring,26,Electrical,598,
+26 09 13.10,Switchboard Instruments,26,Electrical,604,
+26 09 13.30,Smart Metering,26,Electrical,604,
+26 09 23.10,Energy Saving Lighting Devices,26,Electrical,604,
+26 12 19.10,"Transformer, Oil-Filled",26,Electrical,605,26
+26 22 13.10,"Transformer, Dry-Type",26,Electrical,605,26
+26 24 13.10,Incoming Switchboards,26,Electrical,606,
+26 24 13.30,Distribution Switchboards Section,26,Electrical,606,
+26 24 13.40,Switchboards Feeder Section,26,Electrical,606,
+26 24 16.20,Panelboard and Load Center Circuit Breakers,26,Electrical,607,26
+26 24 16.30,Panelboards Commercial Applications,26,Electrical,607,26
+26 24 19.40,Motor Starters and Controls,26,Electrical,608,
+26 25 13.40,Copper Bus Duct,26,Electrical,610,
+26 27 16.10,Cabinets,26,Electrical,610,
+26 27 23.40,Surface Raceway,26,Electrical,610,
+26 27 26.10,Low Voltage Switching,26,Electrical,611,26
+26 27 26.20,Wiring Devices Elements,26,Electrical,611,26
+26 27 73.10,Doorbell System,26,Electrical,611,26
+26 28 16.10,Circuit Breakers,26,Electrical,611,26
+26 28 16.20,Safety Switches,26,Electrical,612,
+26 29 13.20,Control Stations,26,Electrical,612,
+26 32 13.13,Diesel-Engine-Driven Generator Sets,26,Electrical,612,
+26 32 13.16,Gas-Engine-Driven Generator Sets,26,Electrical,613,26
+26 33 43.55,Electric Vehicle Charging,26,Electrical,613,26
+26 35 13.10,Capacitors Indoor,26,Electrical,613,26
+26 51 13.50,Interior Lighting Fixtures,26,Electrical,614,
+26 51 13.55,Interior LED Fixtures,26,Electrical,615,26
+26 52 13.10,Emergency Lighting and Battery Units,26,Electrical,616,
+26 52 13.16,Exit Signs,26,Electrical,616,
+26 54 13.20,Explosion Proof,26,Electrical,617,26
+26 55 33.10,Warning Beacons,26,Electrical,617,26
+26 55 61.10,Lights,26,Electrical,617,26
+26 56 13.10,Lighting Poles,26,Electrical,617,26
+26 56 19.55,Roadway LED Luminaire,26,Electrical,618,
+26 56 19.60,Parking LED Lighting,26,Electrical,618,
+26 56 21.20,Roadway Luminaire,26,Electrical,618,
+26 56 23.10,Exterior Fixtures,26,Electrical,618,
+26 56 23.55,Exterior LED Fixtures,26,Electrical,618,
+26 56 36.20,Floodlights,26,Electrical,619,26
+26 56 36.55,LED Floodlights,26,Electrical,619,96
+26 61 93.10,Lamps,26,Electrical,619,26
+26 61 23.10,Lamps,26,Electrical,620,
+26 61 93.55,LED Lamps,26,Electrical,620,
+26 61 23.55,LED Lamps,26,Electrical,622,
+26 71 13.20,Motors,26,Electrical,622,
+26 71 13.40,Motors Explosion Proof,26,Electrical,622,
+27 13 23.13,Communications Optical Fiber,27,Communications,624,
+27 41 33.10,TV Systems,27,Communications,624,
+27 51 16.10,Public Address System,27,Communications,625,27
+27 52 23.10,Nurse Call Systems,27,Communications,626,
+27 53 13.50,Clock Equipments,27,Communications,626,
+28 15 11.11,Standard Card Readers,28,Electronic Safety & Security,628,
+28 15 11.15,Biometric Identity Devices,28,Electronic Safety & Security,628,
+28 18 11.13,Security Access Metal Detectors,28,Electronic Safety & Security,628,
+28 18 13.16,Security Access X-Ray Equipment,28,Electronic Safety & Security,628,
+28 18 15.23,Security Access Explosive Detection,28,Electronic Safety & Security,628,
+28 23 13.10,Closed Circuit Television System,28,Electronic Safety & Security,629,28
+28 23 23.50,Video Surveillance Equipments,28,Electronic Safety & Security,629,28
+28 31 16.50,Intrusion Detection,28,Electronic Safety & Security,629,28
+28 42 15.50,Tank Leak Detection Systems,28,Electronic Safety & Security,630,
+28 46 11.21,Carbon-Monoxide Detection Sensors,28,Electronic Safety & Security,630,
+28 46 11.27,Other Sensors,28,Electronic Safety & Security,630,
+28 46 11.50,Fire and Heat Detectors,28,Electronic Safety & Security,631,28
+28 46 20.50,Alarm Panels and Devices,28,Electronic Safety & Security,631,98
+28 47 12.10,Mass Notification System,28,Electronic Safety & Security,631,28
+31 05 13.10,Borrow,31,Earthwork,634,
+31 05 16.10,Borrow,31,Earthwork,634,
+31 05 23.30,Plant Mixed Bituminous Concrete,31,Earthwork,634,
+31 06 60.14,Piling Special Costs,31,Earthwork,634,
+31 06 60.15,Mobilization,31,Earthwork,635,31
+31 11 10.10,Clear and Grub Site,31,Earthwork,635,31
+31 13 13.10,Selective Clearing,31,Earthwork,636,
+31 13 13.20,Selective Tree Removal,31,Earthwork,636,
+31 14 13.23,Topsoil Stripping and Stockpiling,31,Earthwork,637,31
+31 22 13.20,Rough Grading Sites,31,Earthwork,637,31
+31 22 16.10,FinishGrading,31,Earthwork,638,
+31 23 16.13,"Excavating, Trench",31,Earthwork,638,
+31 23 16.14,"Excavating, Utility Trench",31,Earthwork,641,31
+31 23 16.16,Structural Excavation for Minor Structures,31,Earthwork,642,
+31 23 16.30,Drilling and Blasting Rock,31,Earthwork,642,
+31 23 16.42,"Excavating, Bulk Bank Measure",31,Earthwork,643,31
+31 23 16.46,"Excavating, Bulk, Dozer",31,Earthwork,644,
+31 23 16.50,"Excavation, Bulk, Scrapers",31,Earthwork,645,31
+31 23 19.20,Dewatering Systems,31,Earthwork,647,31
+31 23 19.30,Wells,31,Earthwork,647,31
+31 23 19.40,Wellpoints,31,Earthwork,647,31
+31 23 23.13,Backfill,31,Earthwork,648,
+31 23 23.14,"Backfill, Structural",31,Earthwork,648,
+31 23 23.16,Fill By Borrow and Utility Bedding,31,Earthwork,649,31
+31 23 23.17,General Fill,31,Earthwork,649,31
+31 23 23.20,Hauling,31,Earthwork,649,31
+31 23 23.24,"Compaction, Structural",31,Earthwork,659,31
+31 25 14.16,Rolled Erosion Control Mats and Blankets,31,Earthwork,659,31
+31 31 16.13,Chemical Termite Control,31,Earthwork,659,31
+31 32 13.30,Calcium Chloride,31,Earthwork,660,
+31 33 13.10,Rock Bolting,31,Earthwork,660,
+31 36 13.10,Gabion Box Systems,31,Earthwork,660,
+31 37 13.10,Riprap and Rock Lining,31,Earthwork,660,
+31 41 13.10,Building Shoring,31,Earthwork,661,31
+31 41 16.10,Sheet Piling Systems,31,Earthwork,662,
+31 43 13.13,Concrete Pressure Grouting,31,Earthwork,662,
+31 45 13.10,Vibroflotation Densification,31,Earthwork,662,
+31 46 13.10,Needle Beams,31,Earthwork,662,
+31 48 13.10,Underpinning Foundations,31,Earthwork,663,31
+31 52 16.10,Cofferdams,31,Earthwork,663,31
+31 56 23.20,Slurry Trench ue,31,Earthwork,664,
+31 62 13.23,Prestressed Concrete Piles,31,Earthwork,664,
+31 62 16.13,Steel Piles,31,Earthwork,664,
+31 62 19.10,Wood Piles,31,Earthwork,665,31
+31 62 23.13,Concrete-Filled Steel Piles,31,Earthwork,666,
+31 63 26.13,Fixed End Caisson Piles,31,Earthwork,666,
+31 63 26.16,Concrete Caissons for Marine Construction,31,Earthwork,668,
+31 63 29.13,Uncased Drilled Concrete Piers,31,Earthwork,668,
+31 63 29.20,"Cast In Place Piles, Adds",31,Earthwork,669,31
+32 01 11.51,Rubber and Paint Removal From Paving,32,Exterior Improvements,672,
+32 01 13.61,Slurry Seal (Latex Modified),32,Exterior Improvements,672,
+32 01 13.64,Sand Seal,32,Exterior Improvements,672,
+32 01 13.66,Fog Seal,32,Exterior Improvements,672,
+32 01 19.61,Sealing of Joints In Rigid Paving,32,Exterior Improvements,672,
+32 06 10.20,Steps,32,Exterior Improvements,673,32
+32 11 23.23,Base Course Drainage Layers,32,Exterior Improvements,673,32
+32 11 26.19,Bituminous-Stabilized Base Courses,32,Exterior Improvements,674,
+32 12 16.13,Plant-Mix Asphalt Paving,32,Exterior Improvements,674,
+32 12 16.14,Asphaltic Concrete Paving,32,Exterior Improvements,674,
+32 12 36.13,Chip Seal,32,Exterior Improvements,675,32
+32 12 36.14,Flush Coat,32,Exterior Improvements,675,32
+32 12 36.33,Slurry Seal,32,Exterior Improvements,676,
+32 12 36.36,Microsurfacing,32,Exterior Improvements,676,
+32 13 13.25,"Concrete Pavement, Highways",32,Exterior Improvements,676,
+32 14 13.13,Interlocking Precast Concrete Unit Paving,32,Exterior Improvements,677,32
+32 14 13.16,Precast Concrete Unit Paving Slabs,32,Exterior Improvements,677,32
+32 14 13.18,Precast Concrete Plantable Pavers,32,Exterior Improvements,677,32
+32 14 16.10,Brick Paving,32,Exterior Improvements,677,32
+32 14 23.10,Asphalt Blocks,32,Exterior Improvements,678,
+32 14 40.10,Stone Pavers,32,Exterior Improvements,678,
+32 16 13.13,Cast-in-Place Concrete Curbs and Gutters,32,Exterior Improvements,678,
+32 16 13.23,Precast Concrete Curbs and Gutters,32,Exterior Improvements,679,32
+32 16 13.33,Asphalt Curbs,32,Exterior Improvements,679,32
+32 16 13.43,Stone Curbs,32,Exterior Improvements,679,32
+32 17 13.13,Metal Parking Bumpers,32,Exterior Improvements,680,
+32 17 13.16,Plastic Parking Bumpers,32,Exterior Improvements,680,
+32 17 13.19,Precast Concrete Parking Bumpers,32,Exterior Improvements,680,
+32 17 13.26,Wood Parking Bumpers,32,Exterior Improvements,680,
+32 17 23.13,Painted Pavement Markings:,32,Exterior Improvements,680,
+32 17 23.14,Pavement Parking Markings,32,Exterior Improvements,681,32
+32 17 26.10,Tactile Warning Surfacing,32,Exterior Improvements,681,32
+32 18 13.10,Artificial Grass Surfacing,32,Exterior Improvements,681,32
+32 18 16.13,Playground Protective Surfacing,32,Exterior Improvements,681,32
+32 18 16.16,Epoxy Acrylic Coatings i,32,Exterior Improvements,681,32
+32 18 23.33,Running Track Surfacing,32,Exterior Improvements,682,
+32 18 23.53,Tennis Court Surfacing,32,Exterior Improvements,682,
+32 31 13.20,"Fence, Chain Link Industrial",32,Exterior Improvements,682,
+32 31 13.25,"Fence, Chain Link Residential",32,Exterior Improvements,683,32
+32 31 13.26,Tennis Court Fences and Gates,32,Exterior Improvements,684,
+32 31 13.33,Chain Link Backstops,32,Exterior Improvements,684,
+32 31 13.53,"High-Security Chain Link Fences, Gates and",32,Exterior Improvements,684,
+32 31 13.80,Residential Chain Link Gate,32,Exterior Improvements,684,
+32 31 13.82,Internal Chain Link Gate,32,Exterior Improvements,684,
+32 31 13.84,Industrial Chain Link Gate,32,Exterior Improvements,685,32
+32 31 13.88,Chain Link Transom,32,Exterior Improvements,685,32
+32 31 26.10,"Fences, Misc. Metal",32,Exterior Improvements,685,32
+32 31 26.20,"Wire Fencing, General r",32,Exterior Improvements,686,
+32 31 29.20,"Fence, Wood Rail",32,Exterior Improvements,686,
+32 32 13.10,"Retaining Walls, Cast Concrete",32,Exterior Improvements,687,32
+32 32 23.13,Segmental Conc. Unit Masonry Retaining,32,Exterior Improvements,687,32
+32 32 26.10,Metal Bin Retaining Walls,32,Exterior Improvements,687,32
+32 32 29.10,Landscape Timber Retaining Walls,32,Exterior Improvements,688,
+32 32 36.10,Stone Gabion Retaining Walls,32,Exterior Improvements,688,
+32 32 53.10,"Retaining Walls, Stone",32,Exterior Improvements,688,
+32 33 33.10,Planters,32,Exterior Improvements,688,
+32 33 43.13,Site Seating,32,Exterior Improvements,689,32
+32 34 13.10,"Bridges, Pedestrian",32,Exterior Improvements,689,32
+32 35 16.10,"Traffic Barriers, Highway Sound Barriers",32,Exterior Improvements,690,
+32 84 23.10,Sprinkler Irrigation System,32,Exterior Improvements,690,
+32 91 13.16,Mulching,32,Exterior Improvements,691,32
+32 91 13.26,Planting Beds,32,Exterior Improvements,692,
+32 91 19.13,Topsoil Placement and Grading,32,Exterior Improvements,692,
+32 92 19.13,Mechanical Seeding,32,Exterior Improvements,693,32
+32 92 23.10,Sodding Systems,32,Exterior Improvements,693,32
+32 93 10.12,Travel,32,Exterior Improvements,693,32
+32 93 13.10,Ground Cover Plants,32,Exterior Improvements,693,32
+32 93 33.10,Shrubs and Trees,32,Exterior Improvements,694,
+32 93 33.20,Shrubs,32,Exterior Improvements,694,
+32 93 43.20,Trees,32,Exterior Improvements,695,32
+32 94 13.20,Edging,32,Exterior Improvements,695,32
+32 94 50.10,Tree Guying Systems,32,Exterior Improvements,695,32
+32 96 23.23,Planting,32,Exterior Improvements,696,
+32 96 23.43,Moving Trees,32,Exterior Improvements,696,
+33 01 10.10,Corrosion Resistance,33,Utilities,698,
+33 01 30.72,Cured-In-Place Pipe,33,Utilities,698,
+33 01 30.75,Cured-In-place Pipe Lining,33,Utilities,698,
+33 05 07.36,"Microtunneling,",33,Utilities,699,33
+33 05 61.10,"Storm Drainage Manholes, Frames and Covers",33,Utilities,699,33
+33 05 63.13,Precast Concrete Utility Structures,33,Utilities,700,
+33 05 97.05,Utility Connection,33,Utilities,700,
+33 05 97.10,Utility Accessories,33,Utilities,700,
+33 11 13.20,"Water Supply Wells, Pumps",33,Utilities,701,33
+33 14 13.15,"Water Supply, Ductile lron Pipe",33,Utilities,701,33
+33 14 13.25,"Water Supply, Polyvinyl Chloride Pipe",33,Utilities,702,
+33 14 19.30,Fire Hydrants,33,Utilities,704,
+33 16 11.50,Elevated Water Storage Tanks,33,Utilities,704,
+33 16 23.13,Steel Water Storage Tanks,33,Utilities,704,
+33 16 36.16,Prestressed Conc. Water Storage Tanks,33,Utilities,704,
+33 34 13.13,Concrete Septic Tanks,33,Utilities,706,
+33 34 13.33,Polyethylene Septic Tanks,33,Utilities,706,
+33 34 16.13,Septic Tank Gravity Effluent Filters,33,Utilities,706,
+33 34 51.10,Drainage Field Excavation and Fill,33,Utilities,706,
+33 34 51.13,Utility Septic Tank Tile Drainage Field,33,Utilities,707,33
+33 41 16.10,"Piping, Subdrainage, Vitrified Clay",33,Utilities,707,33
+33 41 16.25,"Piping, Subdrainage, Corrugated Metal",33,Utilities,707,33
+33 41 16.40,"Piping, Subdrainage, Polyvinyl",33,Utilities,708,
+33 42 11.40,"Piping, Storm Drainage, Corrugated Metal",33,Utilities,708,
+33 42 13.15,Oval Arch,33,Utilities,710,
+33 42 33.13,Catch Basins,33,Utilities,710,
+33 42 33.50,Stormwater Management,33,Utilities,711,33
+33 52 13.16,Gasoline Piping,33,Utilities,711,33
+33 52 16.20,"Piping, Gas Service and Distribution, PE",33,Utilities,712,
+33 52 16.23,Medium Density Polyethylene Piping,33,Utilities,712,
+33 52 16.26,High Density Polyethylene Piping,33,Utilities,719,33
+34 71 16.33,Wood Electrical Utility Poles,34,Transportation,727,33
+34 71 19.17,Electric and Telephone Underground,34,Transportation,727,33
+33 81 13.10,RadioTowers,33,Utilities,728,
+34 01 23.51,Maintenance of Railroads,34,Transportation,730,
+34 11 93.50,Track Accessories,34,Transportation,730,
+34 41 13.10,Traffic Signals Systems,34,Transportation,731,34
+34 71 13.17,Security Vehicle Barriers,34,Transportation,731,34
+34 71 19.13,Fixed Vehicle Delineators,34,Transportation,733,34
+34 72 16.60,Railroad Turnouts,34,Transportation,733,34
+35 24 13.13,Cutter Suction Dredging Ran,35,Waterway & Marine Construction,736,
+35 24 23.13,Mechanical Dredging,35,Waterway & Marine Construction,736,
+35 51 13.23,Floating Wood Piers,35,Waterway & Marine Construction,736,
+41 21 23.16,Container Piece Material Conveyors,41,Material Processing & Handling Equipment,738,
+41 22 13.13,Bridge Cranes,41,Material Processing & Handling Equipment,738,
+41 29 13.19,Jib Cranes,41,Material Processing & Handling Equipment,739,41
+41 29 93.10,Material Handling,41,Material Processing & Handling Equipment,739,41
+44 11 16.10,Dust CollectionSystems,44,Pollution Control Equipment,742,
+46 07 53.10,Biological Pkg. Wastewater Treatment,46,Water & Wastewater Equipment,746,
+46 07 53.20,Wastewater Treatment System,46,Water & Wastewater Equipment,746,
+48 15 13.50,Wind Turbines and Components,48,Electrical Power Generation,748,
