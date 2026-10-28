@@ -111,7 +111,9 @@ def main() -> int:
             install_comps = [c for c in ln["comps"] if c.get("price_status", "").startswith("priced") and "install" in (c.get("component", "") + c.get("book_description_path", "")).lower()]
             lab = sum((D(c["ext_total"]) or Decimal(0)) for c in install_comps)
             origin, value = "web_list", web_ext + lab
-            note = f"{w['price_kind']} {w['vendor']} {w['date_checked']} model {w['matched_model']}; freight, tax, start-up excluded" + (f"; + book installation {q2(lab)}" if lab else "")
+            note = (f"{w['price_kind']} {w['vendor']} {w['date_checked']} model {w['matched_model']} (search-indexed text of the cited page; "
+                    f"the live page was not reachable from this session — open the URL before relying on it); freight, tax, start-up excluded"
+                    + (f"; + book installation {q2(lab)}" if lab else ""))
         elif exact or subst:
             if exact and not subst:
                 origin, value = "book_exact", exact
