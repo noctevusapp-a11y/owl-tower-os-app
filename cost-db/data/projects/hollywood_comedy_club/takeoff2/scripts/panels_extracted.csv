@@ -1,0 +1,318 @@
+sheet,panel,y,ldesc,lva,lpole,lbkr,cktL,cktR,rbkr,rpole,rva,rdesc
+E-2.1,KA,166.8,Ice Tea Brewer,5760,2,30,1,2,30,3,4988,Spare
+E-2.1,KA,178.6,-,5760,-,-,3,4,-,-,8648,Spare
+E-2.1,KA,189.0,Holding Cabinet,2880,2,15,5,6,-,-,4988,Coffee Brewer
+E-2.1,KA,200.4,-,2880,-,-,7,8,30,1,2880,Coffee Brewer
+E-2.1,KA,211.8,Conv. Outlet KA 9,1920,1,20,9,10,30,2,5760,Espresso Machine
+E-2.1,KA,222.7,Conv. Outlet KA 11,1920,1,20,11,12,-,-,5760,-
+E-2.1,KA,232.8,"Soda Dispenser KA 17,19",1920,1,20,13,14,20,1,1920,GECI Conv. Outlets
+E-2.1,KA,245.4,Slicer Conv. Outlet,1920,1,20,15,16,20,1,1920,Proofing Cabinet KA 18
+E-2.1,KA,257.6,Mixer,9977,3,60,17,18,30,2,5760,Ice Machine
+E-2.1,KA,267.8,-,9977,-,-,19,20,-,-,5760,-
+E-2.1,KA,279.8,-,17293,-,-,21,22,20,1,1920,Refrigerator Base Bar KA 39
+E-2.1,KA,291.6,Carbonate Motor KA 12,1920,1,20,23,24,20,1,1920,Proofing Cabinet KA 14
+E-2.1,KA,301.9,Carbonate Motor KA 10,1920,1,20,25,26,20,1,1920,Manufactor Bar Outlet
+E-2.1,KA,313.5,Ice Machine,9600,2,50,27,28,20,1,1920,Heat Lamps and Heater
+E-2.1,KA,324.8,-,9600,-,-,29,30,70,3,11639,Heat Lamps and Heater
+E-2.1,KA,334.1,Soup Wells,2880,2,15,31,32,-,-,11639,Ice Machine
+E-2.1,KA,347.3,-,2880,-,-,33,34,-,-,20174,-
+E-2.1,KA,358.5,Heat Lamps and Heater,3840,2,20,35,36,20,3,3326,Kitchen Disposal
+E-2.1,KA,369.8,-,3840,-,-,37,38,-,-,3326,-
+E-2.1,KA,381.0,Refrigerator base Bar,1920,1,20,39,40,-,-,5764,-
+E-2.1,KA,392.3,SPARE,1920,1,20,41,42,20,1,1920,xx Right Wall
+E-2.1,KA,405.4,,29177 41293 32057,,,,,,,32433 46106 35313,
+E-2.1,KA,0,#META,MOUNTING: PANEL - LOCATION: KITCHEN,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,CP,166.8,Bar Outlet CP 13 (Hollywood),1920,1,20,1,2,20,1,1920,Sound System CPT 9
+E-2.1,CP,178.6,Bar Outlet CP 15 (Hollywood),1920,1,20,3,4,20,1,1920,Vine Bar Outlet CP 11
+E-2.1,CP,189.5,Kitchen Outlet CP 19,1920,1,20,5,6,x,x,x,"Office Outlet Left Cp 2, 4, 6"
+E-2.1,CP,200.6,"Office Outlet CP 1,3,5",1920,1,20,7,8,20,1,1920,Exit Sign
+E-2.1,CP,212.2,-,1920,1,20,9,10,20,1,1920,Vent Fan
+E-2.1,CP,223.1,-,1920,1,20,11,12,x,x,x,x
+E-2.1,CP,232.8,Restroom Hand Dryer,1920,1,20,13,14,x,x,x,x
+E-2.1,CP,245.9,x,x,x,x,15,16,x,x,x,x
+E-2.1,CP,258.0,x,x,x,x,17,18,x,x,x,x
+E-2.1,CP,268.1,x,x,x,x,19,20,x,x,x,x
+E-2.1,CP,279.9,x,x,x,x,21,22,x,x,x,x
+E-2.1,CP,291.6,x,x,x,x,23,24,x,x,x,x
+E-2.1,CP,301.9,x,x,x,x,25,26,x,x,x,x
+E-2.1,CP,313.5,x,x,x,x,27,28,x,x,x,x
+E-2.1,CP,325.2,x,x,x,x,29,30,x,x,x,x
+E-2.1,CP,334.1,x,x,x,x,31,32,x,x,x,x
+E-2.1,CP,347.6,x,x,x,x,33,34,x,x,x,x
+E-2.1,CP,359.0,x,x,x,x,35,36,x,x,x,x
+E-2.1,CP,370.1,x,x,x,x,37,38,x,x,x,x
+E-2.1,CP,381.5,x,x,x,x,39,40,x,x,x,x
+E-2.1,CP,392.7,x,x,x,x,41,42,x,x,x,x
+E-2.1,CP,405.4,,5760 3840 3840,,,,,,,3840 3840 0,
+E-2.1,CP,0,#META,MOUNTING: PANEL - LOCATION: KITCHEN,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,HA,166.8,x,x,x,x,1,2,x,x,x,x
+E-2.1,HA,178.6,Switch - 4,7680,1,20,3,4,x,x,x,x
+E-2.1,HA,188.9,x,x,x,x,5,6,20,1,7680,Switch - 1
+E-2.1,HA,200.2,x,x,x,x,7,8,x,x,x,x
+E-2.1,HA,211.6,Switch - 3,7680,1,20,9,10,x,x,x,x
+E-2.1,HA,222.5,x,x,x,x,11,12,30,1,11520,Switch - 2
+E-2.1,HA,232.8,Switch - 5,7680,1,20,13,14,x,x,x,x
+E-2.1,HA,245.2,x,x,x,x,15,16,20,1,7680,Switch - ?
+E-2.1,HA,257.4,x,x,x,x,17,18,x,x,x,x
+E-2.1,HA,267.5,x,x,x,x,19,20,x,x,x,x
+E-2.1,HA,279.5,x,x,x,x,21,22,x,x,x,x
+E-2.1,HA,291.6,x,x,x,x,23,24,x,x,x,x
+E-2.1,HA,301.9,x,x,x,x,25,26,x,x,x,x
+E-2.1,HA,313.3,Switch - 7,7680,1,20,27,28,x,x,x,x
+E-2.1,HA,324.5,x,x,x,x,29,30,20,1,7680,Switch - 6
+E-2.1,HA,334.0,x,x,x,x,31,32,x,x,x,x 2404 wilshire blvd. suite 1e
+E-2.1,HA,347.0,Switch - 9,7680,1,20,33,34,x,x,x,"x los angeles, ca 90057-3310"
+E-2.1,HA,358.3,x,x,x,x,35,36,20,1,7680,Switch - 8 t e l . 2 1 3 . 3 8 0 . 8 4 9 8
+E-2.1,HA,369.6,x,x,x,x,37,38,x,x,x,x
+E-2.1,HA,380.8,x,x,x,x,39,40,x,x,x,x
+E-2.1,HA,392.1,x,x,x,x,41,42,x,x,x,x
+E-2.1,HA,405.4,,7680 30720 0,,,,,,,0 7680 34560,
+E-2.1,HA,0,#META,MOUNTING: PANEL - LOCATION: MEZZANINE ELECTRICAL ROOM,,,,,,,,"VOLTAGE: 480 3P / 3W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,KB,613.3,Colon Outlet KB 26,1920,1,20,1,2,20,2,3840,Colon Outlet KB 30
+E-2.1,KB,625.1,Colon Outlet KB 17,1920,1,20,3,4,20,2,3840,Chiller Compressor KB 24
+E-2.1,KB,635.3,Chiller Motors KB 22,1920,1,20,5,6,20,2,3840,"Dry Store Chiller KB 23,25"
+E-2.1,KB,646.7,Cream Refrigerator Microwave KB 19,4800,2,25,7,8,-,-,3840,"Dry Store Chiller KB 23,25"
+E-2.1,KB,658.1,Conv. Outlet Toilets KB 29,4800,-,-,9,10,20,1,1920,New Compressor
+E-2.1,KB,669.0,Salad Dispenser KB 21,4988,3,30,11,12,20,2,3840,"Conveyor Toaster KB 18,20"
+E-2.1,KB,679.2,Conv. Outlet in Corridor and CPR1,4988,-,-,13,14,-,-,3840,"Conveyor Toaster KB 18,20"
+E-2.1,KB,691.7,Walk-in Refrigerator Compressor,8648,-,-,15,16,20,2,3840,Walk-in Light / Thermostat
+E-2.1,KB,703.8,Dish Washer,11639,3,70,17,18,20,2,3840,Office Toilets KB 27
+E-2.1,KB,714.0,- 11639,,-,-,19,20,20,1,1920,Shut off Contactor / Hood Lights
+E-2.1,KB,726.0,-,20174,-,-,21,22,20,1,1920,Conv. Outlet KB 12
+E-2.1,KB,738.1,Smoker,1920,1,20,23,24,20,1,1920,Tilting Skillet
+E-2.1,KB,748.4,Smoker,1920,1,20,25,26,20,1,1920,Gal Tilting KB 13
+E-2.1,KB,759.8,Light for hood and outlet,1920,1,20,27,28,20,1,1920,Refrigerator Base KB 7
+E-2.1,KB,771.0,Spare,1920,1,20,29,30,20,1,1920,Pasta Cooker / Oven Grill
+E-2.1,KB,780.5,Washing Drawer,3840,2,20,31,32,20,2,3840,Fryer Battery KB 10
+E-2.1,KB,793.5,x,1920,1,20,33,34,20,1,1920,Fryer Battery KB 10
+E-2.1,KB,804.8,x,5760,2,30,35,36,30,2,5760,Rotassier
+E-2.1,KB,816.0,x,5760,-,-,37,38,-,-,5760,Pomp-Beer
+E-2.1,KB,827.3,x,1920,1,20,39,40,20,2,3840,x
+E-2.1,KB,838.5,x,1920,1,20,41,42,-,-,3840,x
+E-2.1,KB,851.9,,34867 41302 30067,,,,,,,24960 19200 24960,
+E-2.1,KB,0,#META,MOUNTING: PANEL - LOCATION: KITCHEN,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,Dillons,613.3,Column Light / TV Outlet,3840,2,20,1,2,20,2,3840,Toilet Corridor Light / TV Outlet
+E-2.1,Dillons,625.1,Vine Side Light / TV Outlet,3840,2,20,3,4,20,1,1920,Conv. Outlet
+E-2.1,Dillons,635.7,Spare / POS,3840,2,20,5,6,20,1,1920,Light Column
+E-2.1,Dillons,647.1,Mezzanine Lught,1920,1,20,7,8,20,1,1920,Bar TV
+E-2.1,Dillons,658.5,Hollywood Side Light,1920,1,20,9,10,20,1,1920,Outlet
+E-2.1,Dillons,669.4,Column Light,1920,1,20,11,12,20,1,1920,Ceiling Light
+E-2.1,Dillons,679.2,Vine Side Light,1920,1,20,13,14,20,1,1920,Ceiling Light
+E-2.1,Dillons,692.1,Spare,1920,1,20,15,16,20,1,1920,POS / Refrigerator
+E-2.1,Dillons,704.3,Spare Exhaust Dumper,1920,1,20,17,18,20,2,3840,TV Outlet Bar / TV Outlet Bar
+E-2.1,Dillons,714.5,Perimeter Light,1920,1,20,19,20,20,2,3840,TV Outlet / POS
+E-2.1,Dillons,726.3,Spare,1920,1,20,21,22,20,2,3840,POS / TV Outlet Bar
+E-2.1,Dillons,738.1,Hollywood Side Light,1920,1,20,23,24,20,2,3840,Refrigerator
+E-2.1,Dillons,748.4,Spare,1920,1,20,25,26,20,2,3840,Outlet 220 Deep Fryer
+E-2.1,Dillons,760.0,Emergency Lights,3840,2,20,27,28,-,-,3840,TV Outlet Bar / TV Outlet Bar
+E-2.1,Dillons,771.5,x,1920,1,20,29,30,20,2,3840,x
+E-2.1,Dillons,780.5,x,x,x,x,31,32,x,x,x,x
+E-2.1,Dillons,794.0,x,x,x,x,33,34,x,x,x,x
+E-2.1,Dillons,805.2,x,x,x,x,35,36,x,x,x,x
+E-2.1,Dillons,816.5,x,x,x,x,37,38,x,x,x,x
+E-2.1,Dillons,827.7,x,x,x,x,39,40,x,x,x,x
+E-2.1,Dillons,839.0,x,x,x,x,41,42,x,x,x,x
+E-2.1,Dillons,851.9,,11520 13440 11520,,,,,,,15360 13440 15360,
+E-2.1,Dillons,0,#META,MOUNTING: PANEL - LOCATION: MEZZANINE,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,B,612.2,AC-1,-,3,40,,,40,3,-,AC-2
+E-2.1,B,616.5,,,,,1,2,,,,OF THESE RESTRICTIONS.
+E-2.1,B,624.0,-,-,-,-,,,-,-,-,-
+E-2.1,B,629.0,,,,,3,4,,,,©
+E-2.1,B,634.0,-,-,-,-,5,6,-,-,-,- 2014 Kelly Architects
+E-2.1,B,646.0,AC-2,-,3,40,7,8,20,1,-,ADA LIFT
+E-2.1,B,657.6,-,-,-,-,9,10,-,-,-,SPACE Boulevard
+E-2.1,B,668.8,-,-,-,-,,,-,-,-,-
+E-2.1,B,674.0,,,,,11,12,,,,Club
+E-2.1,B,678.2,SPACE,-,-,-,13,14,-,-,-,-
+E-2.1,B,691.5,-,-,-,-,15,16,-,-,-,-
+E-2.1,B,700.9,,-,,,,,-,-,,90028
+E-2.1,B,704.4,-,,-,-,17,18,,,-,-
+E-2.1,B,713.4,-,-,-,-,,,-,-,-,-
+E-2.1,B,718.6,,,,,19,20,,,,Comedy
+E-2.1,B,725.2,-,-,-,-,21,22,-,-,-,-
+E-2.1,B,737.0,-,-,-,-,,,-,-,-,-
+E-2.1,B,741.5,,,,,23,24,,,,Hollywood
+E-2.1,B,747.3,-,-,-,-,,,-,-,-,-
+E-2.1,B,752.8,,,,,25,26,,,,CA
+E-2.1,B,758.9,-,-,-,-,27,28,-,-,-,-
+E-2.1,B,770.7,-,-,-,-,29,30,-,-,-,-
+E-2.1,B,779.4,,-,,-,,,-,-,-,
+E-2.1,B,783.0,-,,-,,,,,,,"- Hollywood,"
+E-2.1,B,786.5,,,,,31,32,,,,Hollywood
+E-2.1,B,792.9,-,-,-,-,33,34,-,-,-,-
+E-2.1,B,804.6,-,-,-,-,35,36,-,-,-,- PROJECT
+E-2.1,B,815.4,-,-,-,-,37,38,-,-,-,-
+E-2.1,B,827.1,-,-,-,-,39,40,-,-,-,- 6263
+E-2.1,B,838.3,-,-,-,-,41,42,-,-,-,-
+E-2.1,B,851.9,,x x x,,,,,,,x x x,
+E-2.1,B,0,#META,MOUNTING: PANEL - LOCATION: USED IN CONNECTION WITH ANY WORK OR,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY PREPARED PROJECT AND FOR DEVELOPED WHICH THEY WITHOUT HAVE BEEN THE"
+E-2.1,KC,1059.7,Toilet Lights KC-23,1920,1,20,1,2,20,1,1920,Canopy Outlet (Hollywood)
+E-2.1,KC,1071.5,Conv. Outlet KC 1 (Hollywood),1920,1,20,3,4,20,1,1920,Mixer Outlet KC 18-20
+E-2.1,KC,1081.6,Beer Cooler KC 3 (Hollywood),1920,1,20,5,6,20,1,1920,Spare
+E-2.1,KC,1092.9,Conv. Outlet KC 1 (Hollywood),1920,1,20,7,8,20,1,1920,Bar Outlet (Vine) KC 11
+E-2.1,KC,1104.3,"Bottle Cooler KC 14,16",1920,1,20,9,10,20,1,1920,Bar Outlet (Vine) KC 13
+E-2.1,KC,1115.2,Espresso Machine KC 22,5760,2,30,11,12,20,1,1920,Bar Outlet (Vine) KC 9
+E-2.1,KC,1125.7,-,5760,-,-,13,14,20,1,1920,Bar Outlet (Vine) KC 8
+E-2.1,KC,1137.9,Bar Mixer Outlet KC 12,1920,1,20,15,16,20,1,1920,Bar Outlet (Vine) KC 6
+E-2.1,KC,1150.1,Switch KC 26,1920,1,20,17,18,20,1,1920,Bar Outlet (Vine) KC 4
+E-2.1,KC,1160.3,TV Outlet From Vine KC 2,1920,1,20,19,20,20,1,1920,Beer Cooler (Vine) KC 10
+E-2.1,KC,1172.3,Light for Beer Cooler,1920,1,20,21,22,20,1,1920,Conv. Outlet mixer KC 10
+E-2.1,KC,1184.6,Conv. Outlet Walk-in Beer,1920,1,20,23,24,20,1,1920,Network Rack AC Drain Pump
+E-2.1,KC,1194.8,x,5760,2,30,25,26,x,x,x,x
+E-2.1,KC,1206.0,x,5760,-,-,27,28,x,x,x,x
+E-2.1,KC,1217.3,x,x,x,x,29,30,x,x,x,x
+E-2.1,KC,1227.0,x,x,x,x,31,32,x,x,x,x
+E-2.1,KC,1239.8,x,x,x,x,33,34,x,x,x,x
+E-2.1,KC,1251.0,x,x,x,x,35,36,x,x,x,x
+E-2.1,KC,1262.3,x,x,x,x,37,38,x,x,x,x
+E-2.1,KC,1273.5,x,x,x,x,39,40,x,x,x,x
+E-2.1,KC,1284.8,x,x,x,x,41,42,x,x,x,x
+E-2.1,KC,1298.3,,17280 13440 11520,,,,,,,7680 7680 7680,
+E-2.1,KC,0,#META,MOUNTING: PANEL - LOCATION: KITCHEN,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,DP,1059.8,Panel KA,14400,1,150,1,2,150,1,14400,Panel DMA
+E-2.1,DP,1071.5,Panel KC,14400,1,150,3,4,150,1,14400,Panel KB
+E-2.1,DP,1081.8,x,8314,3,50,5,6,100,2,19200,Refrigerator Rock
+E-2.1,DP,1093.1,-,8314,-,-,7,8,-,-,19200,-
+E-2.1,DP,1104.5,-,14411,-,-,9,10,x,x,x,x
+E-2.1,DP,1115.4,Panel CP,8314,3,50,11,12,20,1,1920,DM Hood Exhaust
+E-2.1,DP,1125.7,-,8314,-,-,13,14,20,1,1920,-
+E-2.1,DP,1138.1,-,14411,-,-,15,16,20,1,1920,-
+E-2.1,DP,1150.3,x,1920,1,20,17,18,20,1,1920,x
+E-2.1,DP,1160.4,-,1920,1,20,19,20,20,1,1920,-
+E-2.1,DP,1172.4,-,1920,1,20,21,22,20,1,1920,-
+E-2.1,DP,1184.6,AC 2,6651,3,40,23,24,20,1,1920,Water Boiler
+E-2.1,DP,1194.8,-,6651,-,-,25,26,20,1,1920,-
+E-2.1,DP,1206.2,-,11529,-,-,27,28,20,1,1920,-
+E-2.1,DP,1217.5,AC 1,6651,3,40,29,30,20,1,1920,Sign CLK
+E-2.1,DP,1227.0,-,6651,-,-,31,32,20,1,1920,Sign
+E-2.1,DP,1240.0,-,11529,-,-,33,34,20,1,1920,-
+E-2.1,DP,1251.2,AC 3,6651,3,40,35,36,20,1,1920,Sign
+E-2.1,DP,1262.5,-,6651,-,-,37,38,20,1,1920,Spare
+E-2.1,DP,1273.7,-,11529,-,-,39,40,x,x,x,x
+E-2.1,DP,1285.0,x,x,x,x,41,42,x,x,x,x
+E-2.1,DP,1298.3,,52901 79729 38501,,,,,,,43200 22080 28800,
+E-2.1,DP,0,#META,MOUNTING: PANEL - LOCATION: MEZZANINE ELECTRICAL ROOM,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.1,A,1058.6,-,-,1,20,1,2,20,2,-,RCPT. WINDOW
+E-2.1,A,1070.4,RCPT. SIGN,-,2,-,3,4,-,-,-,RCPT. RECEPTION
+E-2.1,A,1081.6,RCPT. RECEPTION,-,-,-,5,6,-,1,-,RCPT. RETAIL AREA
+E-2.1,A,1092.5,RCPT. S. WALL,-,1,-,7,8,-,2,-,RCPT. P.O.S.
+E-2.1,A,1104.1,RCPT. P.O.S.,-,-,-,,,-,-,-,RCPT. P.O.S. Shown
+E-2.1,A,1107.9,,,,,9,10,,,,IFC:
+E-2.1,A,1115.1,RCPT. RETAIL AREA,-,-,-,,,-,1,-,RCPT. CORRIDOR TV No. 25-3582
+E-2.1,A,1120.5,,,,,11,12,,,,Scale:
+E-2.1,A,1124.3,RCPT. HALLWAY,-,-,-,,,-,-,-,RCPT. V.I.P. XXXX
+E-2.1,A,1128.4,,,,,13,14,,,,-
+E-2.1,A,1133.0,,,,,,,,,,Job QC
+E-2.1,A,1137.9,RCPT. V.I.P.,-,-,-,15,16,-,-,-,OFFICE UNCONTROL As
+E-2.1,A,1149.8,OFFICE CONTROL,-,-,-,17,18,-,-,-,RCPT. STORAGE
+E-2.1,A,1159.9,RCPT. INV. & REC.,-,-,-,,,-,-,-,RCPT. RR. BREAK ROOM 2026
+E-2.1,A,1163.9,,,,,19,20,,,,by: Date:
+E-2.1,A,1171.7,RCPT. BREAK ROOM,-,-,-,,,-,-,-,RCPT. BREAK ROOM by:
+E-2.1,A,1176.8,,,,,21,22,,,,Checked Bid:
+E-2.1,A,1183.5,SPARE,-,-,-,,,-,-,-,"P.O.S SIGN INFO 26,"
+E-2.1,A,1188.0,,,,,23,24,,,,Drawn Origin
+E-2.1,A,1193.7,SPARE,-,-,-,,,-,-,-,SPARE - XXX
+E-2.1,A,1199.3,,,,,25,26,,,,QC Jan
+E-2.1,A,1204.5,EF-3 RETAIL,-,2,-,27,28,-,-,-,SPARE RL EL
+E-2.1,A,1217.1,EF-3 SALES,-,-,-,29,30,-,-,-,SPARE
+E-2.1,A,1225.9,,-,,-,,,-,-,-,
+E-2.1,A,1229.4,EF-2 V.I.P,,1,,31,32,,,,WATER HEATER
+E-2.1,A,1239.4,RCPT. STORAGE,-,-,-,33,34,-,-,-,LIGHTS
+E-2.1,A,1251.0,LIGHTS OUTDOOR,-,-,-,,,-,-,-,RCPT. GENERAL
+E-2.1,A,1255.0,,,,,35,36,,,,Calculations
+E-2.1,A,1261.8,RCPT. GENERAL,-,2,-,37,38,-,2,-,RCPT. GENERAL
+E-2.1,A,1273.5,RCPT. GENERAL,-,-,-,39,40,-,-,-,RCPT. GENERAL
+E-2.1,A,1284.8,LIGHTS,-,1,-,41,42,-,1,-,SPARE
+E-2.1,A,1298.3,,x x x,,,,,,,x x x,
+E-2.1,A,0,#META,MOUNTING: PANEL - LOCATION: FOR,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 400 AMP BUS MAIN LUGS ONLY"
+E-2.2,EH2,156.3,1ST EMERGENCY LIGHTS,-,1,20,1,2,20,1,-,2ND EMERGENCY LIGHTS
+E-2.2,EH2,168.2,3ND EMERGENCY LIGHTS,-,-,-,3,4,-,-,-,4TH EMERGENCY LIGHTS
+E-2.2,EH2,179.3,5TH EMERGENCY LIGHTS,-,-,-,5,6,-,-,-,6TH EMERGENCY LIGHTS
+E-2.2,EH2,190.2,7TH EMERGENCY LIGHTS,-,-,-,7,8,-,-,-,8TH EMERGENCY LIGHTS
+E-2.2,EH2,201.8,9TH EMERGENCY LIGHTS,-,-,-,9,10,-,-,-,10TH EMERGENCY LIGHTS
+E-2.2,EH2,213.0,11TH EMERGENCY LIGHTS,-,-,-,11,12,-,-,-,12TH EMERGENCY LIGHTS
+E-2.2,EH2,222.3,2ND FLOOR EXITS,-,-,-,13,14,-,-,-,SPARE
+E-2.2,EH2,235.7,RESTAURANT,-,-,-,15,16,-,-,-,SPARE
+E-2.2,EH2,247.5,SPARE,-,-,-,17,18,-,-,-,EXIT DOOR
+E-2.2,EH2,257.6,-,-,-,-,19,20,-,-,-,SPARE
+E-2.2,EH2,269.4,-,-,-,-,21,22,-,-,-,-
+E-2.2,EH2,281.2,-,-,-,-,23,24,-,-,-,-
+E-2.2,EH2,291.5,SUB PANEL HER,-,3,50,25,26,50,3,-,SUB PANEL EHB
+E-2.2,EH2,303.0,-,-,-,-,27,28,-,-,-,-
+E-2.2,EH2,314.9,-,-,-,-,29,30,-,-,-,-
+E-2.2,EH2,323.6,,-,,-,,,-,-,-,
+E-2.2,EH2,327.2,END OF PANEL,,-,,,,,,,END OF PANEL
+E-2.2,EH2,330.7,,,,,31,32,,,,2404 wilshire blvd. suite 1e
+E-2.2,EH2,337.1,-,-,-,-,33,34,-,-,-,-
+E-2.2,EH2,347.6,-,-,-,-,35,36,-,-,-,"- los angeles, ca 90057-3310"
+E-2.2,EH2,359.6,-,-,-,-,37,38,-,-,-,- t e l . 2 1 3 . 3 8 0 . 8 4 9 8
+E-2.2,EH2,371.3,-,-,-,-,39,40,-,-,-,-
+E-2.2,EH2,382.5,-,-,-,-,41,42,-,-,-,-
+E-2.2,EH2,396.0,,x x x,,,,,,,x x x,
+E-2.2,EH2,0,#META,MOUNTING: PANEL - LOCATION:,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY"
+E-2.2,EHB,604.4,BASEMENT LTS.,-,1,20,,,20,1,-,H. LOBBY LTS. & WALL PARK
+E-2.2,EHB,609.0,,,,,1,2,,,,CONCLUSIVE EVIDENCE OF ACCEPTANCE
+E-2.2,EHB,616.2,LTS. PINEAPPLE (VINE),-,-,-,3,4,-,-,-,SPARE OF THESE RESTRICTIONS.
+E-2.2,EHB,627.3,LTS. RESTAURANT,-,-,-,,,-,-,-,- ©
+E-2.2,EHB,632.5,,,,,5,6,,,,2014 Kelly Architects
+E-2.2,EHB,638.3,PINEAPPLE X PRESS F/A,-,-,-,7,8,-,-,-,-
+E-2.2,EHB,649.8,PINEAPPLE X PRESS F/A,-,-,-,9,10,-,-,-,-
+E-2.2,EHB,660.1,SPARE,-,-,-,11,12,-,-,-,- Boulevard
+E-2.2,EHB,670.4,-,-,-,-,,,-,-,-,-
+E-2.2,EHB,677.5,,,,,13,14,,,,Club
+E-2.2,EHB,683.7,-,-,-,-,15,16,-,-,-,-
+E-2.2,EHB,695.6,-,-,-,-,,,-,-,-,-
+E-2.2,EHB,700.0,,,,,17,18,,,,90028
+E-2.2,EHB,705.6,-,-,-,-,19,20,-,-,-,-
+E-2.2,EHB,717.5,-,-,-,-,21,22,-,-,-,- Comedy
+E-2.2,EHB,729.3,-,-,-,-,23,24,-,-,-,-
+E-2.2,EHB,739.5,SPACE,-,-,-,,,30,3,-,15KVA X-FORMER
+E-2.2,EHB,744.2,,,,,25,26,,,,Hollywood
+E-2.2,EHB,751.1,-,-,-,-,,,-,-,-,15KVA X-FORMER
+E-2.2,EHB,754.7,,,,,27,28,,,,CA
+E-2.2,EHB,762.9,-,-,-,-,29,30,-,-,-,15KVA X-FORMER
+E-2.2,EHB,771.6,,-,,-,,,-,-,-,
+E-2.2,EHB,775.2,END OF PANEL,,-,,31,32,,,,END OF PANEL
+E-2.2,EHB,784.1,-,-,-,-,,,-,-,-,"- Hollywood,"
+E-2.2,EHB,789.0,,,,,33,34,,,,Hollywood
+E-2.2,EHB,796.8,-,-,-,-,35,36,-,-,-,-
+E-2.2,EHB,805.9,-,-,-,-,37,38,-,-,-,- PROJECT
+E-2.2,EHB,819.3,-,-,-,-,39,40,-,-,-,-
+E-2.2,EHB,830.3,-,-,-,-,,,-,-,,- 6263
+E-2.2,EHB,833.9,,,,,41,42,,,-,
+E-2.2,EHB,844.1,,x x x,,,,,,,x x x,
+E-2.2,EHB,0,#META,"MOUNTING: PANEL - LOCATION: BE COPIED, DISCLOSED TO OTHERS OR",,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN LUGS ONLY PROJECT PROJECT FOR OTHER WHICH THAN THEY THE HAVE SPECIFIC BEEN"
+E-2.2,EPB,1058.0,ELE. LOBBY LTS. 9/10,-,1,20,1,2,20,1,-,GEN SET
+E-2.2,EPB,1069.8,BASEMENT TEL BB,-,-,-,3,4,30,1,-,BASEMENT TEL BB
+E-2.2,EPB,1081.0,BASEMENT TEL BB,-,-,-,5,6,20,1,-,FA TERMINAL CAB
+E-2.2,EPB,1091.9,ELE. LOBBY LTS. 1,-,-,-,7,8,-,-,-,FA TERMINAL CAB
+E-2.2,EPB,1103.5,ELEVATOR PIT,-,-,-,,,-,-,-,FA TERMINAL CAB
+E-2.2,EPB,1107.0,,,,,9,10,,,,Shown IFC:
+E-2.2,EPB,1114.7,ELEVATOR PIT,-,-,-,,,-,-,-,FA TERMINAL CAB No. 25-3582
+E-2.2,EPB,1119.9,,,,,11,12,,,,Scale:
+E-2.2,EPB,1124.0,ELEVATOR PIT,-,-,-,,,-,-,-,FA TERMINAL CAB XXXX
+E-2.2,EPB,1128.4,,,,,13,14,,,,-
+E-2.2,EPB,1133.0,,,,,,,,,,Job QC
+E-2.2,EPB,1137.3,ELE. LOBBY LTS.,-,-,-,15,16,-,-,-,FA TERMINAL CAB As
+E-2.2,EPB,1149.2,ELE. LOBBY LTS. 2,-,-,-,17,18,-,-,-,FA TERMINAL CAB
+E-2.2,EPB,1159.3,ELE. LOBBY LTS. 3/4,-,-,-,,,-,-,-,2ND FL. LTS. 2026
+E-2.2,EPB,1163.9,,,,,19,20,,,,by: Date:
+E-2.2,EPB,1171.1,ELE. LOBBY LTS. 5/6,-,-,-,,,-,-,-,SPARE by:
+E-2.2,EPB,1176.2,,,,,21,22,,,,Checked Bid:
+E-2.2,EPB,1182.9,ELE. LOBBY LTS. 7/8,-,-,-,,,-,-,-,"EM-LIGHTS PINEAPPLE 26,"
+E-2.2,EPB,1186.6,,,,,23,24,,,,INFO Drawn
+E-2.2,EPB,1191.2,,-,,,,,-,,-,Origin
+E-2.2,EPB,1195.1,SPARE,,3,20,,,,-,,- - XXX
+E-2.2,EPB,1198.7,,,,,25,26,,,,QC Jan
+E-2.2,EPB,1204.5,-,-,-,-,27,28,-,-,-,- RL EL
+E-2.2,EPB,1216.5,-,-,-,-,29,30,30,1,-,-
+E-2.2,EPB,1225.3,,-,,-,,,-,-,-,
+E-2.2,EPB,1228.8,END OF PANEL,,-,,31,32,,,,END OF PANEL
+E-2.2,EPB,1238.8,-,-,-,-,33,34,-,-,-,-
+E-2.2,EPB,1250.4,-,-,-,-,,,-,-,-,-
+E-2.2,EPB,1254.9,,,,,35,36,,,,Calculations
+E-2.2,EPB,1261.2,-,-,-,-,37,38,-,-,-,-
+E-2.2,EPB,1272.9,-,-,-,-,39,40,-,-,-,-
+E-2.2,EPB,1284.2,-,-,-,-,41,42,-,-,-,-
+E-2.2,EPB,1297.7,,x x x,,,,,,,x x x,
+E-2.2,EPB,0,#META,MOUNTING: PANEL - LOCATION: FOR,,,,,,,,"VOLTAGE: 208 / 120 3P / 4W / 60Hz AIC SYM: 22,000 200 AMP BUS MAIN 3 PHASE 50 AMP"

@@ -1,0 +1,17 @@
+
+== ELECTRICAL (K2.0 readable values; '*' lines excluded) ==
+120 V 1-ph: 33 lines, as listed 231.5 A; extended by qty 291.4 A = 6.0 + 3.2 + 5.0 + 3.0 + 3.0 + 11.8 + 12.0 + 4.0 + 2.8 + 16.0x3 + 11.8x2 + 2.3 + 2.3 + 2.8 + 11.8 + 15.0 + 5.0 + 2.3 + 5.0 + 15.1 + 20.0 + 6.0 + 2.0x3 + 5.0x3 + 10.6 + 2.1x2 + 2.1 + 5.0 + 6.0 + 13.8 + 2.1 + 6.0 + 10.6; 35.0 kVA
+208 V 1-ph: 4 lines, as listed 70.8 A; extended by qty 92.0 A = 26.0 + 10.6x3 + 23.2 + 11.0; 19.1 kVA
+208 V 3-ph: 1 lines, as listed 20.0 A; extended by qty 20.0 A = 20.0; ~7.2 kVA
+208 V 3-ph kW line: item 46 combi 10.8 KW (each deck, qty 1) = 10.8 kW -> 10,800 / (208 x 1.732) = 30.0 A
+unreadable/'*' electrical lines excluded: item 6 (208 V 1-ph), item 9 (208 V 1-ph), item 12 (208 V 1-ph), item 57 (208 V 3-ph), item 76 (120 V 1-ph), item 97 (120 V 1-ph)
+
+== GAS (MBTU) ==
+as listed per line incl. existing water heater: 250 + 198 + 43 + 105 + 75 + 102 = 773 MBTU
+extended by qty incl. water heater: 250 + 198 + 43 + 105 + 75 + 102x2 = 875 MBTU
+new cooking equipment only (items 47, 48, 49, 51, 52x2): 198 + 43 + 105 + 75 + 102x2 = 625 MBTU/h
+
+== WASTE ==
+indirect waste (I.W.) lines: 18; connections extended by qty: 22 (incl. item 14 existing heater 3/4 in); new I.W. connections: 21
+I.W. by size: 3/4": 1, 1": 15, 1-1/2": 5, 2": 1
+direct waste lines: 5; connections: 6 (19 mop sink 2 in, 22 interceptor 4 in, 31 hand sinks 1-1/2 in x2, 88 3-comp 2 in to #22, 93 hand sink 1-1/2 in)
