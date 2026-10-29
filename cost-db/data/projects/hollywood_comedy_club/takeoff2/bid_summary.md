@@ -1,25 +1,27 @@
 # Hollywood Comedy Club — bid assembly from the full-set takeoff
 
-Inputs: priced_demo_struct_gc.csv, priced_equipment.csv, priced_mep.csv, equipment_web_prices.csv.
+Inputs: priced_arch.csv, priced_demo_struct_gc.csv, priced_equipment.csv, priced_mep.csv, equipment_web_prices.csv.
 Every carried value has one origin (column `origin` in bid_lines.csv); nothing is averaged, allowed or assumed.
 
 | origin | direct (USD) | lines |
 |---|---:|---:|
-| book_exact | 43727.56 | 22 |
-| book_substitute | 134229.52 | 57 |
+| book_exact | 67881.33 | 31 |
+| book_substitute | 505741.87 | 152 |
 | web_list | 142546.45 | 52 |
-| quote_required |  | 139 |
-| not_quantified |  | 79 |
-| owner / existing |  | 36 |
+| quote_required |  | 191 |
+| not_quantified |  | 99 |
+| owner / existing |  | 48 |
+| carried in another line |  | 21 |
+| overlap, not added |  | 1 |
 
 | | USD |
 |---|---:|
-| Direct carried (book exact + book substitute + web list) | 320503.53 |
-| Contingency 4% | 12820.14 |
-| Overhead 8% on (direct + contingency) | 26665.89 |
-| Profit 7% on (direct + contingency + overhead) | 25199.27 |
-| **Sell = direct x 1.201824** | **385188.83** |
-| Book O&P extended (reference only, not added) | 199986.15 |
+| Direct carried (book exact + book substitute + web list) | 716169.65 |
+| Contingency 4% | 28646.79 |
+| Overhead 8% on (direct + contingency) | 59585.31 |
+| Profit 7% on (direct + contingency + overhead) | 56308.12 |
+| **Sell = direct x 1.201824** | **860709.87** |
+| Book O&P extended (reference only, not added) | 571857.94 |
 | Prior estimate sell 2026-10-20 (16 items) | 5081408 |
 
 ## By bid-letter item
@@ -27,26 +29,98 @@ Every carried value has one origin (column `origin` in bid_lines.csv); nothing i
 | item | book exact | book substitute | web list | direct | sell | prior sell | priced | quote req. | not quantified | owner/existing |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Demolition | 0.00 | 5678.91 | 0.00 | 5678.91 | 6825.05 | 258314 | 4 | 10 | 15 | 0 |
-| Interior walls | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 408840 | 0 | 0 | 0 | 0 |
-| Ceilings | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 84662 | 0 | 0 | 0 | 0 |
-| Flooring | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 151468 | 0 | 0 | 0 | 0 |
+| Interior walls | 278.50 | 91012.32 | 0.00 | 91290.82 | 109715.50 | 408840 | 32 | 2 | 5 | 0 |
+| Ceilings | 0.00 | 33528.75 | 0.00 | 33528.75 | 40295.66 | 84662 | 8 | 1 | 1 | 0 |
+| Flooring | 0.00 | 83873.16 | 0.00 | 83873.16 | 100800.78 | 151468 | 8 | 4 | 2 | 0 |
 | New Roofing | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 57688 | 0 | 0 | 0 | 0 |
-| Interior finishes | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 524421 | 0 | 0 | 0 | 0 |
-| Exterior finishes | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 94944 | 0 | 0 | 0 | 0 |
-| Doors & Hardware | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 121504 | 0 | 0 | 0 | 0 |
-| Stairs & railing | 0.00 | 21673.49 | 0.00 | 21673.49 | 26047.72 | 322960 | 11 | 7 | 5 | 0 |
-| Owner-provided equipment install | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 23436 | 0 | 0 | 0 | 15 |
+| Interior finishes | 20765.20 | 78576.97 | 0.00 | 99342.17 | 119391.80 | 524421 | 26 | 14 | 5 | 1 |
+| Exterior finishes | 0.00 | 1461.59 | 0.00 | 1461.59 | 1756.57 | 94944 | 3 | 1 | 2 | 0 |
+| Doors & Hardware | 1404.55 | 40452.06 | 0.00 | 41856.61 | 50304.28 | 121504 | 19 | 22 | 3 | 10 |
+| Stairs & railing | 0.00 | 64037.26 | 0.00 | 64037.26 | 76961.52 | 322960 | 16 | 11 | 5 | 0 |
+| Owner-provided equipment install | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 23436 | 0 | 0 | 0 | 16 |
 | Lighting | 67.92 | 51928.56 | 0.00 | 51996.48 | 62490.62 | 249377 | 9 | 18 | 4 | 1 |
 | Mechanical | 0.00 | 5477.65 | 0.00 | 5477.65 | 6583.17 | 793677 | 9 | 25 | 18 | 2 |
 | Plumbing | 17795.65 | 31695.13 | 0.00 | 49490.78 | 59479.21 | 266324 | 33 | 27 | 7 | 3 |
 | Low Voltage | 0.00 | 65.61 | 0.00 | 65.61 | 78.85 | 84128 | 1 | 2 | 4 | 0 |
 | F&B equipment | 0.00 | 0.00 | 142546.45 | 142546.45 | 171315.74 | 714484 | 52 | 30 | 0 | 0 |
-| Other required scope | 25863.99 | 17710.17 | 0.00 | 43574.16 | 52368.47 | 925181 | 12 | 20 | 26 | 15 |
+| Other required scope | 27569.51 | 17953.90 | 0.00 | 45523.41 | 54711.13 | 925181 | 15 | 24 | 28 | 15 |
 
-## Lines without a value (218)
+## Lines without a value (290)
 
 | item | id | description | qty | unit | why |
 |---|---|---|---:|---|---|
+| Interior walls | A-033 | Day-2 walls on the mezzanine (layer 2604-FP-02_Day2): BOH 34 partition 14.6 LF ( | 27.4 | LF | not_quantified: Day-2 mezzanine walls 27.4 LF without a wall type or height (takeoff RFI); no SF basis for studs / board and the Day-2 scope is not confirmed in the base bid |
+| Interior walls | A-047 | Cement board substitution behind wall tile WT-1/WT-2 (mezzanine restrooms 22/23, | 420 | SF | quote_required: 1/2" cement backer board behind WT-1 / WT-2 (420 SF): every 09 28 13 row of the table is flagged or machine_read; substitution within the GWB SF of A-026 |
+| Interior walls | A-048 | Low wall 24" high around the sloped ceiling of the stair landing below (A-2.20 K |  | LF | not_quantified: 24" low wall at the sloped stair-landing ceiling: extent not drawn (takeoff RFI) |
+| Interior walls | A-049 | Perforated metal column enclosure, floor to exposed ceiling, around the (E) plum | 4 | EA | quote_required: perforated metal column enclosures: pattern, gauge and finish not specified and the column count is 'TYP.' (RFI); no row can be chosen; a custom sheet-metal fab |
+| Interior walls | A-050 | GC to furr out and patch (E) wall to a continuous smooth surface (A-2.10 KN15) |  | SF | not_quantified: furr-out and patch of the (E) wall at two KN15 locations: extent not drawn (RFI) |
+| Interior walls | A-051 | Soffit / beam enclosure: frame wall around the (E) ceiling beam at the comedy cl |  | LF | not_quantified: soffit / wall around the (E) ceiling beam: beam length and soffit extent not dimensioned (Addendum 1 A-4.30, RFI) |
+| Interior walls | A-052 | GWB ceiling above the hallway opening (A-4.31 "(N) GWB CEILING ABOVE HALLWAY OPE |  | SF | not_quantified: GWB ceiling above the hallway opening: no dimensions on A-4.31 (RFI) |
+| Doors & Hardware | A-059 | Door 07 (type E, single): 3'-0" x 7'-0" x -, aluminum door in aluminum frame, fi | 1 | EA | quote_required: door 07: Eliason-type aluminum double-acting pivot door with 4" x 4" window, 3'-0" x 7'-0" - a manufacturer's product (door, frame and pivots as a unit); the bo |
+| Doors & Hardware | A-060 | Door 08 (type E, single): 3'-0" x 7'-0" x -, aluminum door in aluminum frame, fi | 1 | EA | quote_required: door 08: Eliason-type aluminum double-acting pivot door with 4" x 4" window, 3'-0" x 7'-0" - a manufacturer's product (door, frame and pivots as a unit); the bo |
+| Doors & Hardware | A-067 | Door 15 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 15 (recessed panel with mirror insert per A-4.21): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid |
+| Doors & Hardware | A-069 | Door 17 (type F, single): 3'-0" x 7'-0" x -, aluminum door in aluminum frame, fi | 1 | EA | quote_required: door 17: Eliason-type aluminum double-acting pivot door with 4" x 4" window, 3'-0" x 7'-0" - a manufacturer's product (door, frame and pivots as a unit); the bo |
+| Doors & Hardware | A-070 | Door 18 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 18 (Day 2): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are fl |
+| Doors & Hardware | A-073 | Door 22 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 22: solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are flagged an |
+| Doors & Hardware | A-075 | Door 24 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 24: solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are flagged an |
+| Doors & Hardware | A-076 | Door 25 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 25: solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are flagged an |
+| Doors & Hardware | A-077 | Door 26 (type E, single): 3'-0" x 7'-0" x -, aluminum door in aluminum frame, fi | 1 | EA | quote_required: door 26: Eliason-type aluminum double-acting pivot door with 4" x 4" window, 3'-0" x 7'-0" - a manufacturer's product (door, frame and pivots as a unit); the bo |
+| Doors & Hardware | A-079 | Door 28 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 28: solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are flagged an |
+| Doors & Hardware | A-080 | Door 29 (type G, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 29 (louvered, type G): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 1 |
+| Doors & Hardware | A-081 | Door 30 (type G, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 30 (louvered, type G): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 1 |
+| Doors & Hardware | A-082 | Door 31 (type G, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 31 (louvered, type G): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 1 |
+| Doors & Hardware | A-088 | Door 39 (type F, single): 3'-0" x 7'-0" x 1 3/4", wood, solid core (A-7.10 note: | 1 | EA | quote_required: wood door 39 (Day 2): solid core flush wood door 3'-0" x 7'-0" x 1-3/4" in a wood frame (frame in A-105); the flush solid-core wood door rows of 08 14 16 are fl |
+| Doors & Hardware | A-090 | Hardware set HW-2: rim lock cylinder | 3 | EA | quote_required: HW-2 rim lock cylinder (Harney PENCYSC1): no cylinder line in the table (08 71 20.40 carries only a flagged 're-core cylinder' add); one per active leaf assumed |
+| Doors & Hardware | A-091 | Hardware set HW-3: panic exit device storeroom / keyed function lever trim | 4 | EA | quote_required: HW-3 exit-device lever trim, storeroom / keyed function (Harney PEL8001SRB): no outside-trim line for exit devices in the table; the lever lockset rows are a di |
+| Doors & Hardware | A-093 | Hardware set HW-5: pull handle | 3 | EA | quote_required: HW-5 pull handle: manufacturer, model and finish are '-' on the hardware schedule (product to be selected, RFI) |
+| Doors & Hardware | A-094 | Hardware set HW-6: pivot set (Eliason-type double-acting door) | 4 | EA | quote_required: HW-6 pivot set for the Eliason-type doors: the pivots are part of the door manufacturer's package (doors 07, 08, 17, 26 are quote rows); no pivot-set line in th |
+| Doors & Hardware | A-099 | Hinges (hinge finish column "-" for every door) |  | EA | not_quantified: hinges: type and finish '-' for every door and no count per door (RFI); the book hinge rows are material-only per pair |
+| Doors & Hardware | A-100 | Smoke seal / weather gasketing at doors marked in the schedule | 15 | EA | quote_required: smoke seal / weather gasketing at 15 doors: the door weatherstripping rows of 08 71 25 are flagged; no smoke-seal line |
+| Doors & Hardware | A-102 | Double deadbolt at (E) dry-storage door E12 | 1 | EA | quote_required: double-cylinder deadbolt at (E) door E12: the matching row OT-08712041-1010 (tubular deadlock, double cylinder) is verified but carries no unit and cannot be ex |
+| Doors & Hardware | A-103 | Ventilation door louver in door types G | 7 | EA | quote_required: door louvers in the 7 type-G doors: louver size is not given on A-7.10 and 4 of the doors are 60-minute rated (fire-rated louvers are not in the table); the ste |
+| Doors & Hardware | A-109 | Access hatches in drywall ceilings (CLG-1D) |  | EA | not_quantified: access hatches in drywall ceilings (Williams Bros. WB DW 405): specification only, locations not shown (RFI) |
+| Doors & Hardware | A-110 | Access hatches in tile ceilings |  | EA | not_quantified: access hatches in tile ceilings (Williams Bros. WB DWAL 414): no location (RFI) |
+| Doors & Hardware | A-111 | Rodent-proof hard rubber gasket at exterior doors (A-7.10 detail 7 note) | 3 | EA | quote_required: rodent-proof hard rubber door-bottom gasket at 3 exterior doors (A-7.10 detail 7): no door-bottom gasket line with a verified status (08 71 25 rows flagged) |
+| Ceilings | A-121 | K-13 spray-applied acoustical insulation within the (E) concrete coffers (A-3.12 | 3773 | SF | quote_required: K-13 spray-applied cellulose acoustical insulation in the coffers (3773 SF gross, net coffer area smaller, thickness / colour / NRC not specified - RFI): the ta |
+| Ceilings | A-123 | Ceiling access hatches |  | EA | not_quantified: ceiling access hatches: specification only, no count or locations (RFI) |
+| Flooring | A-125 | B-2 epoxy cove base 6" high, 3/8" radius, at FL-2 rooms (kitchen zone, employee  | 357.2 | LF | quote_required: B-2 epoxy cove base 6" high with 3/8" radius (Onyx, 357.2 LF): no epoxy / resinous cove base line in the table (09 65 / 09 66 cove rows are vinyl, zinc-strip an |
+| Flooring | A-130 | FL-9 black terrazzo to match the (E) Hollywood Walk of Fame sidewalk terrazzo -  |  | SF | not_quantified: FL-9 black terrazzo entry step / stair 2 slab: not quantifiable in SF (takeoff); the exterior step is priced per LF in A-207 |
+| Flooring | A-132 | Floor preparation / leveling under new finishes on the (E) slabs (trench patches |  | SF | not_quantified: floor preparation / levelling / moisture testing under the new finishes: not specified and no area (RFI) |
+| Flooring | A-134 | B-5 LED light base 4"H, metal painted to match P-5 - stair 1 (06), mezzanine din | 657.7 | LF | quote_required: B-5 LED light base: CORE Lighting ALP-2500TL aluminum LED channel base 4" high painted P-5 (657.7 LF, faceted at the curved walls) - a manufacturer's lighting-c |
+| Flooring | A-136 | B-3 base at mezzanine restrooms 22/23 (A-7.21) - NOT USED on A-7.20 | 72.4 | LF | quote_required: B-3 base at restrooms 22/23 (72.4 LF): 'NOT USED' on A-7.20, product unknown (takeoff RFI: probably the B-1 Daltile cove) |
+| Flooring | A-137 | Transition strips between floor finishes (A-2.75/A-2.76 KN1 "GC to provide trans | 134.7 | LF | quote_required: transition strips between floor finishes (134.7 LF, flush profile not specified): the vinyl transition strip rows OT-09651337-0235 / -0255 are verified but carr |
+| Interior finishes | A-144 | WD-1 poplar slat panelling (1"W x 0.5" thick strips, stained/sealed to match WC- | 209 | SF | quote_required: WD-1 poplar slat panelling 1" x 1/2" strips stained ST-1 over WC-8 at the stage walls (209 SF): custom millwork, slat spacing not given (RFI); no wood slat / bo |
+| Interior finishes | A-157 | P-4 metallic paint - ADA lift lobby walls at the 1st floor and mezzanine and the | 390 | SF | quote_required: P-4 Modern Masters metallic paint 'Brass Monkey' (390 SF): a decorative metallic coating system; the table carries only standard latex and clear glaze coating r |
+| Interior finishes | A-159 | P-6 paint on the stair 1 steel (A-6.12 stair detail "P-6") - stringers, landing  | 63.7 | LF | quote_required: P-6 on the stair 1 steel (63.7 LF): P-6 is not listed on A-7.20 - product / colour unknown, shop primer vs field paint unknown (RFI) |
+| Interior finishes | A-161 | WC-2 custom 18 GA brushed stainless steel sheet wall lining behind the kitchen h | 21.7 | LF | not_quantified: WC-2 custom 18 ga brushed stainless sheet lining behind the hoods and at the pick-up counter border (21.7 LF): SF not computable without the lining height (take |
+| Interior finishes | A-164 | TX-1 velvet drapery "2nd level" (A-7.20) |  | EA | not_quantified: TX-1 Architex 'Annie' velvet drapery '2nd level': location and size not shown (RFI) |
+| Interior finishes | A-165 | TX-4 fabric at the main stage arch panel (11'-11" x 15'-3" curved opening panel, | 182 | SF | quote_required: TX-4 fabric at the stage arch panel and stretched over the fin panels (182 SF): product cells blank on A-7.20 (RFI); fin panel sizes not given |
+| Interior finishes | A-166 | WC-6 gold wallpaper - host 01 ceiling (A-7.21 CLG-1D WC-6 8'-0") and the transom | 131 | SF | quote_required: WC-6 gold wallpaper on the host ceiling and the entry transom (131 SF): manufacturer / model blank on A-7.20 (RFI); transom size not given |
+| Interior finishes | A-168 | GL-1 gold mirror "2nd level bar" (A-7.20) |  | SF | not_quantified: GL-1 Altered Glass 'Nugold' gold mirror at the 2nd level bar: no size or location (RFI) |
+| Interior finishes | A-169 | Stain & seal all surfaces of the (E) concrete columns and the (E) concrete beams | 35 | EA | quote_required: stain & seal of the (E) concrete columns (35 EA, SF not computed - heights vary): ST-2 / SL-2 are not listed on A-7.20 (product unknown, RFI); the beam / slab s |
+| Interior finishes | A-171 | Main stage platform (A-2.10 KN18): millwork stage 18" AFF with LVT FL-6 top, 12' | 64.5 | SF | quote_required: main stage platform 12'-0" x 6'-8" curved front, 18" high, millwork framing not detailed, fascia finish not stated (RFI): custom millwork to be quoted; the FL-6 |
+| Interior finishes | A-172 | Mezzanine stage platform (A-2.20 KN22): millwork stage 6" AFF with LVT FL-6 top  |  | SF | not_quantified: mezzanine stage platform(s) 6" high: size not identified on A-2.20 (3 KN22 tags, RFI) |
+| Interior finishes | A-173 | Stage decorative wood frame at the mezzanine stage (A-4.30 det 5/8): 4" deep x 3 | 22.8 | LF | quote_required: stage decorative wood frame 4" x 3" curved top, painted P-2, with 1 W bulbs @ 12" o.c. (22.8 LF): custom millwork with integrated lamp holders; lamps / wiring i |
+| Interior finishes | A-174 | Light-beam fins above the main stage (A-4.22 elevation, A-4.22A): curved full-he | 9 | EA | quote_required: light-beam fins above the main stage (9 per A-4.22 / 8 per A-3.22 - RFI): curved full-height 8" acoustic-core fins with drywall faces, jogs and bolted lighting  |
+| Interior finishes | A-176 | Bar opening at the prep bar / dining 2 (Addendum 1 A-4.33 det 2 and 8): low wall | 6.0 | LF | quote_required: bar opening at the prep bar / dining 2 (Addendum 1 A-4.33): low wall countertop at 42" AFF of unspecified material (RFI), 6" x 2" wood frame and 6" x 1" wood pa |
+| Interior finishes | A-177 | Foot rail at the bar opening (A-4.33 det 8 "FOOT RAIL FROM KEGWORKS BY GC") | 6.0 | LF | quote_required: KegWorks bar foot rail 6'-0" (A-4.33 det 8): manufacturer's product, model / finish / brackets not stated (RFI) |
+| Interior finishes | A-178 | Planton poplar moulding over/around mezzanine doors, painted P-5 (A-4.31 det 9:  | 5 | EA | quote_required: planton poplar mouldings over / around 5 mezzanine doors (9/A-4.31: three 2" steps with R1/2", 6" total), painted P-5: a custom built-up profile, LF per door no |
+| Interior finishes | A-179 | 2" wood frame cased openings, typ. (A-4.31 "2\" WOOD FRAME CASED OPENING, TYP.", | 3 | EA | not_quantified: 2" wood frame cased openings at the 3 mezzanine hallway arches (A-4.31 / A-4.32): arch dimensions not given and the arches are not in the A-7.10 cased-opening l |
+| Interior finishes | A-180 | Lobby base cabinet (A-4.20 elevation 1): 2'-10" high cabinet LM-2 with HW-7 pull | 1 | EA | quote_required: lobby base cabinet 2'-10" high with LM-2 laminate, STN-2 stone top, HW-7 pulls and 2" walnut shelves (A-4.20): LM-2 / STN-2 / HW-22 are unlisted codes and the c |
+| Interior finishes | A-182 | 2" 18 GA bent metal channel to hold the strip light at the lobby ceiling edge, p | 17.3 | LF | quote_required: 2" x 18 ga bent metal channel for the strip light at the lobby ceiling edge, painted P-3 (17.3 LF): a custom sheet-metal fabrication not in the table; the strip |
+| Other required scope | A-185 | Oblong mirror 60" x 48", tempered bronze glass, walnut-stain frame (A-4.20 lobby | 1 | EA | quote_required: oblong mirror 60" x 48" tempered bronze glass in a walnut-stained frame (lobby): custom framed mirror, furnished-by not stated (RFI); the book mirror rows are u |
+| Other required scope | A-186 | Oblong mirror 60" x 48", tempered clear glass, walnut-stain frame (A-4.21 green  | 1 | EA | quote_required: oblong mirror 60" x 48" tempered clear glass in a walnut-stained frame (green room): custom framed mirror, furnished-by not stated (RFI) |
+| Other required scope | A-187 | Make-up mirror IBM Mirror "Hollywood Mirror Princess" 60" x 45" at the green roo | 1 | EA | quote_required: IBM Mirror 'Hollywood Mirror Princess' 60" x 45" lighted make-up mirror: a manufacturer's lighted product, furnished-by not stated (RFI); power in mep.csv |
+| Other required scope | A-189 | Wall backing plates for mounted items (A-9.10 det 5: 4" x 16 GA unpunched steel  | 20 | EA | quote_required: steel backing plates 4" x 16 ga spanning 3 studs / nested 3-5/8" x 16 ga studs behind fixtures over 50 lb (A-9.10 det 5 and note), 20 locations: no steel backin |
+| Other required scope | A-190 | Fire extinguisher and cabinet (legend "FE" on A-2.10 / A-2.20) |  | EA | not_quantified: fire extinguishers and cabinets: locations not shown (fire-department requirement, RFI); the kitchen K-class unit is in equipment.csv |
+| Other required scope | A-193 | New accessories at the (E) 1st-floor restrooms (A-5.11 keynotes without "(E)"):  | 8 | EA | not_quantified: new accessories at the (E) restrooms (8 EA mixed: recessed towel dispenser / waste receptacle KN13, baby changing station KN15, coat hooks KN16): the takeoff gi |
+| Stairs & railing | A-195 | Stair 1 visual warning strips 2" wide, 1" max from the nosing, at the top and bo | 15.0 | LF | quote_required: visual warning strips 2" wide at the top and bottom treads (15 LF): on FL-5 carpet treads the strip must be a carpet / insert product (takeoff RFI); no contrast |
+| Stairs & railing | A-196 | LED strip for riser illumination at stair 1 (A-6.12 stair detail "LED STRIP FOR  | 60.0 | LF | quote_required: LED strip for riser illumination at stair 1 (60 LF): not in the A-3.70 lighting schedule or mep.csv, product unknown (RFI); carried for the architectural channe |
+| Stairs & railing | A-200 | ADA vertical platform lift, Garaventa Genesis Shaftway model GVL-SW-120 (A-6.22  | 1 | EA | quote_required: Garaventa Genesis Shaftway GVL-SW-120 vertical platform lift, 2 stops, 105" travel + 3-1/2" pit, 750 lb, 39" x 52" platform, with doors by McKinley Elevator (A- |
+| Stairs & railing | A-201 | Dumbwaiter, Matot medium duty (100-750 lb class), car size K 36"W x 38"D x 48"H, | 1 | EA | quote_required: Matot medium-duty dumbwaiter, car size K 36" x 38" x 48", 2 stops, winding drum 50 fpm, stainless bi-parting doors - a manufacturer's unit to be quoted (capacit |
+| Exterior finishes | A-205 | Aluminum metal panel, colour to match the (E) window frame (A-4.01 KN12) at the  |  | SF | not_quantified: aluminum metal panel at the new door bay head, colour to match the (E) window frame (A-4.01 KN12): extent not dimensioned (RFI) |
+| Exterior finishes | A-206 | (E) granite base salvaged and reused to match the (E) facade (A-4.01 KN8) at the | 7.33 | LF | quote_required: salvage and reset of the (E) granite base at the new door bay (7.33 LF, A-4.01 KN8): no granite or stone reset / salvage line in the table (04 43 rows are new b |
+| Exterior finishes | A-210 | Patch (E) plaster / stone at the removed window jambs and head, and (E) storefro |  | SF | not_quantified: patch of the (E) plaster / stone at the removed window jambs and head and the (E) storefront glass & mullion repair (Addendum 1 A-4.34): no extent (RFI) |
 | Demolition | D-03 | Remove (E) kitchen equipment (KN4) - cooking line, tables, sinks, refrigeration, |  | EA | not_quantified: equipment count not derivable (K-sheets show new equipment only) |
 | Demolition | D-04 | Remove (E) kitchen exhaust hood (KN5) with duct connection | 1 | EA | quote_required: the kitchen exhaust hood removal row is flagged |
 | Demolition | D-06 | Remove (E) bar equipment and bar plumbing utilities (KN8); (E) lines to remain w |  | LS | not_quantified: bar equipment and plumbing utilities to remove not counted |

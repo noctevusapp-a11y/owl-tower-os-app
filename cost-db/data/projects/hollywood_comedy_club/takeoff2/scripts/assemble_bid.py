@@ -110,7 +110,14 @@ def main() -> int:
         statuses = ln["statuses"]
         origin, value, note = None, Decimal(0), ""
         fb = (ln["furnished_by"] or "").lower()
-        if "owner" in fb or "existing" in fb or statuses & {"owner_provided", "existing"}:
+        reasons_all = " ".join((c.get("reason") or "") for c in ln["comps"]).lower()
+        if statuses == {"carried_elsewhere"}:
+            # the line's quantity is already inside another priced line (aggregate or duplicate row): no value here, not "unpriced"
+            origin, note = "carried in another line", "; ".join(sorted({(c.get("reason") or "") for c in ln["comps"]}))[:300]
+        elif "overlap" in reasons_all and (exact or subst):
+            # the pricing notes say this row's area is also inside another priced row: the value is shown but NOT added to the bid
+            origin, note = "overlap, not added", f"priced {q2(exact + subst)} but excluded from the total: " + "; ".join(sorted({(c.get("reason") or "") for c in ln["comps"]}))[:300]
+        elif "owner" in fb or "existing" in fb or statuses & {"owner_provided", "existing"}:
             origin, note = "owner / existing", "no bid value (furnished by owner / existing to remain); installation labor only where priced"
             value = exact + subst
             if value:
@@ -190,7 +197,7 @@ def main() -> int:
           f"Inputs: {', '.join(os.path.basename(x) for x in priced_files)}" + (", equipment_web_prices.csv" if web else "") + ".",
           "Every carried value has one origin (column `origin` in bid_lines.csv); nothing is averaged, allowed or assumed.", "",
           "| origin | direct (USD) | lines |", "|---|---:|---:|"]
-    for o_ in origins + ["quote_required", "not_quantified", "owner / existing"]:
+    for o_ in origins + ["quote_required", "not_quantified", "owner / existing", "carried in another line", "overlap, not added"]:
         md.append(f"| {o_} | {q2(tot.get(o_, Decimal(0))) if o_ in origins else ''} | {sum(counts[i][o_] for i in ITEMS)} |")
     md += ["", "| | USD |", "|---|---:|", f"| Direct carried (book exact + book substitute + web list) | {q2(direct)} |",
            f"| Contingency 4% | {q2(c)} |", f"| Overhead 8% on (direct + contingency) | {q2(o)} |", f"| Profit 7% on (direct + contingency + overhead) | {q2(p)} |",

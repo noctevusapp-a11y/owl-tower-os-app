@@ -7,7 +7,7 @@ Exterior A-203..210. No prices. Scope of mep.csv, equipment.csv and demo_struct_
 1704 N Vine, MEP, kitchen equipment) is not repeated.
 
 ## Documents used (the SHEET_INDEX page numbers are off for the schedule sheets)
-- Vector plans with text: `/tmp/claude-0/hollywood/03_Architectural_Plans_Demo_RCP.pdf` p4 A-2.10, p5 A-2.20, p6 A-3.12, p7 A-3.22,
+- Vector plans with text: the vector plan set 03_Architectural_Plans_Demo_RCP.pdf (Drive export) p4 A-2.10, p5 A-2.20, p6 A-3.12, p7 A-3.22,
   p8 A-4.01, p9 A-5.12, p10 A-5.11 (IFB 9/9/2026 versions; wall notes and keynotes are on these sheets).
 - Finish plans A-2.75 / A-2.76 = IFB Interior Design part01 p6 / p7 (text + vector pattern layers).
 - A-7.10 door/window/hardware schedule = IFB part03 p12 (ID p35) and TI part07 p2 (TI p33): the schedule body is raster -

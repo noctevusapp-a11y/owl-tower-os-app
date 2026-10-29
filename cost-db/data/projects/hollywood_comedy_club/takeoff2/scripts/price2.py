@@ -17,6 +17,7 @@ every takeoff line to zero or more book components:
     price_status_override = the price_status, reason = why, candidate_row = the nearest book row(s) if any
   * a takeoff line whose qty is empty is written as not_quantified whatever the mapping says (an override is kept
     only when it is one of the no-price statuses: owner_provided, existing, quote, none_required)
+  * carried_elsewhere = the line's scope is priced in other rows of the estimate (named in reason); no price here
 
 Rules applied (the owner's standing rules, the same as scripts/price.py of the first estimate):
   1. a component is priced ONLY from a row with status = verified; the Los Angeles latest-month columns are used
@@ -44,7 +45,9 @@ from decimal import Decimal, ROUND_HALF_UP
 PRICED = ("priced_exact", "priced_substitute")
 NO_PRICE_STATUSES = ("owner_provided", "existing", "quote", "none_required")
 UNPRICED_STATUSES = ("book_row_not_matching", "book_row_not_verified", "not_in_book", "not_quantified",
-                     "spec_not_issued", "owner_provided", "existing", "quote", "none_required")
+                     "spec_not_issued", "owner_provided", "existing", "quote", "none_required", "carried_elsewhere")
+# carried_elsewhere (added for arch.csv): the line's scope is priced in other rows named in `reason` (an aggregate
+# or duplicate row of the takeoff) and carries no price of its own, so that nothing is counted twice.
 UNIT_ALIAS = {"SF": "S.F.", "LF": "L.F.", "EA": "Ea.", "RISER": "Riser", "WK": "Week", "DAY": "Day", "LS": "L.S.",
               "GAL": "Gal.", "MSF": "M.S.F.", "OPNG": "Opng.", "SET": "Set", "CY": "C.Y.", "LOT": "Lot"}
 EACH_UNITS = {"Ea.", "Door", "Opng.", "Set", "Riser"}
