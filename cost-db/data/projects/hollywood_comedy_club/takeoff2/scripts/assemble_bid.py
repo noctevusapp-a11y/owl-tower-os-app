@@ -53,11 +53,21 @@ def q2(x):
     return x.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def item_of(name: str) -> str:
+ARCH_MAP = {"walls": "Interior walls", "doors": "Doors & Hardware", "ceilings": "Ceilings", "floors": "Flooring",
+            "wall finishes": "Interior finishes", "millwork": "Interior finishes", "specialties": "Other required scope",
+            "stair / lift": "Stairs & railing", "exterior": "Exterior finishes"}
+
+
+def item_of(name: str, furnished_by: str = "") -> str:
+    """the architect's bid-letter item for a takeoff row (the architectural takeoff uses trade names: mapped here)"""
     n = (name or "").strip()
     if n in ITEMS:
         return n
     low = n.lower()
+    if "owner" in (furnished_by or "").lower() and low in ("specialties", "millwork"):
+        return "Owner-provided equipment install"
+    if low in ARCH_MAP:
+        return ARCH_MAP[low]
     if "owner" in low:
         return "Owner-provided equipment install"
     if "electrical" in low or "other" in low or "existing" in low:
@@ -79,7 +89,7 @@ def main() -> int:
     for f in priced_files:
         for r in csv.DictReader(open(f, encoding="utf-8")):
             key = r["item_id"]
-            ln = lines.setdefault(key, {"item_id": key, "source_file": os.path.basename(f), "bid_letter_item": item_of(r["bid_letter_item"]),
+            ln = lines.setdefault(key, {"item_id": key, "source_file": os.path.basename(f), "bid_letter_item": item_of(r["bid_letter_item"], r.get("furnished_by", "")),
                                         "takeoff_item": r["bid_letter_item"], "division": r.get("division", ""), "description": r["description"],
                                         "spec_or_model": r.get("spec_or_model", ""), "qty": r.get("qty", ""), "unit": r.get("unit", ""),
                                         "qty_basis": r.get("qty_basis", ""), "furnished_by": r.get("furnished_by", ""),
