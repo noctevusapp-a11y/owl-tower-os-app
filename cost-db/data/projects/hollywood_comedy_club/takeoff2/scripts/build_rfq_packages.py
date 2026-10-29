@@ -39,7 +39,7 @@ def load(path):
                 rows[k] = dict(r)
                 rows[k]["_statuses"] = []
                 rows[k]["_components"] = []
-            rows[k]["_statuses"].append(r["price_status"])
+            rows[k]["_statuses"].append(r.get("price_status") or "arch takeoff (not yet priced)")
             if r.get("component"):
                 rows[k]["_components"].append((r["component"], r["price_status"]))
     return rows
@@ -48,8 +48,9 @@ def load(path):
 MEP = load(os.path.join(T2, "priced_mep.csv"))
 EQ = load(os.path.join(T2, "priced_equipment.csv"))
 DS = load(os.path.join(T2, "priced_demo_struct_gc.csv"))
+ARCHT = load(os.path.join(T2, "arch.csv"))
 ALL = {}
-ALL.update(MEP); ALL.update(EQ); ALL.update(DS)
+ALL.update(MEP); ALL.update(EQ); ALL.update(DS); ALL.update(ARCHT)
 
 PRICED = {"priced_exact", "priced_substitute"}
 
@@ -457,6 +458,7 @@ H_GROUPS = OrderedDict([
     ("H3 Mezzanine opening box beams and mechanical attic floor (Sure-Board)", ["S-10", "S-11", "S-12"]),
     ("H4 Dumbwaiter beams and shaft anchors", ["S-13", "S-14"]),
     ("H5 Sloped floor, headers, shear walls, typical studs", ["S-15", "S-16", "S-17", "S-18"]),
+    ("H6 Misc. metals from the architectural takeoff: stair 1 handrails, warning strips, riser LED, overhead finish, attic guardrail and theatrical pipe rail", rng("A-", 194, 199)),
 ])
 total_h = 0
 for g, ids in H_GROUPS.items():
@@ -498,21 +500,21 @@ P("Documents the subcontractor must receive: the exit-stair set 2604-260626-Exit
   "(KN17 sloped floor, limit of work); A-9.10 (typical details); stair 1 sheets A-6.10..A-6.12 for the P-6 steel finish reference.")
 P("")
 P("Open RFIs that affect this package:")
-P(rfi_lines([6, 40, 42, 43, 47, 48]))
+P(rfi_lines([6, 40, 42, 43, 47, 48, 75]))
 P("")
 COUNTS["I Exit stair 1704 N Vine"] = n
 
 # ------------------------------------------------------------------ J
 P("## Package J - ADA vertical platform lift and dumbwaiter (vendor-furnished equipment)")
 P("")
-P("Equipment: (1) ADA vertical wheelchair lift, level 1 to mezzanine, per A-6.20 / A-6.21 / A-6.22 - the takeoff references a Garaventa "
-  "(Genesis) specification on A-6.22 and the prior estimate carries a ROM from McKinley Equipment / Garaventa on file; power is the 20A/1P "
-  "'ADA LIFT' circuit on (E) panel B (E-2.1). (2) Dumbwaiter, 2 stops, per A-6.30 (model to be taken from A-6.30; the sheet is in the "
-  "architectural takeoff, pending) framed by three W10x22 beams at the mezzanine opening. The lift and dumbwaiter lines themselves belong to "
-  "the architectural takeoff (not yet in takeoff2); the structural, demolition and electrical interface lines in takeoff2 are listed below so the "
-  "vendor can confirm pit, opening, beam and power requirements.")
+P("Equipment: (1) ADA vertical platform lift, level 1 to mezzanine, Garaventa Genesis Shaftway GVL-SW per A-6.21 / A-6.22 (A-6.22 "
+  "specifies GVL-SW-120, A-6.21 KN2 calls GVL-SW-144 - RFI 072); the prior estimate carries a ROM from McKinley Equipment / Garaventa on file; "
+  "power is the 20A/1P 'ADA LIFT' circuit on (E) panel B (E-2.1). (2) Dumbwaiter, Matot medium-duty car size K (36 x 38 x 48 in), floor "
+  "mounted, 2 stops, per A-6.30, framed by three W10x22 beams at the mezzanine opening, with a 24 x 24 in UL-listed pit access door. The "
+  "equipment lines (A-200..A-202) come from the architectural takeoff; the structural, demolition and electrical interface lines are listed "
+  "with them so the vendor can confirm pit, shaft, opening, beam and power requirements.")
 P("")
-J_IDS = ["S-08", "S-09", "D-28", "E-020", "S-13", "S-14", "D-17", "E-021"]
+J_IDS = ["A-200", "A-201", "A-202", "S-08", "S-09", "D-28", "E-020", "S-13", "S-14", "D-17", "E-021"]
 t, n = table(J_IDS)
 P(t)
 P("")
@@ -524,9 +526,9 @@ P("Documents the vendor must receive: A-6.20, A-6.21, A-6.22 (lift), A-6.30 (dum
   "S-2.20, 5/S-3.10, 6/S-3.20, E-2.1 (panel B).")
 P("")
 P("Open RFIs that affect this package:")
-P(rfi_lines([1, 37, 38]))
+P(rfi_lines([1, 37, 38, 72]))
 P("")
-COUNTS["J ADA lift and dumbwaiter (interface lines)"] = n
+COUNTS["J ADA lift (Garaventa GVL-SW) and dumbwaiter (Matot size K) with interface lines"] = n
 
 # ------------------------------------------------------------------ K
 P("## Package K - Demolition subcontractor (A-1.10 / A-1.20 demolition plans)")
@@ -582,6 +584,200 @@ P(rfi_lines([5, 6, 32, 38, 40, 41, 45, 47]))
 P("")
 COUNTS["L Other (sprinkler, inspection, hauling, painting, concrete, framing, GC items)"] = total_l
 
+# ------------------------------------------------------------------ M (arch) millwork
+P("## Package M - Millwork / casework and specialties (stages, light-beam fins, pick-up counter, bar opening, planton mouldings, reception, mirrors)")
+P("")
+P("Scope: architectural millwork per Addendum 1 (A-4.20..A-4.33), A-5.20 and A-2.10 / A-2.20 keynotes: two stage platforms with LVT tops, "
+  "nine curved light-beam fins above the main stage (A-4.22A), the stainless pick-up counter and the 6 ft bar opening with KegWorks foot rail, "
+  "planton poplar mouldings and 2 in wood frames at the mezzanine doors and cased openings, the lobby base cabinet and green-room make-up "
+  "counter with stone tops, the bent-metal strip-light channel, drapery frames, and the specialties (reception desk, mirrors, hook rail, backing "
+  "plates, FE cabinets, signage, restroom accessories). Several items may be owner-furnished (RFI 070). Strip lights inside the fins and bases "
+  "are in the lighting package F; the WD-1 slat panelling and the poplar moulding grid over WC-8 are in the finishes package N.")
+P("")
+M_GROUPS = OrderedDict([
+    ("M1 Stages, fins, pick-up counter, bar opening, mouldings, cabinets, frames", rng("A-", 171, 183)),
+    ("M2 Specialties: reception desk, mirrors, hook rail, backing, FE cabinets, signage, restroom accessories", rng("A-", 184, 193)),
+])
+total_m = 0
+for g, ids in M_GROUPS.items():
+    P(f"### {g} - {len(ids)} lines")
+    P("")
+    t, n = table(ids)
+    total_m += n
+    P(t)
+    P("")
+P("Documents the subcontractor must receive: Addendum 1 (9/21/2026) A-4.20..A-4.27 and A-4.30..A-4.34 (interior elevations, details 5/A-4.30, "
+  "9/A-4.31, 2 and 8/A-4.33), A-4.22A (light-beam fin diagram and section), A-5.20 (pick-up counter details 1-3), A-2.10 / A-2.20 (KN13, KN18, "
+  "KN22), A-3.22 (fin ceilings), A-5.12 (restroom accessories), 8 & 9/A-5.10 (signage), A-7.20 / A-7.21 (finish codes), A-9.10 detail 5 (backing).")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([67, 68, 69, 70, 71, 66, 59]))
+P("")
+COUNTS["M Millwork / casework and specialties"] = total_m
+
+# ------------------------------------------------------------------ N (arch) finishes
+P("## Package N - Finishes subcontractor (wallcoverings WC-3 / WC-4 / WC-8, poplar moulding grid, WD-1, fabric panels, drapery, paint, FRP, wall tile)")
+P("")
+P("Scope: all wall and ceiling finishes of A-7.20 / A-7.21 as adjusted by the Addendum 1 elevations: Type II vinyl wallcoverings WC-3 (host and "
+  "dining soffit ceilings), WC-8 (dining, green room, hallway 04, mechanical attic) with the stained poplar moulding grid and WD-1 slat "
+  "panelling, WC-4 red vinyl (mezzanine), WT-1 / WT-2 wall tile, paints P-1..P-6 on walls, ceilings, doors, frames and the stair-1 steel, "
+  "stain and seal of the exposed concrete, FRP in the kitchen zone, Tectum / velvet acoustic panels, TX-4 stage fabric, drapery sets, gold "
+  "wallpaper / film / mirror. The 18 GA stainless hood wall lining WC-2 (A-161) is a fabricator item (see the custom stainless lines of "
+  "package A). Finish conflicts between A-7.21 and the Addendum are listed in RFI 065; unlisted codes in RFI 066.")
+P("")
+N_GROUPS = OrderedDict([
+    ("N1 Vinyl wallcoverings WC-3 / WC-8 / WC-4, poplar moulding grid, WD-1 slat panelling", rng("A-", 138, 150)),
+    ("N2 Wall tile WT-1 / WT-2", ["A-151", "A-152"]),
+    ("N3 Paint P-1..P-6, stain and seal, doors and frames", ["A-153", "A-154", "A-155", "A-156", "A-157", "A-158", "A-159", "A-169", "A-170"]),
+    ("N4 FRP, stainless lining, acoustic panels, drapery, fabric, gold wallpaper / film / mirror", rng("A-", 160, 168)),
+])
+total_n = 0
+for g, ids in N_GROUPS.items():
+    P(f"### {g} - {len(ids)} lines")
+    P("")
+    t, n = table(ids)
+    total_n += n
+    P(t)
+    P("")
+P("Documents the subcontractor must receive: A-7.20 (finish legend), A-7.21 (room finish schedule, ceiling heights, notes), A-2.75 / A-2.76 "
+  "(finish plans), A-3.12 / A-3.22 (RCPs), Addendum 1 A-4.20..A-4.27 and A-4.30..A-4.34 (interior elevations), A-5.11 / A-5.12 (restroom "
+  "elevations and tile), A-6.10..A-6.12 (stair 1, P-6), A-9.10 (details), the 16 finish cut sheets where available.")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([65, 66, 63, 69, 73, 59, 57]))
+P("")
+COUNTS["N Finishes subcontractor"] = total_n
+
+# ------------------------------------------------------------------ O (arch) flooring
+P("## Package O - Flooring (FL-2 epoxy, FL-4 / FL-5 carpet tile, FL-6 LVT, FL-7 / FL-8 tile, FL-9 terrazzo, SL-1 sealer, bases incl. the LED base)")
+P("")
+P("Scope: floor finishes per A-2.75 / A-2.76 and A-7.20 / A-7.21 with their bases: epoxy flooring and cove base in the kitchen zone, carpet "
+  "tile in both dining rooms and on stair 1, LVT along the curved wall and on the stages, porcelain tile at the host and restrooms, black "
+  "terrazzo at the exterior step (also package R), urethane sealer in the back-of-house rooms, MDF base B-4, tile cove base B-1, the B-5 LED "
+  "light base (CORE channel - the LED strip and drivers are in the lighting package F) and transition strips. Floor preparation and moisture "
+  "testing are not specified (RFI 064) and are to be priced as a separate line; trench patches and infills are in the demolition package K.")
+P("")
+O_IDS = rng("A-", 124, 137)
+t, n = table(O_IDS)
+P(t)
+P("")
+P("Documents the subcontractor must receive: A-2.75 / A-2.76 (floor finish plans with pattern layers and keynotes 1-2), A-7.20 / A-7.21, "
+  "A-5.11 / A-5.12 (restroom tile and grout notes), A-6.10..A-6.12 (stair 1 treads), A-4.01 and A-7.20 FL-9 (terrazzo step), A-3.70 row G6-G11 "
+  "(LED base channel), A-9.10 details 6 / 7 (slab patch interface).")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([64, 63, 67, 59, 75, 74]))
+P("")
+COUNTS["O Flooring and bases"] = n
+
+# ------------------------------------------------------------------ P (arch) drywall / framing
+P("## Package P - Drywall / light-gage framing (walls by tag with LF and layers, CLG-1D ceilings, K-13, column enclosures)")
+P("")
+P("Scope: all new partitions of A-2.10 / A-2.20 by wall tag (types 1, 1A, 2, 3, 5, AC and the Day-2 walls) with their studs, GWB layers, "
+  "insulation, sealant, Mold Tough and cement-board substitutions, furring and soffits; the CLG-1D GWB ceilings on new steel joists with the "
+  "8'-0\" band fascia and the curved fin ceilings; cleaning / patching of the exposed concrete coffers and the K-13 spray-applied acoustical "
+  "insulation; the perforated metal column enclosures (metal fabricator); access hatches; the GWB soffit under stair 1. The exit-stair "
+  "enclosure walls (X-14) are in package I; the structural light-gage (box beams, attic floor, landings) in package H.")
+P("")
+P_GROUPS = OrderedDict([
+    ("P1 Walls by tag - first floor (A-2.10)", rng("A-", 1, 15)),
+    ("P2 Walls by tag - mezzanine / attic (A-2.20) incl. Day-2 walls", rng("A-", 16, 33)),
+    ("P3 Wall assemblies: GWB by type, sheathing, insulation, studs, furring, sealant, substitutions", rng("A-", 34, 47)),
+    ("P4 Low wall, column enclosures, furring / patch, beam soffit, hallway ceiling", rng("A-", 48, 52)),
+    ("P5 Ceilings: CLG-1D, joists, fascia, CLG-1A refinish, CLG-3A clean / patch, K-13, fin ceilings, hatches", rng("A-", 112, 123) + ["A-197"]),
+])
+total_p = 0
+for g, ids in P_GROUPS.items():
+    P(f"### {g} - {len(ids)} lines")
+    P("")
+    t, n = table(ids)
+    total_p += n
+    P(t)
+    P("")
+# wall LF by tag
+WALL_RE = re.compile(r"^Wall type (1A|AC|\d)\b")
+walls = OrderedDict()
+for k in rng("A-", 1, 33):
+    r = ARCHT[k]
+    m = WALL_RE.match(r["description"])
+    tag = m.group(1) if m else "Day-2 (untyped)"
+    walls.setdefault(tag, []).append((k, float(r["qty"])))
+LAYERS = {"1": "1-hr UL U404: 5/8 in Type X GWB 1 layer each side, 4 in acoustic batt",
+          "1A": "2-hr: 6 in 20 GA studs, 5/8 in Type X GWB 2 layers each side",
+          "2": "non-rated: 3-5/8 in 20 GA studs, 5/8 in Type X GWB 1 layer each side",
+          "3": "1-hr exterior: 6 in 20 GA studs, 5/8 in Type X inside, 5/8 in DensGlass Gold + 2 layers felt outside",
+          "5": "furring: 2 in steel hat channel, 5/8 in Type X GWB one side",
+          "AC": "acoustic 1-hr UL U404: 400S162-54 studs, 5/8 in Type X GWB 2 layers each side, acoustical sealant both sides",
+          "Day-2 (untyped)": "wall type not tagged (RFI 059)"}
+P("### Wall length by tag (sum of the drawn runs above)")
+P("")
+P("| wall tag | LF | layers / assembly (wall notes A-2.10 / A-2.20) | lines |")
+P("|---|---|---|---|")
+for tag, items in walls.items():
+    P(f"| {tag} | {sum(v for _, v in items):.1f} | {LAYERS.get(tag, '')} | {', '.join(k for k, _ in items)} |")
+P("")
+P("Documents the subcontractor must receive: A-2.10 / A-2.20 (plans with wall tags and wall notes 1, 1A, 2, 3, 5, AC; keynotes KN13, KN14, "
+  "KN15, KN17, KN21, KN23), A-3.12 / A-3.22 (RCPs: CLG-1D zones, KN1 AC-1, KN3 edge of attic, CURVE UP fins), A-7.21 (ceiling types and "
+  "heights), A-9.10 (details 4, 5 and typical partitions), Addendum 1 A-4.22A, A-4.30, A-4.31, S-1.10 / S-2.10 / S-2.20 (stud legend and "
+  "schedule - RFI 041), A-6.11 KN9 (stair soffit), K5.0 (kitchen wall backing and curbs).")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([41, 56, 57, 58, 59, 62, 69, 3]))
+P("")
+COUNTS["P Drywall / light-gage framing and ceilings"] = total_p
+
+# ------------------------------------------------------------------ Q (arch) doors
+P("## Package Q - Doors, frames, hardware (A-7.10 types, hardware sets HW-1..HW-10, tempered glass, louvers, thresholds, hatches)")
+P("")
+P("Scope: the A-7.10 door schedule - 29 new leaves / openings including 4 cased openings, 6 existing doors receiving new hardware or finish and "
+  "4 existing doors to remain; hollow metal, wood and aluminum frames; aluminum / glass storefront doors 06 and the E01 pair hardware; Eliason-type "
+  "pivot doors 07 / 08 / 17 / 26; hardware sets HW-1..HW-10 by door (counts in the lines); 7 louvered type-G doors; smoke seals, thresholds, "
+  "rodent gaskets; window type A (also package R); ceiling access hatches (count open). Paint on doors and frames is in package N (A-170). "
+  "Hardware gaps are listed in RFI 060.")
+P("")
+Q_GROUPS = OrderedDict([
+    ("Q1 Doors and cased openings by number (A-7.10)", rng("A-", 53, 88)),
+    ("Q2 Hardware sets, hinges, seals, louvers, frames, thresholds, window A, hatches", rng("A-", 89, 111)),
+])
+total_q = 0
+for g, ids in Q_GROUPS.items():
+    P(f"### {g} - {len(ids)} lines")
+    P("")
+    t, n = table(ids)
+    total_q += n
+    P(t)
+    P("")
+P("Documents the subcontractor must receive: A-7.10 (door, window and hardware schedules, door-type elevations detail 1, window types detail 4, "
+  "header detail 6, threshold detail 7), A-2.10 / A-2.20 (door tags and swings), A-7.20 / A-7.21 (door finishes), Addendum 1 A-4.26, A-4.30..A-4.33 "
+  "(frame colours and planton mouldings), A-4.01 (door 06 and window A), exit-stair A-2.10 for the related doors (package I).")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([60, 61, 59, 65]))
+P("")
+COUNTS["Q Doors, frames and hardware"] = total_q
+
+# ------------------------------------------------------------------ R (arch) exterior
+P("## Package R - Storefront and exterior (Hollywood Blvd exit-door bay: door 06, window A, plaster, metal panel, granite, terrazzo step, handrails)")
+P("")
+P("Scope: the new exit-door bay in the former window opening on the Hollywood Blvd facade (A-4.01): aluminum / glass exit door 06 to match "
+  "the (E) entry door, fixed acoustic storefront window A, new 1-hr exterior infill wall type 3 (framing in package P, lines A-011 / A-028), "
+  "plaster to match the (E) facade, aluminum metal panel at the head, salvage and reset of the (E) granite base, the 7 in black terrazzo step to "
+  "match the Walk of Fame sidewalk, two exterior handrails and patching of the (E) plaster / stone and storefront at the removed window. "
+  "Historic facade constraints apply (Mills Act / HPR, G-08). The Vine St exit doors are in package I.")
+P("")
+R_IDS = rng("A-", 203, 210) + ["A-058", "A-108", "A-011", "A-028"]
+t, n = table(R_IDS)
+P(t)
+P("")
+P("Documents the subcontractor must receive: A-4.01 (exterior elevations 2-4, plan 5, keynotes KN4, KN5, KN7, KN8, KN9, KN12, KN13), A-7.10 "
+  "(door 06, window A, detail 4), A-2.10 (wall type 3 note), A-7.20 (FL-9), A-0.00 / historic review conditions (G-08), demolition A-1.10 KN13 "
+  "(window removal, D-12).")
+P("")
+P("Open RFIs that affect this package:")
+P(rfi_lines([74, 61, 60, 63]))
+P("")
+COUNTS["R Storefront and exterior (Hollywood Blvd bay)"] = n
+
 # ------------------------------------------------------------------ summary
 P("## Package summary")
 P("")
@@ -591,11 +787,12 @@ for k, v in COUNTS.items():
     P(f"| {k} | {v} |")
 P(f"| **total lines listed (lines shared between packages are counted in each)** | **{sum(COUNTS.values())}** |")
 P("")
-P("## Architectural RFIs — pending")
+P("## Architectural RFIs — included")
 P("")
-P("The architectural takeoff notes (arch_notes.md) were not issued when this draft was written; its conflicts and missing-document items "
-  "will be appended to rfi_list.csv (continuing the numbering) and the finishes / partitions / doors / millwork packages added here when "
-  "it is ready.")
+P("The architectural takeoff (arch.csv, 210 lines; arch_notes.md) was issued after the first draft: its 21 RFIs are in rfi_list.csv as "
+  "RFI 056-075 (arch RFI 1 on the stud size is merged into RFI 041) and its lines are in packages J (lift, dumbwaiter), H6 (stair 1 and "
+  "attic rails), M (millwork and specialties), N (finishes), O (flooring), P (drywall / framing / ceilings), Q (doors) and R (exterior bay). "
+  "arch.csv is not yet priced, so its lines show 'arch takeoff (not yet priced)' as status.")
 P("")
 
 out = os.path.join(T2, "rfq_packages.md")
